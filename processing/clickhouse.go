@@ -68,7 +68,7 @@ func CH_ReadRegistry() error {
 		billing__billing_operation_created_at BETWEEN toDateTime('$1') AND toDateTime('$2')
 		AND billing__merchant_id IN ($3)
 
-	limit 1000000`
+	limit 3000000`
 
 	merchant_str := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(config.Get().Registry.Merchant_id)), ","), "[]")
 

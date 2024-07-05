@@ -18,7 +18,10 @@ func Read_Registry(registry_done chan struct{}) {
 
 	if config.Get().Registry.Storage == config.Clickhouse {
 		close(registry_done)
-		CH_ReadRegistry()
+		err := CH_ReadRegistry()
+		if err != nil {
+			logs.Add(logs.FATAL, err)
+		}
 	} else {
 		defer close(registry_done)
 		Read_CSV_Registry()
@@ -76,8 +79,8 @@ func Read_CSV_Registry() {
 
 	channel_records := make(chan []string, 1000)
 
-	wg.Add(NUM_GORUTINES)
-	for i := 1; i <= NUM_GORUTINES; i++ {
+	wg.Add(config.NumCPU)
+	for i := 1; i <= config.NumCPU; i++ {
 		go func() {
 			defer wg.Done()
 			for record := range channel_records {

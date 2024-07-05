@@ -22,7 +22,7 @@ func TestProceesing1(t *testing.T) {
 
 	// Проверка результатов
 	fact := processing.GetCheckFeeCount()
-	expected := 21
+	expected := 19
 	if fact != expected {
 		t.Errorf("check fee: %d; expected: %d", fact, expected)
 	}
@@ -56,7 +56,7 @@ func TestProceesing2(t *testing.T) {
 
 	// Проверка результатов
 	fact := processing.GetCheckFeeCount()
-	expected := 21
+	expected := 19
 	if fact != expected {
 		t.Errorf("check fee: %d; expected: %d", fact, expected)
 	}

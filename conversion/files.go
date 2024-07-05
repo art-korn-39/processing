@@ -62,7 +62,7 @@ func GetFiles(filenames []string) []*FileInfo {
 func (f *FileInfo) InsertIntoDB() {
 
 	if db == nil {
-		logs.Add(logs.INFO, "no connection to postgres")
+		logs.Add(logs.FATAL, "no connection to postgres")
 		return
 	}
 

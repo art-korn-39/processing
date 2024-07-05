@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -14,15 +15,17 @@ var (
 	cfg   Config
 	Debug bool
 
-	// C:/Users/Public/projects/processing-billing-operations
+	// C:/Users/Public/projects/processing
 	WorkDir string
 
 	//go:embed databases.conf
 	databases embed.FS
 
-	READ_GOROUTINES       = 5  // 5
-	WRITE_CSV_GOROUTINES  = 5  // 5
-	WRITE_PSQL_GOROUTINES = 10 // 10
+	NumCPU int
+
+	// READ_GOROUTINES       = 5  // 5
+	// WRITE_CSV_GOROUTINES  = 5  // 5
+	// WRITE_PSQL_GOROUTINES = 10 // 10
 )
 
 type Storage string
@@ -91,7 +94,8 @@ type (
 func init() {
 	dir, _ := os.Getwd()
 	WorkDir = strings.ReplaceAll(dir, "\\", "/")
-	Debug = strings.Contains(WorkDir, "processing-billing-operations")
+	Debug = strings.Contains(WorkDir, "processing")
+	NumCPU = runtime.NumCPU()
 }
 
 func New(app string, async bool, file_config string) {
@@ -125,12 +129,6 @@ func Load() (err error) {
 		if err != nil {
 			return err
 		}
-
-		// // Clickhouse
-		// cfg.Clickhouse.usage = true
-		// cfg.Registry.Storage = S_Clickhouse
-		// cfg.Registry.DateFrom = time.Date(2024, 01, 01, 0, 0, 0, 0, &time.Location{})
-		// cfg.Registry.DateTo = time.Date(2024, 02, 01, 0, 0, 0, 0, &time.Location{})
 
 	} else {
 		return errors.New("не обнаружен файл конфигурации")

@@ -5,12 +5,10 @@ import (
 	"app/logs"
 	"fmt"
 	"sync"
-	"time"
 )
 
 const (
-	Version       = "0.6.9"
-	NUM_GORUTINES = 5
+	Version = "0.7.1"
 )
 
 var (
@@ -36,13 +34,10 @@ func Init() {
 }
 
 func Start() {
-	defer logs.Finish()
 
 	Init()
 
 	defer storage.Close()
-
-	start_time := time.Now()
 
 	// 1. Загрузка источников
 	ReadSources()
@@ -55,8 +50,6 @@ func Start() {
 
 	// 4. Результат
 	SaveResult()
-
-	logs.Add(logs.INFO, fmt.Sprintf("Общее время выполнения: %v", time.Since(start_time)))
 
 }
 

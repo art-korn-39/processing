@@ -4,7 +4,7 @@ import (
 	"app/config"
 	"app/logs"
 	"app/processing"
-	"log"
+	"fmt"
 	"path/filepath"
 	"sync"
 	"time"
@@ -19,8 +19,8 @@ func ReadFiles(files []*FileInfo) (ch_operations chan processing.ProviderOperati
 
 	ch_files := make(chan *FileInfo, 100)
 
-	wg.Add(config.READ_GOROUTINES)
-	for i := 1; i <= config.READ_GOROUTINES; i++ {
+	wg.Add(config.NumCPU)
+	for i := 1; i <= config.NumCPU; i++ {
 		go func() {
 			defer logs.Finish()
 			defer wg.Done()
@@ -28,7 +28,7 @@ func ReadFiles(files []*FileInfo) (ch_operations chan processing.ProviderOperati
 			for f := range ch_files {
 				f.SetLastUpload()
 				if f.LastUpload.After(f.Modified) {
-					log.Println("Skipped: ", filepath.Base(f.Filename))
+					logs.Add(logs.INFO, fmt.Sprint("Пропущен: ", filepath.Base(f.Filename)))
 					continue
 				}
 				operations, err := processing.ReadRates(f.Filename, true)
@@ -49,11 +49,9 @@ func ReadFiles(files []*FileInfo) (ch_operations chan processing.ProviderOperati
 					ticker := time.NewTicker(40 * time.Second)
 					<-ticker.C
 					f.InsertIntoDB()
-					log.Println("Записан в БД - ", filepath.Base(f.Filename))
+					logs.Add(logs.INFO, fmt.Sprint("Записан в БД: ", filepath.Base(f.Filename)))
 				}(f)
-
-				log.Println("Readed: ", filepath.Base(f.Filename))
-
+				logs.Add(logs.INFO, fmt.Sprint("Прочитан: ", filepath.Base(f.Filename)))
 			}
 		}()
 	}

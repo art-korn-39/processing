@@ -134,7 +134,8 @@ func Write_XLSX_SummaryInfo(M map[KeyFields_SummaryInfo]SumFileds) {
 		cell.SetFormat("0.00")
 
 		cell = row.AddCell()
-		cell.SetFloat(v.fee_amount)
+		//cell.SetFloat(v.fee_amount)
+		cell.SetFloat(v.SR_channel_currency)
 		cell.SetFormat("0.00")
 
 		cell = row.AddCell()

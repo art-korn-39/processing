@@ -4,7 +4,6 @@ import (
 	"app/logs"
 	"app/processing"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
@@ -12,6 +11,11 @@ import (
 )
 
 func WriteIntoDB(channel_operations chan processing.ProviderOperation, channel_files chan *FileInfo) {
+
+	if db == nil {
+		logs.Add(logs.FATAL, "no connection to postgres")
+		return
+	}
 
 	start_time := time.Now()
 
@@ -34,48 +38,47 @@ func WriteIntoDB(channel_operations chan processing.ProviderOperation, channel_f
 	counter_rows := 0
 
 	wg.Add(1)
-	for i := 1; i <= 1; i++ {
-		go func() {
-			defer wg.Done()
-			for v := range channel_maps {
+	go func() {
+		defer wg.Done()
+		for v := range channel_maps {
 
-				tx, _ := db.Beginx()
+			tx, _ := db.Beginx()
 
-				print := false
-				sliceID := make([]int, 0, len(v))
-				sliceRows := make([]processing.ProviderOperation, 0, len(v))
-				for _, row := range v {
-					sliceID = append(sliceID, row.Id)
-					sliceRows = append(sliceRows, row)
-					counter_rows++
-					if counter_rows%100000 == 0 {
-						print = true
-					}
+			print := false
+			sliceID := make([]int, 0, len(v))
+			sliceRows := make([]processing.ProviderOperation, 0, len(v))
+			for _, row := range v {
+				sliceID = append(sliceID, row.Id)
+				sliceRows = append(sliceRows, row)
+				counter_rows++
+				if counter_rows%100000 == 0 {
+					print = true
 				}
-
-				_, err = tx.Exec("delete from provider_registry where operation_id = ANY($1);", pq.Array(sliceID))
-				if err != nil {
-					tx.Rollback()
-					continue
-				}
-
-				_, err := tx.NamedExec(statement, sliceRows)
-
-				if err != nil {
-					log.Println("не удалось записать в БД ", err)
-					tx.Rollback()
-				} else {
-					mu.Lock()
-					if print {
-						log.Println("Загружено в БД: ", counter_rows, " rows")
-					}
-					mu.Unlock()
-					tx.Commit()
-				}
-
 			}
-		}()
-	}
+
+			_, err = tx.Exec("delete from provider_registry where operation_id = ANY($1);", pq.Array(sliceID))
+			if err != nil {
+				logs.Add(logs.ERROR, fmt.Sprint("ошибка при удалении: ", err))
+				tx.Rollback()
+				continue
+			}
+
+			_, err := tx.NamedExec(statement, sliceRows)
+
+			if err != nil {
+				logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД: ", err))
+				tx.Rollback()
+			} else {
+				mu.Lock()
+				if print {
+					logs.Add(logs.INFO, fmt.Sprint("Добавлено/обновлено в БД: ", counter_rows, " строк"))
+				}
+				mu.Unlock()
+				tx.Commit()
+			}
+
+		}
+	}()
 
 	i := 1
 	batch := map[int]processing.ProviderOperation{}

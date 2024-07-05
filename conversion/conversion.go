@@ -5,21 +5,14 @@ import (
 	"app/logs"
 	"app/processing"
 	"app/util"
-	"fmt"
 	"sort"
 
 	"github.com/jmoiron/sqlx"
 )
 
-const (
-	Version = "1.0.0"
-)
-
 var db *sqlx.DB
 
 func Start() {
-
-	logs.Add(logs.INFO, fmt.Sprintf("Загружен файл конфигурации (ver %s)", Version))
 
 	var err error
 	db, err = processing.PSQL_connect()

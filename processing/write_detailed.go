@@ -53,8 +53,8 @@ func Write_CSV_Detailed() {
 	channel_rows := make(chan []string, 1000)
 	channel_indexes := make(chan int, 1000)
 
-	wg.Add(config.WRITE_CSV_GOROUTINES)
-	for i := 1; i <= config.WRITE_CSV_GOROUTINES; i++ {
+	wg.Add(config.NumCPU)
+	for i := 1; i <= config.NumCPU; i++ {
 		go func() {
 			defer wg.Done()
 			// чтение будет выполняться до момента close(channel_indexes) и полного исчерпания буфера
@@ -186,8 +186,8 @@ func PSQL_Insert_Detailed() {
 		return
 	}
 
-	wg.Add(PSQL_NUM_GORUTINES)
-	for i := 1; i <= PSQL_NUM_GORUTINES; i++ {
+	wg.Add(config.NumCPU)
+	for i := 1; i <= config.NumCPU; i++ {
 		go func() {
 			defer wg.Done()
 			for v := range channel {

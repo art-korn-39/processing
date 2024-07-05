@@ -124,3 +124,14 @@ func Stat_Insert_decline() string {
 		:incoming_currency, :coverted_currency, :comment, :date_day, :created_at_day
 		)`
 }
+
+func Stat_Insert_summary_merchant() string {
+	return `INSERT INTO summary_merchant (document_date, operation_type, operation_group, 
+		merchant_id, merchant_account_id, balance_id, provider_id, country, region, payment_type, channel_currency, 
+		balance_currency, convertation, tariff_date_start, tariff_id, formula, channel_amount, balance_amount, 
+		sr_channel_currency, sr_balance_currency, count_operations)
+	VALUES (:document_date, :operation_type, :operation_group, :merchant_id, :merchant_account_id, 
+		:balance_id, :provider_id, :country, :region, :payment_type, :channel_currency, :balance_currency, 
+		:convertation, :tariff_date_start, :tariff_id, :formula, :channel_amount, :balance_amount, 
+		:sr_channel_currency, :sr_balance_currency, :count_operations)`
+}

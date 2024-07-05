@@ -5,13 +5,8 @@ import (
 	"app/logs"
 	"app/processing"
 	"app/util"
-	"fmt"
 
 	"github.com/jmoiron/sqlx"
-)
-
-const (
-	Version = "1.0.0"
 )
 
 var (
@@ -21,13 +16,13 @@ var (
 
 func Start() {
 
-	logs.Add(logs.INFO, fmt.Sprintf("Загружен файл конфигурации (ver %s)", Version))
-
 	var err error
 	db, err = processing.PSQL_connect()
 	if err != nil {
 		logs.Add(logs.FATAL, err)
+		return
 	}
+	logs.Add(logs.INFO, "Successful connection to Postgres")
 
 	decline_operations = make(map[int]DeclineOperation, 1000)
 

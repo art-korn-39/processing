@@ -7,15 +7,21 @@ import (
 	"app/logs"
 	"app/processing"
 	"flag"
+	"fmt"
+	"time"
 )
 
 func main() {
+
+	defer logs.Finish()
+
+	start_time := time.Now()
 
 	var app string
 	var async bool
 	var file_config string
 
-	flag.StringVar(&app, "app", "decline", "") // processing | conversion | decline
+	flag.StringVar(&app, "app", "processing", "") // processing | conversion | decline
 	flag.BoolVar(&async, "async", false, "")
 	flag.StringVar(&file_config, "file_config", "", "")
 	flag.Parse()
@@ -34,5 +40,7 @@ func main() {
 	case "decline":
 		decline.Start()
 	}
+
+	logs.Add(logs.INFO, fmt.Sprintf("Общее время выполнения: %v", time.Since(start_time)))
 
 }

@@ -53,8 +53,8 @@ func ParseDir_crypto(folder string) {
 		return
 	}
 
-	wg.Add(config.READ_GOROUTINES)
-	for i := 1; i <= config.READ_GOROUTINES; i++ {
+	wg.Add(config.NumCPU)
+	for i := 1; i <= config.NumCPU; i++ {
 		go func() {
 			defer wg.Done()
 			for filename := range channel_files {

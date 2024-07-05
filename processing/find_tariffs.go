@@ -10,47 +10,25 @@ import (
 
 func SelectTariffsInRegistry() {
 
-	if config.Get().Async {
-		SelectTariffsInRegistry_async()
-		return
-	}
-
 	start_time := time.Now()
 
-	var cnt int
-	for _, operation := range storage.Registry {
-		operation.Crypto_network = storage.Crypto[operation.Operation_id]
-		operation.Tariff = FindTariffForOperation(operation)
-		if operation.Tariff == nil {
-			cnt++
-		}
-	}
-
-	logs.Add(logs.INFO, fmt.Sprintf("Подбор тарифов: %v [без тарифов: %d]", time.Since(start_time), cnt))
-
-}
-
-func SelectTariffsInRegistry_async() {
-
-	start_time := time.Now()
-
-	var wg1 sync.WaitGroup
+	var wg sync.WaitGroup
 
 	channel_indexes := make(chan int, 10000)
 
-	var cnt int
+	var countWithoutTariff int
 
-	wg1.Add(NUM_GORUTINES)
-	for i := 1; i <= NUM_GORUTINES; i++ {
+	wg.Add(config.NumCPU)
+	for i := 1; i <= config.NumCPU; i++ {
 		go func() {
-			defer wg1.Done()
+			defer wg.Done()
 			for index := range channel_indexes {
 				operation := storage.Registry[index]
 				operation.Crypto_network = storage.Crypto[operation.Operation_id]
 				operation.Tariff = FindTariffForOperation(operation)
 				if operation.Tariff == nil {
 					mu.Lock()
-					cnt++
+					countWithoutTariff++
 					mu.Unlock()
 				}
 			}
@@ -62,9 +40,9 @@ func SelectTariffsInRegistry_async() {
 	}
 	close(channel_indexes)
 
-	wg1.Wait()
+	wg.Wait()
 
-	logs.Add(logs.INFO, fmt.Sprintf("Подбор тарифов: %v [без тарифов: %d]", time.Since(start_time), cnt))
+	logs.Add(logs.INFO, fmt.Sprintf("Подбор тарифов: %v [без тарифов: %d]", time.Since(start_time), countWithoutTariff))
 
 }
 

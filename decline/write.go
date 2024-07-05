@@ -32,8 +32,8 @@ func InsertIntoDB() {
 		return
 	}
 
-	wg.Add(config.WRITE_PSQL_GOROUTINES)
-	for i := 1; i <= config.WRITE_PSQL_GOROUTINES; i++ {
+	wg.Add(config.NumCPU)
+	for i := 1; i <= config.NumCPU; i++ {
 		go func() {
 			defer wg.Done()
 			for v := range channel {
@@ -45,12 +45,16 @@ func InsertIntoDB() {
 					sliceID = append(sliceID, row.Operation_id)
 				}
 
-				tx.Exec("delete from decline where operation_id = ANY($1);", pq.Array(sliceID))
-
-				_, err := tx.NamedExec(stat, v)
+				_, err := tx.Exec("delete from decline where operation_id = ANY($1);", pq.Array(sliceID))
 				if err != nil {
-					fmt.Println(err)
-					return
+					logs.Add(logs.ERROR, fmt.Sprint("ошибка при удалении: ", err))
+					tx.Rollback()
+					continue
+				}
+
+				_, err = tx.NamedExec(stat, v)
+				if err != nil {
+					logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД: ", err))
 					tx.Rollback()
 				} else {
 					tx.Commit()

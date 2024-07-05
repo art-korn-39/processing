@@ -107,45 +107,25 @@ func PSQL_Insert_SummaryMerchant(s []SummaryRowMerchant) {
 		`DELETE FROM summary_merchant 
 		WHERE document_date = $1 AND merchant_id = $2 AND convertation = $3`
 
-	stat_insert := `INSERT INTO summary_merchant (document_date, operation_type, operation_group, 
-		merchant_id, merchant_account_id, balance_id, provider_id, country, region, payment_type, channel_currency, 
-		balance_currency, convertation, tariff_date_start, tariff_id, formula, channel_amount, balance_amount, 
-		sr_channel_currency, sr_balance_currency, count_operations)
-	VALUES (:document_date, :operation_type, :operation_group, :merchant_id, :merchant_account_id, 
-		:balance_id, :provider_id, :country, :region, :payment_type, :channel_currency, :balance_currency, 
-		:convertation, :tariff_date_start, :tariff_id, :formula, :channel_amount, :balance_amount, 
-		:sr_channel_currency, :sr_balance_currency, :count_operations)`
-
+	stat_insert := Stat_Insert_summary_merchant()
 	_, err := storage.Postgres.PrepareNamed(stat_insert)
 	if err != nil {
 		logs.Add(logs.INFO, err)
 		return
 	}
 
-	wg.Add(PSQL_NUM_GORUTINES)
-	for i := 1; i <= PSQL_NUM_GORUTINES; i++ {
+	wg.Add(config.NumCPU)
+	for i := 1; i <= config.NumCPU; i++ {
 		go func() {
 			defer wg.Done()
 			for v := range channel {
 
 				tx, _ := storage.Postgres.Beginx()
 
-				//var cnt int64
 				for _, row := range v {
 					tx.Exec(stat_delete, row.Document_date, row.Merchant_id, row.Convertation)
-					// if err != nil {
-					// 	AddLog(L_Error, err)
-					// } else {
-					// 	num, err := r.RowsAffected()
-					// 	if err != nil {
-					// 		AddLog(L_Error, err)
-					// 	} else {
-					// 		cnt = cnt + num
-					// 	}
-					// }
-				}
 
-				//logs.Add(logs.INFO, fmt.Sprint("удалено: ", cnt, " добавлено: ", len(v), " date ", v[0].Document_date.Format(time.DateOnly)))
+				}
 
 				_, err := storage.Postgres.NamedExec(stat_insert, v)
 				if err != nil {
