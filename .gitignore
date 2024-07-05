@@ -1,0 +1,6 @@
+/data
+/test
+/temp
+*.conf
+*.exe
+*.out
