@@ -1,0 +1,62 @@
+package logs
+
+import (
+	"app/config"
+	"fmt"
+	"log"
+	"os"
+)
+
+type LogType int
+
+const (
+	INFO LogType = iota
+	ERROR
+	FATAL
+)
+
+var Testing bool
+
+func Add(t LogType, value any) {
+
+	if Testing {
+		if t == FATAL {
+			log.Fatal(value)
+		}
+		return
+	}
+
+	switch t {
+	case INFO:
+		file, _ := os.OpenFile(config.Get().File_logs, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+		defer file.Close()
+
+		file.WriteString(fmt.Sprintf("%s\n", value))
+		log.Println(value)
+
+	case ERROR:
+		file, _ := os.OpenFile(config.Get().File_errors, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+		defer file.Close()
+
+		file.WriteString(fmt.Sprintf("%s\n", value))
+
+		if config.Debug {
+			log.Println(value)
+		}
+
+	case FATAL:
+		file, _ := os.OpenFile(config.Get().File_logs, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+		defer file.Close()
+
+		file.WriteString(fmt.Sprintf("%s\n", value))
+		log.Fatal(value)
+	}
+
+}
+
+func Finish() {
+	r := recover()
+	if r != nil {
+		Add(INFO, r)
+	}
+}
