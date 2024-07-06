@@ -22,10 +22,6 @@ var (
 	databases embed.FS
 
 	NumCPU int
-
-	// READ_GOROUTINES       = 5  // 5
-	// WRITE_CSV_GOROUTINES  = 5  // 5
-	// WRITE_PSQL_GOROUTINES = 10 // 10
 )
 
 type Storage string

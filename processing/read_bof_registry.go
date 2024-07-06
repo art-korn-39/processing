@@ -3,7 +3,9 @@ package processing
 import (
 	"app/config"
 	"app/logs"
+	"app/querrys"
 	"app/util"
+	"app/validation"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -60,16 +62,23 @@ func Read_CSV_Registry() {
 	// строка с названиями колонок
 	headers, _ := reader.Read()
 
-	// мапа соответствий: имя колонки - индекс
-	map_fileds := map[string]int{}
-	for i, field := range headers {
-		map_fileds[field] = i + 1
-	}
+	// // мапа соответствий: имя колонки - индекс
+	// map_fileds := map[string]int{}
+	// for i, field := range headers {
+	// 	map_fileds[field] = i + 1
+	// }
 
-	// проверяем наличие обязательных полей
-	err = CheckRequiredFileds_Registry(map_fileds)
+	// // проверяем наличие обязательных полей
+	// err = CheckRequiredFileds_Registry(map_fileds)
+	// if err != nil {
+	// 	logs.Add(logs.FATAL, err)
+	// }
+
+	map_fileds := validation.GetMapOfColumnNamesStrings(headers)
+	err = validation.CheckMapOfColumnNames(map_fileds, "bof_registry")
 	if err != nil {
 		logs.Add(logs.FATAL, err)
+		return
 	}
 
 	// 150 000 records -> 43.500.000 bytes (~0.004)
@@ -93,7 +102,6 @@ func Read_CSV_Registry() {
 		}()
 	}
 
-	// чтение csv StartingFill построчно и запись в канал
 	for {
 		record, err := reader.Read()
 		if err != nil {
@@ -156,30 +164,92 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 
 }
 
-func CheckRequiredFileds_Registry(map_fileds map[string]int) error {
+func CH_ReadRegistry() error {
 
-	M := []string{
-		"id / operation_id", "transaction_id", "transaction_completed_at",
-		"merchant_id", "merchant_account_id", "project_id", "project_name",
-		"provider_name", "merchant_name", "merchant_account_name",
-		"acquirer_id / provider_payment_id", "issuer_country",
-		"operation_type", "balance_id", "payment_type_id / payment_method_type",
-		"contract_id", "tariff_condition_id",
-		"real_currency / channel_currency", "real_amount / channel_amount",
-		"fee_currency", "fee_amount",
-		"provider_currency", "provider_amount",
-		"tariff_rate_percent", "tariff_rate_fix", "tariff_rate_min", "tariff_rate_max",
+	start_time := time.Now()
+
+	Statement := querrys.Stat_Select_reports()
+
+	merchant_str := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(config.Get().Registry.Merchant_id)), ","), "[]")
+
+	Statement = strings.ReplaceAll(Statement, "$1", config.Get().Registry.DateFrom.Format(time.DateTime))
+	Statement = strings.ReplaceAll(Statement, "$2", config.Get().Registry.DateTo.Format(time.DateTime))
+	Statement = strings.ReplaceAll(Statement, "$3", merchant_str)
+
+	err := storage.Clickhouse.Select(&storage.Registry, Statement)
+
+	if err != nil {
+		return err
 	}
 
-	for _, v := range M {
-
-		_, ok := map_fileds[v]
-		if !ok {
-			return fmt.Errorf("отсуствует обязательное поле: %s", v)
-		}
-
+	for _, o := range storage.Registry {
+		o.StartingFill()
 	}
+
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра из Clickhouse: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Registry))))
 
 	return nil
 
+}
+
+func CH_ReadRegistry_async() error {
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	start_time := time.Now()
+
+	merchant_str := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(config.Get().Registry.Merchant_id)), ","), "[]")
+
+	Statement := `SELECT COUNT(*) 
+	FROM reports
+	WHERE 
+		billing__billing_operation_created_at BETWEEN toDateTime('$1') AND toDateTime('$2')
+		AND billing__merchant_id IN ($3)`
+	Statement = strings.ReplaceAll(Statement, "$1", config.Get().Registry.DateFrom.Format(time.DateTime))
+	Statement = strings.ReplaceAll(Statement, "$2", config.Get().Registry.DateTo.Format(time.DateTime))
+	Statement = strings.ReplaceAll(Statement, "$3", merchant_str)
+
+	var count_rows int
+	storage.Clickhouse.Get(&count_rows, Statement)
+
+	fmt.Println("строк в выборке: ", count_rows)
+
+	storage.Registry = make([]*Operation, 0, count_rows)
+
+	channel_dates := GetChannelOfDays(config.Get().Registry.DateFrom,
+		config.Get().Registry.DateTo,
+		24*time.Hour)
+
+	Statement = querrys.Stat_Select_reports()
+	Statement = strings.ReplaceAll(Statement, "$3", merchant_str)
+
+	wg.Add(config.NumCPU)
+	for i := 1; i <= config.NumCPU; i++ {
+		go func() {
+			defer wg.Done()
+			for period := range channel_dates {
+				stat := strings.ReplaceAll(Statement, "$1", period.startDay.Format(time.DateTime))
+				stat = strings.ReplaceAll(stat, "$2", period.endDay.Format(time.DateTime))
+
+				res := []*Operation{}
+				err := storage.Clickhouse.Select(&res, stat)
+				if err != nil {
+					// обработка ошибки
+				}
+				for _, o := range res {
+					o.StartingFill()
+				}
+				mu.Lock()
+				storage.Registry = append(storage.Registry, res...)
+				mu.Unlock()
+			}
+		}()
+	}
+
+	wg.Wait()
+
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра из Clickhouse: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Registry))))
+
+	return nil
 }

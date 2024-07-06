@@ -3,7 +3,9 @@ package processing
 import (
 	"app/config"
 	"app/logs"
+	"fmt"
 
+	_ "github.com/alexbrainman/odbc"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -16,6 +18,36 @@ type Storage struct {
 	Crypto              map[int]string
 	Rates               []ProviderOperation
 	Provider_operations map[int]ProviderOperation
+}
+
+func CH_Connect() (*sqlx.DB, error) {
+
+	connInfo := fmt.Sprintf("driver=ClickHouse ODBC Driver (Unicode);host=%s;port=%d;username=%s;password=%s;dbname=%s",
+		config.Get().Clickhouse.Host, config.Get().Clickhouse.Port, config.Get().Clickhouse.User, config.Get().Clickhouse.Password, config.Get().Clickhouse.Name)
+
+	connect, err := sqlx.Connect("odbc", connInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect, nil
+}
+
+// PostgreSQL only supports 65535 parameters
+// max count 1 batch = 65535 / count columns
+func PSQL_connect() (*sqlx.DB, error) {
+
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		config.Get().PSQL.Host, config.Get().PSQL.Port, config.Get().PSQL.User, config.Get().PSQL.Password, config.Get().PSQL.Name)
+
+	connect, err := sqlx.Connect("postgres", psqlInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect, nil
+
 }
 
 func (s *Storage) Close() {
@@ -32,7 +64,6 @@ func (s *Storage) Init() (err error) {
 	if config.Get().Clickhouse.Usage {
 		connect, err := CH_Connect()
 		if err != nil {
-			//logs.Add(logs.FATAL, err)
 			return err
 		}
 		logs.Add(logs.INFO, "Successful connection to Clickhouse")
@@ -42,7 +73,6 @@ func (s *Storage) Init() (err error) {
 	if config.Get().PSQL.Usage {
 		connect, err := PSQL_connect()
 		if err != nil {
-			//logs.Add(logs.FATAL, err)
 			return err
 		}
 		logs.Add(logs.INFO, "Successful connection to Postgres")
@@ -74,64 +104,4 @@ func GetCheckFeeCount() int {
 		}
 	}
 	return count
-}
-
-func Stat_Insert_provider_registry() string {
-	return `INSERT INTO provider_registry (
-	operation_id, transaction_completed_at, provider_name, merchant_name, merchant_account_name,
-	project_url, payment_method_type, country, rate, operation_type, amount,
-	provider_payment_id, operation_status, account_number, channel_currency, provider_currency, br_amount
-	)
-	VALUES (
-	:operation_id, :transaction_completed_at, :provider_name, :merchant_name, :merchant_account_name,
-	:project_url, :payment_method_type, :country, :rate, :operation_type, :amount,
-	:provider_payment_id, :operation_status, :account_number, :channel_currency, :provider_currency, :br_amount
-	)`
-}
-
-func Stat_Insert_detailed() string {
-	return `INSERT INTO detailed (
-		operation_id, transaction_completed_at, merchant_id, merchant_account_id, balance_id, company_id,
-		contract_id, project_id, provider_id, provider_payment_id, provider_name, merchant_name, merchant_account_name,
-		account_bank_name, project_name, payment_method_type, country, region, operation_type, provider_amount,
-		provider_currency, msc_amount, msc_currency, channel_amount, channel_currency, fee_amount, fee_currency,
-		balance_amount, balance_currency, rate, sr_channel_currency, sr_balance_currency, check_fee, provider_registry_amount,
-		verification, crypto_network, convertation, provider_1c, subdivision_1c, rated_account, tariff_id,
-		tariff_date_start, act_percent, act_fix, act_min, act_max, range_min, range_max,
-		tariff_rate_percent, tariff_rate_fix, tariff_rate_min, tariff_rate_max
-	)
-	VALUES (
-		:operation_id, :transaction_completed_at, :merchant_id, :merchant_account_id, :balance_id, :company_id,
-		:contract_id, :project_id, :provider_id, :provider_payment_id, :provider_name, :merchant_name, :merchant_account_name,
-		:account_bank_name, :project_name, :payment_method_type, :country, :region, :operation_type, :provider_amount,
-		:provider_currency, :msc_amount, :msc_currency, :channel_amount, :channel_currency, :fee_amount, :fee_currency,
-		:balance_amount, :balance_currency, :rate, :sr_channel_currency, :sr_balance_currency, :check_fee, :provider_registry_amount,
-		:verification, :crypto_network, :convertation, :provider_1c, :subdivision_1c, :rated_account, :tariff_id,
-		:tariff_date_start, :act_percent, :act_fix, :act_min, :act_max, :range_min, :range_max,
-		:tariff_rate_percent, :tariff_rate_fix, :tariff_rate_min, :tariff_rate_max
-		)`
-}
-
-func Stat_Insert_decline() string {
-	return `INSERT INTO decline (
-		operation_id, message_id, date, merchant_id, merchant_account_id, provider_id, provider_name, 
-		merchant_name, merchant_account_name, operation_type, incoming_amount, coverted_amount, created_at,
-		incoming_currency, coverted_currency, comment, date_day, created_at_day
-	)
-	VALUES (
-		:operation_id, :message_id, :date, :merchant_id, :merchant_account_id, :provider_id, :provider_name, 
-		:merchant_name, :merchant_account_name,	:operation_type, :incoming_amount, :coverted_amount, :created_at,
-		:incoming_currency, :coverted_currency, :comment, :date_day, :created_at_day
-		)`
-}
-
-func Stat_Insert_summary_merchant() string {
-	return `INSERT INTO summary_merchant (document_date, operation_type, operation_group, 
-		merchant_id, merchant_account_id, balance_id, provider_id, country, region, payment_type, channel_currency, 
-		balance_currency, convertation, tariff_date_start, tariff_id, formula, channel_amount, balance_amount, 
-		sr_channel_currency, sr_balance_currency, count_operations)
-	VALUES (:document_date, :operation_type, :operation_group, :merchant_id, :merchant_account_id, 
-		:balance_id, :provider_id, :country, :region, :payment_type, :channel_currency, :balance_currency, 
-		:convertation, :tariff_date_start, :tariff_id, :formula, :channel_amount, :balance_amount, 
-		:sr_channel_currency, :sr_balance_currency, :count_operations)`
 }

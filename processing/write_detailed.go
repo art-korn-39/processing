@@ -3,6 +3,7 @@ package processing
 import (
 	"app/config"
 	"app/logs"
+	"app/querrys"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -179,7 +180,7 @@ func PSQL_Insert_Detailed() {
 
 	var wg sync.WaitGroup
 
-	stat := Stat_Insert_detailed()
+	stat := querrys.Stat_Insert_detailed()
 	_, err := storage.Postgres.PrepareNamed(stat)
 	if err != nil {
 		logs.Add(logs.INFO, err)

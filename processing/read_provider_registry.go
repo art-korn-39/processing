@@ -4,6 +4,7 @@ import (
 	"app/config"
 	"app/logs"
 	"app/util"
+	"app/validation"
 	"errors"
 	"fmt"
 	"math"
@@ -16,8 +17,6 @@ import (
 	"github.com/lib/pq"
 	"github.com/tealeg/xlsx"
 )
-
-//var wg_rates sync.WaitGroup
 
 func Read_ProviderRegistry(registry_done chan struct{}) {
 
@@ -76,7 +75,7 @@ func ParseFolders_rates(folder string) {
 					continue
 				}
 
-				operations, err := ReadRates(filename, false)
+				operations, err := ReadRates(filename)
 				if err != nil {
 					logs.Add(logs.ERROR, err)
 					continue
@@ -102,7 +101,7 @@ func ParseFolders_rates(folder string) {
 
 }
 
-func ReadRates(filename string, full_loading bool) (ops []ProviderOperation, err error) {
+func ReadRates(filename string) (ops []ProviderOperation, err error) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -137,21 +136,28 @@ func ReadRates(filename string, full_loading bool) (ops []ProviderOperation, err
 		}
 
 		// мапа соответствий: имя колонки - индекс
-		map_fileds := map[string]int{}
-		for i, cell := range sheet.Rows[0].Cells {
-			column_name := strings.ToLower(strings.TrimSpace(cell.String()))
-			map_fileds[column_name] = i + 1
+		// map_fileds := map[string]int{}
+		// for i, cell := range sheet.Rows[0].Cells {
+		// 	column_name := strings.ToLower(strings.TrimSpace(cell.String()))
+		// 	map_fileds[column_name] = i + 1
+		// }
+
+		map_fileds := validation.GetMapOfColumnNamesCells(sheet.Rows[0].Cells)
+		err = validation.CheckMapOfColumnNames(map_fileds, "provider_registry")
+		if err != nil {
+			return nil, err
 		}
+
 		idx_br := map_fileds["br в валюте пс *при необходимости"] - 1
 		idx_account := map_fileds["customer_purse / account_number"] - 1
 		idx_operation_id := map_fileds["id / operation_id"] - 1
 
-		// проверяем наличие обязательных полей
-		err = CheckRequiredFileds_Rates(map_fileds, full_loading)
-		if err != nil {
-			err = fmt.Errorf("%v file: %s", err, filename)
-			return nil, err
-		}
+		// // проверяем наличие обязательных полей
+		// err = CheckRequiredFileds_Rates(map_fileds)
+		// if err != nil {
+		// 	err = fmt.Errorf("%v file: %s", err, filename)
+		// 	return nil, err
+		// }
 
 		ops = make([]ProviderOperation, 0, len(sheet.Rows))
 
@@ -178,30 +184,29 @@ func ReadRates(filename string, full_loading bool) (ops []ProviderOperation, err
 			operation.Rate, _ = row.Cells[map_fileds["курс"]-1].Float()
 			operation.Rate = util.TR(math.IsNaN(operation.Rate), float64(0), operation.Rate).(float64)
 
-			operation.Amount, _ = row.Cells[map_fileds["provider_amount"]-1].Float() // provider_amount
+			operation.Amount, _ = row.Cells[map_fileds["provider_amount"]-1].Float()
 			operation.Amount = util.TR(math.IsNaN(operation.Amount), float64(0), operation.Amount).(float64)
 
 			if operation.Provider_currency.Name == "EUR" && operation.Rate != 0 {
 				operation.Rate = 1 / operation.Rate
 			}
 
-			if full_loading {
-				operation.Provider_name = row.Cells[map_fileds["provider_name"]-1].String()
-				operation.Merchant_account_name = row.Cells[map_fileds["merchant_account_name"]-1].String()
-				operation.Provider_payment_id = row.Cells[map_fileds["acquirer_id / provider_payment_id"]-1].String()
-				operation.Project_url = row.Cells[map_fileds["project_url"]-1].String()
-				operation.Operation_status = row.Cells[map_fileds["operation_status"]-1].String()
-				operation.Channel_currency_str = operation.Channel_currency.Name
-				operation.Provider_currency_str = operation.Provider_currency.Name
+			// additional columns
+			operation.Provider_name = row.Cells[map_fileds["provider_name"]-1].String()
+			operation.Merchant_account_name = row.Cells[map_fileds["merchant_account_name"]-1].String()
+			operation.Provider_payment_id = row.Cells[map_fileds["acquirer_id / provider_payment_id"]-1].String()
+			operation.Project_url = row.Cells[map_fileds["project_url"]-1].String()
+			operation.Operation_status = row.Cells[map_fileds["operation_status"]-1].String()
+			operation.Channel_currency_str = operation.Channel_currency.Name
+			operation.Provider_currency_str = operation.Provider_currency.Name
 
-				if idx_account >= 0 {
-					operation.Account_number = row.Cells[map_fileds["customer_purse / account_number"]-1].String()
-				}
+			if idx_account >= 0 {
+				operation.Account_number = row.Cells[map_fileds["customer_purse / account_number"]-1].String()
+			}
 
-				if len(row.Cells) > idx_br && idx_br >= 0 {
-					operation.BR_amount, _ = row.Cells[idx_br].Float()
-					operation.BR_amount = util.TR(math.IsNaN(operation.BR_amount), float64(0), operation.BR_amount).(float64)
-				}
+			if len(row.Cells) > idx_br && idx_br >= 0 {
+				operation.BR_amount, _ = row.Cells[idx_br].Float()
+				operation.BR_amount = util.TR(math.IsNaN(operation.BR_amount), float64(0), operation.BR_amount).(float64)
 			}
 
 			ops = append(ops, operation)
@@ -214,7 +219,7 @@ func ReadRates(filename string, full_loading bool) (ops []ProviderOperation, err
 
 }
 
-func CheckRequiredFileds_Rates(map_fileds map[string]int, full_loading bool) error {
+func CheckRequiredFileds_Rates(map_fileds map[string]int) error {
 
 	M := []string{
 		"id / operation_id", "transaction_completed_at",
@@ -224,11 +229,11 @@ func CheckRequiredFileds_Rates(map_fileds map[string]int, full_loading bool) err
 		"provider_currency", "курс", "provider_amount",
 	}
 
-	if full_loading {
-		M = append(M,
-			"provider_name", "merchant_account_name", "acquirer_id / provider_payment_id",
-			"project_url", "operation_status")
-	}
+	//if full_loading {
+	M = append(M,
+		"provider_name", "merchant_account_name", "acquirer_id / provider_payment_id",
+		"project_url", "operation_status")
+	//}
 
 	//"customer_purse / account_number", "BR в валюте ПС *при необходимости"
 

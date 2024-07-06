@@ -3,7 +3,7 @@ package decline
 import (
 	"app/config"
 	"app/logs"
-	"app/processing"
+	"app/querrys"
 	"fmt"
 	"sync"
 	"time"
@@ -25,7 +25,7 @@ func InsertIntoDB() {
 
 	var wg sync.WaitGroup
 
-	stat := processing.Stat_Insert_decline()
+	stat := querrys.Stat_Insert_decline()
 	_, err := db.PrepareNamed(stat)
 	if err != nil {
 		logs.Add(logs.INFO, err)

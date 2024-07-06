@@ -3,6 +3,7 @@ package conversion
 import (
 	"app/logs"
 	"app/processing"
+	"app/querrys"
 	"fmt"
 	"sync"
 	"time"
@@ -27,7 +28,7 @@ func WriteIntoDB(channel_operations chan processing.ProviderOperation, channel_f
 
 	batch_len := 1000 // 17 fileds
 
-	statement := processing.Stat_Insert_provider_registry()
+	statement := querrys.Stat_Insert_provider_registry()
 
 	_, err := db.PrepareNamed(statement)
 	if err != nil {

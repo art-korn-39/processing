@@ -31,7 +31,7 @@ func ReadFiles(files []*FileInfo) (ch_operations chan processing.ProviderOperati
 					logs.Add(logs.INFO, fmt.Sprint("Пропущен: ", filepath.Base(f.Filename)))
 					continue
 				}
-				operations, err := processing.ReadRates(f.Filename, true)
+				operations, err := processing.ReadRates(f.Filename)
 				if err != nil {
 					logs.Add(logs.ERROR, err)
 					continue

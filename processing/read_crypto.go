@@ -4,6 +4,7 @@ import (
 	"app/config"
 	"app/logs"
 	"app/util"
+	"app/validation"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -35,13 +36,13 @@ func Read_CSV_Crypto() {
 
 	storage.Crypto = make(map[int]string)
 
-	ParseDir_crypto(folderPath)
+	ReadFilesCrypto(folderPath)
 
 	logs.Add(logs.INFO, fmt.Sprintf("Чтение криптовалютных операций: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Crypto))))
 
 }
 
-func ParseDir_crypto(folder string) {
+func ReadFilesCrypto(folder string) {
 
 	var wg sync.WaitGroup
 
@@ -63,7 +64,7 @@ func ParseDir_crypto(folder string) {
 					continue
 				}
 
-				err := ReadCrypto(filename)
+				err := ReadFileCrypto(filename)
 				if err != nil {
 					logs.Add(logs.ERROR, err)
 					continue
@@ -83,7 +84,7 @@ func ParseDir_crypto(folder string) {
 
 }
 
-func ReadCrypto(filename string) (err error) {
+func ReadFileCrypto(filename string) (err error) {
 
 	file, err := os.Open(filename)
 	if err != nil {
@@ -101,16 +102,22 @@ func ReadCrypto(filename string) (err error) {
 		return err
 	}
 
-	// мапа соответствий: имя колонки - индекс
-	map_fileds := map[string]int{}
-	for i, field := range records[0] {
-		map_fileds[field] = i + 1
-	}
+	// // мапа соответствий: имя колонки - индекс
+	// map_fileds := map[string]int{}
+	// for i, field := range records[0] {
+	// 	map_fileds[field] = i + 1
+	// }
 
-	// проверяем наличие обязательных полей
-	err = CheckRequiredFileds_Crypto(map_fileds)
+	// // проверяем наличие обязательных полей
+	// err = CheckRequiredFileds_Crypto(map_fileds)
+	// if err != nil {
+	// 	logs.Add(logs.ERROR, fmt.Sprint("CheckRequiredFileds_Crypto() ", filename, ": ", err))
+	// 	return err
+	// }
+
+	map_fileds := validation.GetMapOfColumnNamesStrings(records[0])
+	err = validation.CheckMapOfColumnNames(map_fileds, "crypto")
 	if err != nil {
-		logs.Add(logs.ERROR, fmt.Sprint("CheckRequiredFileds_Crypto() ", filename, ": ", err))
 		return err
 	}
 
@@ -120,8 +127,8 @@ func ReadCrypto(filename string) (err error) {
 			continue
 		}
 
-		operation_id, _ := strconv.Atoi(record[map_fileds["Operation id"]-1])
-		network := record[map_fileds["Crypto network"]-1]
+		operation_id, _ := strconv.Atoi(record[map_fileds["operation id"]-1])
+		network := record[map_fileds["crypto network"]-1]
 
 		mu.Lock()
 		storage.Crypto[operation_id] = network

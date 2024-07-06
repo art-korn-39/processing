@@ -3,6 +3,7 @@ package processing
 import (
 	"app/config"
 	"app/logs"
+	"app/querrys"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -107,7 +108,7 @@ func PSQL_Insert_SummaryMerchant(s []SummaryRowMerchant) {
 		`DELETE FROM summary_merchant 
 		WHERE document_date = $1 AND merchant_id = $2 AND convertation = $3`
 
-	stat_insert := Stat_Insert_summary_merchant()
+	stat_insert := querrys.Stat_Insert_summary_merchant()
 	_, err := storage.Postgres.PrepareNamed(stat_insert)
 	if err != nil {
 		logs.Add(logs.INFO, err)
