@@ -6,6 +6,7 @@ import (
 	"app/util"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	_ "github.com/alexbrainman/odbc"
@@ -25,11 +26,8 @@ func CH_Connect() (*sqlx.DB, error) {
 	return connect, nil
 }
 
-func CH_ReadRegistry() error {
-
-	start_time := time.Now()
-
-	Statement := `
+func Stat_Select_reports() string {
+	return `
 	SELECT 
 	operation__operation_id AS operation_id, 
 	billing__transaction_id AS transaction_id,
@@ -69,6 +67,13 @@ func CH_ReadRegistry() error {
 		AND billing__merchant_id IN ($3)
 
 	limit 3000000`
+}
+
+func CH_ReadRegistry() error {
+
+	start_time := time.Now()
+
+	Statement := Stat_Select_reports()
 
 	merchant_str := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(config.Get().Registry.Merchant_id)), ","), "[]")
 
@@ -90,4 +95,91 @@ func CH_ReadRegistry() error {
 
 	return nil
 
+}
+
+func CH_ReadRegistry_async() error {
+
+	type Period struct {
+		startDay time.Time
+		endDay   time.Time
+	}
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	start_time := time.Now()
+
+	merchant_str := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(config.Get().Registry.Merchant_id)), ","), "[]")
+
+	Statement := `SELECT COUNT(*) 
+	FROM reports
+	WHERE 
+		billing__billing_operation_created_at BETWEEN toDateTime('$1') AND toDateTime('$2')
+		AND billing__merchant_id IN ($3)`
+	Statement = strings.ReplaceAll(Statement, "$1", config.Get().Registry.DateFrom.Format(time.DateTime))
+	Statement = strings.ReplaceAll(Statement, "$2", config.Get().Registry.DateTo.Format(time.DateTime))
+	Statement = strings.ReplaceAll(Statement, "$3", merchant_str)
+
+	var count_rows int
+	storage.Clickhouse.Get(&count_rows, Statement)
+	fmt.Println("строк в выборке: ", count_rows)
+
+	storage.Registry = make([]*Operation, 0, count_rows)
+
+	channel_dates := make(chan Period, 50)
+
+	Statement = Stat_Select_reports()
+	Statement = strings.ReplaceAll(Statement, "$3", merchant_str)
+
+	wg.Add(config.NumCPU)
+	for i := 1; i <= config.NumCPU; i++ {
+		go func() {
+			defer wg.Done()
+			for period := range channel_dates {
+				stat := strings.ReplaceAll(Statement, "$1", period.startDay.Format(time.DateTime))
+				stat = strings.ReplaceAll(Statement, "$2", period.endDay.Format(time.DateTime))
+
+				res := []*Operation{}
+				err := storage.Clickhouse.Select(&res, stat)
+				if err != nil {
+					// обработка ошибки
+				}
+				for _, o := range res {
+					o.StartingFill()
+				}
+				mu.Lock()
+				storage.Registry = append(storage.Registry, res...)
+				mu.Unlock()
+			}
+		}()
+	}
+
+	dateFrom := config.Get().Registry.DateFrom
+	dateTo := config.Get().Registry.DateTo
+	startDay := dateFrom
+	for {
+		if startDay.After(dateTo) {
+			break
+		}
+
+		endDay := startDay.Round(24 * time.Hour).Add(24 * time.Hour).Add(-1 * time.Second) //23:59:59
+		if endDay.After(dateTo) {
+			endDay = dateTo
+		}
+
+		period := Period{
+			startDay: startDay,
+			endDay:   endDay,
+		}
+		fmt.Println(period)
+		channel_dates <- period
+
+		startDay = startDay.Add(24 * time.Hour)
+	}
+
+	wg.Wait()
+
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра из Clickhouse: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Registry))))
+
+	return nil
 }
