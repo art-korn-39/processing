@@ -51,13 +51,13 @@ func Stat_Select_reports() string {
 	IFNULL(operation__issuer_region, '') AS region,
 	billing__operation_type_id AS operation_type_id,
 	1 AS count_operations,
-	operation__msc_amount AS msc_amount,
+	IFNULL(operation__msc_amount, 0) AS msc_amount,
 	IFNULL(operation__msc_currency, '') AS msc_currency,
-	operation__provider_amount AS provider_amount,
+	IFNULL(operation__provider_amount, 0) AS provider_amount,
 	IFNULL(operation__provider_currency, '') AS provider_currency,	 
-	operation__channel_amount AS channel_amount,
+	IFNULL(operation__channel_amount, 0) AS channel_amount,
 	IFNULL(operation__channel_currency, '') AS channel_currency,
-	operation__fee_amount AS fee_amount,
+	IFNULL(operation__fee_amount, 0) AS fee_amount,
 	IFNULL(operation__fee_currency, '') AS fee_currency
 
 	FROM reports
@@ -99,10 +99,10 @@ func CH_ReadRegistry() error {
 
 func CH_ReadRegistry_async() error {
 
-	type Period struct {
-		startDay time.Time
-		endDay   time.Time
-	}
+	// type Period struct {
+	// 	startDay time.Time
+	// 	endDay   time.Time
+	// }
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
@@ -122,11 +122,14 @@ func CH_ReadRegistry_async() error {
 
 	var count_rows int
 	storage.Clickhouse.Get(&count_rows, Statement)
+
 	fmt.Println("строк в выборке: ", count_rows)
 
 	storage.Registry = make([]*Operation, 0, count_rows)
 
-	channel_dates := make(chan Period, 50)
+	channel_dates := GetChannelOfDays(config.Get().Registry.DateFrom,
+		config.Get().Registry.DateTo,
+		24*time.Hour)
 
 	Statement = Stat_Select_reports()
 	Statement = strings.ReplaceAll(Statement, "$3", merchant_str)
@@ -137,7 +140,7 @@ func CH_ReadRegistry_async() error {
 			defer wg.Done()
 			for period := range channel_dates {
 				stat := strings.ReplaceAll(Statement, "$1", period.startDay.Format(time.DateTime))
-				stat = strings.ReplaceAll(Statement, "$2", period.endDay.Format(time.DateTime))
+				stat = strings.ReplaceAll(stat, "$2", period.endDay.Format(time.DateTime))
 
 				res := []*Operation{}
 				err := storage.Clickhouse.Select(&res, stat)
@@ -152,29 +155,6 @@ func CH_ReadRegistry_async() error {
 				mu.Unlock()
 			}
 		}()
-	}
-
-	dateFrom := config.Get().Registry.DateFrom
-	dateTo := config.Get().Registry.DateTo
-	startDay := dateFrom
-	for {
-		if startDay.After(dateTo) {
-			break
-		}
-
-		endDay := startDay.Round(24 * time.Hour).Add(24 * time.Hour).Add(-1 * time.Second) //23:59:59
-		if endDay.After(dateTo) {
-			endDay = dateTo
-		}
-
-		period := Period{
-			startDay: startDay,
-			endDay:   endDay,
-		}
-		fmt.Println(period)
-		channel_dates <- period
-
-		startDay = startDay.Add(24 * time.Hour)
 	}
 
 	wg.Wait()

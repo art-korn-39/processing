@@ -305,15 +305,6 @@ func PSQL_ReadProviderRegistry(registry_done chan struct{}) {
 	storage.Provider_operations = map[int]ProviderOperation{}
 
 	args := []any{pq.Array(merchant_names), DateFrom, DateTo}
-	//var condition string
-	//if config.Get().Registry.Storage == config.Clickhouse {
-	//	condition = " "
-	//	DateFrom := config.Get().Registry.DateFrom.Add(-30 * 24 * time.Hour)
-	//	DateTo := config.Get().Registry.DateTo.Add(5 * 24 * time.Hour)
-	// args = append(args,
-	// 	DateFrom.Format(time.DateTime),
-	// 	DateTo.Format(time.DateTime))
-	//}
 
 	stat := `SELECT * FROM provider_registry 
 			WHERE merchant_name = ANY($1) 
