@@ -18,7 +18,6 @@ type Operation struct {
 	Balance_id          int    `db:"balance_id"`
 	Company_id          int    `db:"company_id"`
 	Contract_id         int    `db:"contract_id"`
-	Project_id          int    `db:"project_id"`
 	Provider_id         int    `db:"provider_id"`
 	Tariff_condition_id int    `db:"tariff_id"`
 	Provider_payment_id string `db:"provider_payment_id"`
@@ -27,11 +26,15 @@ type Operation struct {
 	Merchant_name         string `db:"merchant_name"`
 	Merchant_account_name string `db:"merchant_account_name"`
 	Account_bank_name     string `db:"account_bank_name"`
-	Project_name          string `db:"project_name"`
-	IsDragonPay           bool
-	Payment_method_type   string `db:"payment_method_type"`
+	Business_type         string `db:"business_type"`
 	Country               string `db:"country"`
 	Region                string `db:"region"`
+
+	Project_name      string `db:"project_name"`
+	Project_id        int    `db:"project_id"`
+	Payment_type      string `db:"payment_type"`
+	Payment_type_id   int    `db:"payment_type_id"`
+	Payment_method_id int    `db:"payment_method_id"`
 
 	Operation_type    string `db:"operation_type"`
 	Operation_type_id int    `db:"operation_type_id"`
@@ -63,6 +66,7 @@ type Operation struct {
 	SR_balance_currency float64
 	CheckFee            float64
 	Verification        string
+	IsDragonPay         bool
 
 	Crypto_network    string
 	ProviderOperation *ProviderOperation

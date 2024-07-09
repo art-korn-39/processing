@@ -62,18 +62,6 @@ func Read_CSV_Registry() {
 	// строка с названиями колонок
 	headers, _ := reader.Read()
 
-	// // мапа соответствий: имя колонки - индекс
-	// map_fileds := map[string]int{}
-	// for i, field := range headers {
-	// 	map_fileds[field] = i + 1
-	// }
-
-	// // проверяем наличие обязательных полей
-	// err = CheckRequiredFileds_Registry(map_fileds)
-	// if err != nil {
-	// 	logs.Add(logs.FATAL, err)
-	// }
-
 	map_fileds := validation.GetMapOfColumnNamesStrings(headers)
 	err = validation.CheckMapOfColumnNames(map_fileds, "bof_registry")
 	if err != nil {
@@ -136,7 +124,7 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		IsDragonPay:   strings.Contains(record[map_fileds["provider_name"]-1], "Dragonpay"),
 
 		Provider_payment_id: record[map_fileds["acquirer_id / provider_payment_id"]-1],
-		Payment_method_type: record[map_fileds["payment_type_id / payment_method_type"]-1],
+		Payment_type:        record[map_fileds["payment_type_id / payment_method_type"]-1],
 		Operation_type:      record[map_fileds["operation_type"]-1],
 		Country:             record[map_fileds["issuer_country"]-1],
 		Project_name:        record[map_fileds["project_name"]-1],

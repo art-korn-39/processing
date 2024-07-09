@@ -36,7 +36,7 @@ type KeyFields_SummaryInfo struct {
 	verification          string //?
 	operation_type        string
 	country               string
-	payment_method_type   string
+	payment_type          string
 	merchant_name         string
 	project_name          string
 	merchant_account_name string
@@ -65,7 +65,7 @@ func NewKeyFields_SummaryInfo(o Operation) (KF KeyFields_SummaryInfo) {
 		verification:          o.Verification,
 		operation_type:        o.Operation_type,
 		country:               o.Country,
-		payment_method_type:   o.Payment_method_type,
+		payment_type:          o.Payment_type,
 		merchant_name:         o.Merchant_name,
 		project_name:          o.Project_name,
 		merchant_account_name: o.Merchant_account_name,
@@ -121,7 +121,7 @@ type KeyFields_Rates struct {
 	transaction_completed_at time.Time
 	operation_type           string
 	country                  string
-	payment_method_type      string
+	payment_type             string
 	merchant_name            string
 	channel_currency         Currency
 	provider_currency        Currency
@@ -131,7 +131,7 @@ func NewKeyFields_Rates(r ProviderOperation) KeyFields_Rates {
 	return KeyFields_Rates{
 		transaction_completed_at: r.Transaction_completed_at,
 		country:                  r.Country,
-		payment_method_type:      r.Payment_method_type,
+		payment_type:             r.Payment_type,
 		merchant_name:            r.Merchant_name,
 		operation_type:           r.Operation_type,
 		channel_currency:         r.Channel_currency,
@@ -167,7 +167,7 @@ func GroupRates() (group_Data map[KeyFields_Rates]SumFileds_Rates) {
 		r := ProviderOperation{
 			Transaction_completed_at: k.transaction_completed_at,
 			Country:                  k.country,
-			Payment_method_type:      k.payment_method_type,
+			Payment_type:             k.payment_type,
 			Merchant_name:            k.merchant_name,
 			Operation_type:           k.operation_type,
 			Channel_currency:         k.channel_currency,

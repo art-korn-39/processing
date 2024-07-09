@@ -122,7 +122,7 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		d.Merchant_name,
 		fmt.Sprint(d.Operation_id),
 		fmt.Sprint(d.Merchant_account_id),
-		d.Payment_method_type,
+		d.Payment_type,
 		d.Operation_type,
 		d.Merchant_account_name,
 		d.Country,

@@ -72,6 +72,7 @@ func InsertIntoDB() {
 			channel <- batch
 			batch = make([]DeclineOperation, 0, batch_len)
 		}
+		i++
 	}
 
 	if len(batch) != 0 {

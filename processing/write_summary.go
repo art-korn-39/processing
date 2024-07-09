@@ -53,7 +53,7 @@ func Write_CSV_SummaryMerchant(s []SummaryRowMerchant) {
 	headers := []string{
 		"document_date", "merchant_id", "merchant_account_id", "provider_id", //"provider_payment_id",
 		"balance_id", "operation_group", "operation_type", "country", "region",
-		"date start", "formula", "network", "convertation",
+		"date start", "formula", "payment_type", "convertation", //network
 		"count_operations",
 		"channel_currency", "channel_amount", "SR_channel_currency",
 		"balance_currency", "balance_amount", "SR_balance_currency",
@@ -73,7 +73,8 @@ func Write_CSV_SummaryMerchant(s []SummaryRowMerchant) {
 			v.Region,
 			v.Tariff_date_start.Format(time.DateOnly),
 			v.Formula,
-			v.Crypto_network,
+			//v.Crypto_network,
+			v.Payment_type,
 			v.Convertation,
 			fmt.Sprint(v.Count_operations),
 			v.Channel_currency_str,
@@ -106,7 +107,7 @@ func PSQL_Insert_SummaryMerchant(s []SummaryRowMerchant) {
 
 	stat_delete :=
 		`DELETE FROM summary_merchant 
-		WHERE document_date = $1 AND merchant_id = $2 AND convertation = $3`
+		WHERE document_date = $1 AND merchant_id = $2` // AND convertation = $3
 
 	stat_insert := querrys.Stat_Insert_summary_merchant()
 	_, err := storage.Postgres.PrepareNamed(stat_insert)
@@ -124,8 +125,7 @@ func PSQL_Insert_SummaryMerchant(s []SummaryRowMerchant) {
 				tx, _ := storage.Postgres.Beginx()
 
 				for _, row := range v {
-					tx.Exec(stat_delete, row.Document_date, row.Merchant_id, row.Convertation)
-
+					tx.Exec(stat_delete, row.Document_date, row.Merchant_id) //, row.Convertation)
 				}
 
 				_, err := storage.Postgres.NamedExec(stat_insert, v)

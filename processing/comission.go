@@ -38,7 +38,7 @@ func FindRateForOperation(o *Operation) float64 {
 		if r.Transaction_completed_at.Before(o.Transaction_completed_at) &&
 			r.Operation_type == o.Operation_type &&
 			r.Country == o.Country &&
-			r.Payment_method_type == o.Payment_method_type &&
+			r.Payment_type == o.Payment_type &&
 			r.Merchant_name == o.Merchant_name &&
 			r.Channel_currency == o.Channel_currency &&
 			r.Provider_currency == o.Tariff.CurrencyBP {

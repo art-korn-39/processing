@@ -20,7 +20,7 @@ type Detailed_row struct {
 	Merchant_account_name string `db:"merchant_account_name"`
 	Account_bank_name     string `db:"account_bank_name"`
 	Project_name          string `db:"project_name"`
-	Payment_method_type   string `db:"payment_method_type"`
+	Payment_type          string `db:"payment_type"`
 	Country               string `db:"country"`
 	Region                string `db:"region"`
 
@@ -88,7 +88,7 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.Merchant_account_name = o.Merchant_account_name
 	d.Account_bank_name = o.Account_bank_name
 	d.Project_name = o.Project_name
-	d.Payment_method_type = o.Payment_method_type
+	d.Payment_type = o.Payment_type
 	d.Country = o.Country
 	d.Region = o.Region
 	d.Operation_type = o.Operation_type

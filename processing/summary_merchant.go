@@ -18,27 +18,35 @@ type SummaryRowMerchant struct {
 	Provider_id         int       `db:"provider_id"`
 	Country             string    `db:"country"`
 	Region              string    `db:"region"`
+	Project_id          int       `db:"project_id"`
 	Tariff_date_start   time.Time `db:"tariff_date_start"`
 	Tariff_id           int       `db:"tariff_id"`
 	Formula             string    `db:"formula"`
-	Crypto_network      string    `db:"payment_type"`
+	Payment_type_id     int       `db:"payment_type_id"`
+	Payment_type        string    `db:"payment_type"`
+	Payment_method_id   int       `db:"payment_method_id"`
 
-	Count_operations int `db:"count_operations"`
+	Business_type     string `db:"business_type"`
+	Account_bank_name string `db:"account_bank_name"`
 
-	Channel_currency_str string  `db:"channel_currency"`
-	Channel_amount       float64 `db:"channel_amount"`
-	SR_channel_currency  float64 `db:"sr_channel_currency"`
+	Channel_currency_str string `db:"channel_currency"`
+	Balance_currency_str string `db:"balance_currency"`
 
-	Balance_currency_str string  `db:"balance_currency"`
-	Balance_amount       float64 `db:"balance_amount"`
-	SR_balance_currency  float64 `db:"sr_balance_currency"`
+	Count_operations    int     `db:"count_operations"`
+	Channel_amount      float64 `db:"channel_amount"`
+	SR_channel_currency float64 `db:"sr_channel_currency"`
+	Balance_amount      float64 `db:"balance_amount"`
+	SR_balance_currency float64 `db:"sr_balance_currency"`
 
-	//Provider_payment_id string    `db:"provider_payment_id"`
-	//Contract_date_start   time.Time `db:"tariff_date_start"`
+	Rate           float64 `db:"rate"`
+	Rated_account  string  `db:"rated_account"`
+	Provider_1c    string  `db:"provider_1c"`
+	Subdivision_1c string  `db:"subdivision_1c"`
 }
 
 func (row *SummaryRowMerchant) AddValues(o Operation) {
 
+	row.Rate = row.Rate + o.Rate
 	row.Count_operations = row.Count_operations + o.Count_operations
 	row.Channel_amount = row.Channel_amount + o.Channel_amount
 	row.Balance_amount = row.Balance_amount + o.Balance_amount
@@ -60,7 +68,12 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 		k.Provider_id = o.Provider_id
 		k.Country = o.Country
 		k.Region = o.Region
-		k.Crypto_network = o.Crypto_network
+		k.Project_id = o.Project_id
+		k.Payment_type = o.Payment_type
+		k.Payment_type_id = o.Payment_type_id
+		k.Payment_method_id = o.Payment_method_id
+		k.Account_bank_name = o.Account_bank_name
+		k.Business_type = o.Business_type
 		k.Channel_currency_str = o.Channel_currency.Name
 		k.Balance_currency_str = o.Balance_currency.Name
 
@@ -69,6 +82,9 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 			k.Tariff_date_start = o.Tariff.DateStart
 			k.Tariff_id = o.Tariff.id
 			k.Formula = o.Tariff.Formula
+			k.Provider_1c = o.Tariff.Provider1C
+			k.Subdivision_1c = o.Tariff.Subdivision1C
+			k.Rated_account = o.Tariff.RatedAccount
 		}
 		return
 	}
@@ -90,6 +106,7 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 	data = make([]SummaryRowMerchant, 0, len(group_data))
 	for k, v := range group_data {
 
+		k.Rate = v.Rate / float64(v.Count_operations)
 		k.Count_operations = v.Count_operations
 		k.Channel_amount = v.Channel_amount
 		k.Balance_amount = v.Balance_amount

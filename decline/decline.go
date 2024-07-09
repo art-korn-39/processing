@@ -21,8 +21,10 @@ func Start() {
 	if err != nil {
 		logs.Add(logs.FATAL, err)
 		return
+	} else {
+		logs.Add(logs.INFO, "Successful connection to Postgres")
 	}
-	logs.Add(logs.INFO, "Successful connection to Postgres")
+	defer db.Close()
 
 	decline_operations = make(map[int]DeclineOperation, 1000)
 

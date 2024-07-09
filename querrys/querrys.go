@@ -11,7 +11,6 @@ func Stat_Select_reports() string {
 	billing__balance_id AS balance_id, 
 	billing__company_id AS company_id, 
 	billing__contract_id AS contract_id, 
-	billing__project_id AS project_id, 
 	billing__provider_id AS provider_id, 
 	billing__tariff_conditions_id AS tariff_id,
 	IFNULL(operation__provider_payment_id, '') AS provider_payment_id,
@@ -19,8 +18,14 @@ func Stat_Select_reports() string {
 	operation__merchant_name AS merchant_name,
 	operation__merchant_account_name AS merchant_account_name,
 	IFNULL(operation__account_bank_name, '') AS account_bank_name,
+
+	operation__business_type AS business_type,
 	operation__project_name AS project_name,
-	operation__payment_method_type AS payment_method_type,
+	billing__project_id AS project_id,
+	operation__payment_method_type AS payment_type,
+	billing__payment_type_id AS payment_type_id,
+	billing__payment_method_id AS payment_method_id,
+
 	IFNULL(operation__issuer_country, '') AS country,
 	IFNULL(operation__issuer_region, '') AS region,
 	billing__operation_type_id AS operation_type_id,
@@ -60,7 +65,7 @@ func Stat_Insert_detailed() string {
 	return `INSERT INTO detailed (
 		operation_id, transaction_completed_at, merchant_id, merchant_account_id, balance_id, company_id,
 		contract_id, project_id, provider_id, provider_payment_id, provider_name, merchant_name, merchant_account_name,
-		account_bank_name, project_name, payment_method_type, country, region, operation_type, provider_amount,
+		account_bank_name, project_name, payment_type, country, region, operation_type, provider_amount,
 		provider_currency, msc_amount, msc_currency, channel_amount, channel_currency, fee_amount, fee_currency,
 		balance_amount, balance_currency, rate, sr_channel_currency, sr_balance_currency, check_fee, provider_registry_amount,
 		verification, crypto_network, convertation, provider_1c, subdivision_1c, rated_account, tariff_id,
@@ -70,7 +75,7 @@ func Stat_Insert_detailed() string {
 	VALUES (
 		:operation_id, :transaction_completed_at, :merchant_id, :merchant_account_id, :balance_id, :company_id,
 		:contract_id, :project_id, :provider_id, :provider_payment_id, :provider_name, :merchant_name, :merchant_account_name,
-		:account_bank_name, :project_name, :payment_method_type, :country, :region, :operation_type, :provider_amount,
+		:account_bank_name, :project_name, :payment_type, :country, :region, :operation_type, :provider_amount,
 		:provider_currency, :msc_amount, :msc_currency, :channel_amount, :channel_currency, :fee_amount, :fee_currency,
 		:balance_amount, :balance_currency, :rate, :sr_channel_currency, :sr_balance_currency, :check_fee, :provider_registry_amount,
 		:verification, :crypto_network, :convertation, :provider_1c, :subdivision_1c, :rated_account, :tariff_id,
@@ -97,12 +102,14 @@ func Stat_Insert_summary_merchant() string {
 		document_date, operation_type, operation_group, 
 		merchant_id, merchant_account_id, balance_id, provider_id, country, region, payment_type, channel_currency, 
 		balance_currency, convertation, tariff_date_start, tariff_id, formula, channel_amount, balance_amount, 
-		sr_channel_currency, sr_balance_currency, count_operations
+		sr_channel_currency, sr_balance_currency, count_operations, rate,
+		payment_type_id, payment_method_id, rated_account, provider_1c, subdivision_1c, business_type, project_id
 	)
 	VALUES (
 		:document_date, :operation_type, :operation_group, :merchant_id, :merchant_account_id, 
 		:balance_id, :provider_id, :country, :region, :payment_type, :channel_currency, :balance_currency, 
 		:convertation, :tariff_date_start, :tariff_id, :formula, :channel_amount, :balance_amount, 
-		:sr_channel_currency, :sr_balance_currency, :count_operations
+		:sr_channel_currency, :sr_balance_currency, :count_operations, :rate,
+		:payment_type_id, :payment_method_id, :rated_account, :provider_1c, :subdivision_1c, :business_type, :project_id
 		)`
 }

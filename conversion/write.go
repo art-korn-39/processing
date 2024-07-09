@@ -5,8 +5,8 @@ import (
 	"app/processing"
 	"app/querrys"
 	"fmt"
+	"path/filepath"
 	"sync"
-	"time"
 
 	"github.com/lib/pq"
 )
@@ -18,10 +18,10 @@ func WriteIntoDB(channel_operations chan processing.ProviderOperation, channel_f
 		return
 	}
 
-	start_time := time.Now()
+	//start_time := time.Now()
 
 	var wg sync.WaitGroup
-	var mu sync.Mutex
+	//var mu sync.Mutex
 
 	//1М rows, чтобы читающие горутины на паузу не встали
 	channel_maps := make(chan map[int]processing.ProviderOperation, 1000)
@@ -32,7 +32,7 @@ func WriteIntoDB(channel_operations chan processing.ProviderOperation, channel_f
 
 	_, err := db.PrepareNamed(statement)
 	if err != nil {
-		logs.Add(logs.INFO, err)
+		logs.Add(logs.FATAL, err)
 		return
 	}
 
@@ -45,16 +45,16 @@ func WriteIntoDB(channel_operations chan processing.ProviderOperation, channel_f
 
 			tx, _ := db.Beginx()
 
-			print := false
+			//print := false
 			sliceID := make([]int, 0, len(v))
 			sliceRows := make([]processing.ProviderOperation, 0, len(v))
 			for _, row := range v {
 				sliceID = append(sliceID, row.Id)
 				sliceRows = append(sliceRows, row)
 				counter_rows++
-				if counter_rows%100000 == 0 {
-					print = true
-				}
+				// if counter_rows%100000 == 0 {
+				// 	print = true
+				// }
 			}
 
 			_, err = tx.Exec("delete from provider_registry where operation_id = ANY($1);", pq.Array(sliceID))
@@ -70,11 +70,11 @@ func WriteIntoDB(channel_operations chan processing.ProviderOperation, channel_f
 				logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД: ", err))
 				tx.Rollback()
 			} else {
-				mu.Lock()
-				if print {
-					logs.Add(logs.INFO, fmt.Sprint("Добавлено/обновлено в БД: ", counter_rows, " строк"))
-				}
-				mu.Unlock()
+				// mu.Lock()
+				// if print {
+				// 	logs.Add(logs.INFO, fmt.Sprint("Добавлено/обновлено в postgres: ", counter_rows, " строк"))
+				// }
+				// mu.Unlock()
 				tx.Commit()
 			}
 
@@ -102,9 +102,13 @@ func WriteIntoDB(channel_operations chan processing.ProviderOperation, channel_f
 
 	// Штатное завершение, сохраняем статусы всех файлов
 	for f := range channel_files {
-		f.InsertIntoDB()
+		if !f.Done {
+			f.InsertIntoDB()
+			logs.Add(logs.INFO, fmt.Sprint("Записан в postgres: ", filepath.Base(f.Filename)))
+		}
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Загрузка операций провайдера в Postgres: %v", time.Since(start_time)))
+	logs.Add(logs.INFO, fmt.Sprint("Добавлено/обновлено: ", counter_rows, " строк"))
+	//logs.Add(logs.INFO, fmt.Sprintf("Загрузка операций провайдера в Postgres: %v", time.Since(start_time)))
 
 }

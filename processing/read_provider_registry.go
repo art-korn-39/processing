@@ -5,7 +5,6 @@ import (
 	"app/logs"
 	"app/util"
 	"app/validation"
-	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -135,13 +134,6 @@ func ReadRates(filename string) (ops []ProviderOperation, err error) {
 			return nil, err
 		}
 
-		// мапа соответствий: имя колонки - индекс
-		// map_fileds := map[string]int{}
-		// for i, cell := range sheet.Rows[0].Cells {
-		// 	column_name := strings.ToLower(strings.TrimSpace(cell.String()))
-		// 	map_fileds[column_name] = i + 1
-		// }
-
 		map_fileds := validation.GetMapOfColumnNamesCells(sheet.Rows[0].Cells)
 		err = validation.CheckMapOfColumnNames(map_fileds, "provider_registry")
 		if err != nil {
@@ -151,13 +143,6 @@ func ReadRates(filename string) (ops []ProviderOperation, err error) {
 		idx_br := map_fileds["br в валюте пс *при необходимости"] - 1
 		idx_account := map_fileds["customer_purse / account_number"] - 1
 		idx_operation_id := map_fileds["id / operation_id"] - 1
-
-		// // проверяем наличие обязательных полей
-		// err = CheckRequiredFileds_Rates(map_fileds)
-		// if err != nil {
-		// 	err = fmt.Errorf("%v file: %s", err, filename)
-		// 	return nil, err
-		// }
 
 		ops = make([]ProviderOperation, 0, len(sheet.Rows))
 
@@ -176,7 +161,7 @@ func ReadRates(filename string) (ops []ProviderOperation, err error) {
 			operation.Transaction_completed_at, _ = row.Cells[map_fileds["transaction_completed_at"]-1].GetTime(false)
 			operation.Operation_type = row.Cells[map_fileds["operation_type"]-1].String()
 			operation.Country = row.Cells[map_fileds["issuer_country"]-1].String()
-			operation.Payment_method_type = row.Cells[map_fileds["payment_type_id / payment_method_type"]-1].String()
+			operation.Payment_type = row.Cells[map_fileds["payment_type_id / payment_method_type"]-1].String()
 			operation.Merchant_name = row.Cells[map_fileds["merchant_name"]-1].String()
 			operation.Channel_currency = NewCurrency(row.Cells[map_fileds["real_currency / channel_currency"]-1].String())
 			operation.Provider_currency = NewCurrency(row.Cells[map_fileds["provider_currency"]-1].String())
@@ -216,37 +201,6 @@ func ReadRates(filename string) (ops []ProviderOperation, err error) {
 	}
 
 	return ops, nil
-
-}
-
-func CheckRequiredFileds_Rates(map_fileds map[string]int) error {
-
-	M := []string{
-		"id / operation_id", "transaction_completed_at",
-		"operation_type", "issuer_country",
-		"payment_type_id / payment_method_type",
-		"merchant_name", "real_currency / channel_currency",
-		"provider_currency", "курс", "provider_amount",
-	}
-
-	//if full_loading {
-	M = append(M,
-		"provider_name", "merchant_account_name", "acquirer_id / provider_payment_id",
-		"project_url", "operation_status")
-	//}
-
-	//"customer_purse / account_number", "BR в валюте ПС *при необходимости"
-
-	for _, v := range M {
-
-		_, ok := map_fileds[v]
-		if !ok {
-			return errors.New("Отсуствует обязательное поле! (" + v + ")")
-		}
-
-	}
-
-	return nil
 
 }
 

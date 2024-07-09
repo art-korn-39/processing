@@ -37,39 +37,43 @@ func ReadFiles(filenames []string) {
 				continue
 			}
 
-			M := map[string]string{}
-			fields := strings.Split(text, "\n")
-			for _, field := range fields { // key: value
-				index := strings.Index(field, ":")
-				if index != -1 {
-					key := strings.ToLower(util.SubString(field, 0, index))
-					val := util.SubString(field, index+1, len(field))
-					M[key] = strings.TrimSpace(val)
+			ops := strings.Split(text, "\n\n\n")
+			for _, operation_str := range ops {
+
+				M := map[string]string{}
+				fields := strings.Split(operation_str, "\n")
+				for _, field := range fields { // key: value
+					index := strings.Index(field, ":")
+					if index != -1 {
+						key := strings.ToLower(util.SubString(field, 0, index))
+						val := util.SubString(field, index+1, len(field))
+						M[key] = strings.TrimSpace(val)
+					}
 				}
-			}
 
-			if len(M) > 5 {
-				o := DeclineOperation{}
+				if len(M) > 5 {
+					o := DeclineOperation{}
 
-				o.Date = util.GetDateFromString(message.Date_str)
-				o.Created_at = util.GetDateFromString(M["created at"])
+					o.Date = util.GetDateFromString(message.Date_str)
+					o.Created_at = util.GetDateFromString(M["created at"])
 
-				o.Date_day = o.Date.Truncate(24 * time.Hour)
-				o.Created_at_day = o.Created_at.Truncate(24 * time.Hour)
+					o.Date_day = o.Date.Truncate(24 * time.Hour)
+					o.Created_at_day = o.Created_at.Truncate(24 * time.Hour)
 
-				o.Message_id = message.Id
-				o.Operation_id, _ = strconv.Atoi(M["operation id"])
-				o.Operation_type = M["operation type"]
-				o.Comment = M["comment/proof link"]
+					o.Message_id = message.Id
+					o.Operation_id, _ = strconv.Atoi(M["operation id"])
+					o.Operation_type = M["operation type"]
+					o.Comment = M["comment/proof link"]
 
-				o.Merchant_id, o.Merchant_name = GetIDandName(M["merchant"])
-				o.Provider_id, o.Provider_name = GetIDandName(M["provider"])
-				o.Merchant_account_id, o.Merchant_account_name = GetIDandName(M["merchant account"])
+					o.Merchant_id, o.Merchant_name = GetIDandName(M["merchant"])
+					o.Provider_id, o.Provider_name = GetIDandName(M["provider"])
+					o.Merchant_account_id, o.Merchant_account_name = GetIDandName(M["merchant account"])
 
-				o.Incoming_amount, o.Incoming_currency = GetAmountAndCurrency(M["incoming amount"])
-				o.Coverted_amount, o.Coverted_currency = GetAmountAndCurrency(M["coverted amount"])
+					o.Incoming_amount, o.Incoming_currency = GetAmountAndCurrency(M["incoming amount"])
+					o.Coverted_amount, o.Coverted_currency = GetAmountAndCurrency(M["coverted amount"])
 
-				decline_operations[o.Operation_id] = o
+					decline_operations[o.Operation_id] = o
+				}
 			}
 		}
 	}

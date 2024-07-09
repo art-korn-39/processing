@@ -89,7 +89,7 @@ func Write_XLSX_SummaryInfo(M map[KeyFields_SummaryInfo]SumFileds) {
 		row.AddCell().SetString(k.verification)
 		row.AddCell().SetString(k.operation_type)
 		row.AddCell().SetString(k.country)
-		row.AddCell().SetString(k.payment_method_type)
+		row.AddCell().SetString(k.payment_type)
 		row.AddCell().SetString(k.merchant_name)
 		row.AddCell().SetString(k.project_name)
 		row.AddCell().SetString(k.merchant_account_name)
