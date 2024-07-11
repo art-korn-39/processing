@@ -48,6 +48,14 @@ func Stat_Select_reports() string {
 	limit 3000000`
 }
 
+func Stat_Select_provider_registry() string {
+	return `SELECT operation_id, transaction_completed_at, operation_type, country,
+		payment_method_type, merchant_name, rate, amount, channel_currency, provider_currency
+		FROM provider_registry 
+		WHERE merchant_name = ANY($1) 
+		AND transaction_completed_at BETWEEN $2 AND $3`
+}
+
 func Stat_Insert_provider_registry() string {
 	return `INSERT INTO provider_registry (
 		operation_id, transaction_completed_at, provider_name, merchant_name, merchant_account_name,
@@ -94,6 +102,17 @@ func Stat_Insert_decline() string {
 		:operation_id, :message_id, :date, :merchant_id, :merchant_account_id, :provider_id, :provider_name, 
 		:merchant_name, :merchant_account_name,	:operation_type, :incoming_amount, :coverted_amount, :created_at,
 		:incoming_currency, :coverted_currency, :comment, :date_day, :created_at_day
+		)`
+}
+
+func Stat_Insert_crypto() string {
+	return `INSERT INTO crypto (
+		operation_id, created_at, network, operation_type, 
+		payment_amount, payment_currency, crypto_amount, crypto_currency
+	)
+	VALUES (
+		:operation_id, :created_at, :network, :operation_type, 
+		:payment_amount, :payment_currency, :crypto_amount, :crypto_currency
 		)`
 }
 

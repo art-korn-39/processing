@@ -5,6 +5,7 @@ import (
 	"app/logs"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -16,7 +17,7 @@ func SelectTariffsInRegistry() {
 
 	channel_indexes := make(chan int, 10000)
 
-	var countWithoutTariff int
+	var countWithoutTariff int64
 
 	wg.Add(config.NumCPU)
 	for i := 1; i <= config.NumCPU; i++ {
@@ -24,12 +25,10 @@ func SelectTariffsInRegistry() {
 			defer wg.Done()
 			for index := range channel_indexes {
 				operation := storage.Registry[index]
-				operation.Crypto_network = storage.Crypto[operation.Operation_id]
+				operation.Crypto_network = storage.Crypto[operation.Operation_id].Network
 				operation.Tariff = FindTariffForOperation(operation)
 				if operation.Tariff == nil {
-					mu.Lock()
-					countWithoutTariff++
-					mu.Unlock()
+					atomic.AddInt64(&countWithoutTariff, 1)
 				}
 			}
 		}()

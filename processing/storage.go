@@ -15,7 +15,7 @@ type Storage struct {
 
 	Registry            []*Operation
 	Tariffs             []Tariff
-	Crypto              map[int]string
+	Crypto              map[int]CryptoOperation
 	Rates               []ProviderOperation
 	Provider_operations map[int]ProviderOperation
 }
@@ -78,6 +78,9 @@ func (s *Storage) Init() (err error) {
 		logs.Add(logs.INFO, "Successful connection to Postgres")
 		s.Postgres = connect
 	}
+
+	storage.Crypto = make(map[int]CryptoOperation)
+	storage.Provider_operations = make(map[int]ProviderOperation)
 
 	return nil
 }

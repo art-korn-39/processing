@@ -201,8 +201,6 @@ func CH_ReadRegistry_async() error {
 	var count_rows int
 	storage.Clickhouse.Get(&count_rows, Statement)
 
-	fmt.Println("строк в выборке: ", count_rows)
-
 	storage.Registry = make([]*Operation, 0, count_rows)
 
 	channel_dates := GetChannelOfDays(config.Get().Registry.DateFrom,

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -16,7 +17,8 @@ type FileInfo struct {
 	Modified   time.Time `db:"modified"`
 	Rows       int       `db:"rows"`
 	LastUpload time.Time `db:"last_upload"`
-	Done       bool
+	done       bool
+	mu         sync.Mutex
 }
 
 func GetFiles(filenames []string) []*FileInfo {
@@ -66,7 +68,7 @@ func (f *FileInfo) InsertIntoDB() {
 		return
 	}
 
-	if f.Done {
+	if f.done {
 		return
 	}
 
@@ -101,7 +103,7 @@ func (f *FileInfo) InsertIntoDB() {
 		tx.Commit()
 	}
 
-	f.Done = true
+	f.done = true
 
 }
 

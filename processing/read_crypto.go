@@ -17,7 +17,7 @@ import (
 func Read_Crypto() {
 
 	if config.Get().Crypto.Storage == config.PSQL {
-		util.Unused()
+		PSQL_ReadCrypto()
 	} else {
 		Read_CSV_Crypto()
 	}
@@ -33,8 +33,6 @@ func Read_CSV_Crypto() {
 	start_time := time.Now()
 
 	folderPath := config.Get().Crypto.Filename
-
-	storage.Crypto = make(map[int]string)
 
 	ReadFilesCrypto(folderPath)
 
@@ -64,11 +62,17 @@ func ReadFilesCrypto(folder string) {
 					continue
 				}
 
-				err := ReadFileCrypto(filename)
+				operations, err := ReadFileCrypto(filename)
 				if err != nil {
 					logs.Add(logs.ERROR, err)
 					continue
 				}
+
+				mu.Lock()
+				for _, o := range operations {
+					storage.Crypto[o.Id] = o
+				}
+				mu.Unlock()
 
 			}
 		}()
@@ -84,12 +88,12 @@ func ReadFilesCrypto(folder string) {
 
 }
 
-func ReadFileCrypto(filename string) (err error) {
+func ReadFileCrypto(filename string) (ops []CryptoOperation, err error) {
 
 	file, err := os.Open(filename)
 	if err != nil {
 		logs.Add(logs.ERROR, fmt.Sprint("os.Open() ", err))
-		return err
+		return nil, err
 	}
 	defer file.Close()
 
@@ -99,27 +103,16 @@ func ReadFileCrypto(filename string) (err error) {
 	records, err := reader.ReadAll()
 	if err != nil {
 		logs.Add(logs.ERROR, fmt.Sprint("reader.ReadAll() ", filename, ": ", err))
-		return err
+		return nil, err
 	}
-
-	// // мапа соответствий: имя колонки - индекс
-	// map_fileds := map[string]int{}
-	// for i, field := range records[0] {
-	// 	map_fileds[field] = i + 1
-	// }
-
-	// // проверяем наличие обязательных полей
-	// err = CheckRequiredFileds_Crypto(map_fileds)
-	// if err != nil {
-	// 	logs.Add(logs.ERROR, fmt.Sprint("CheckRequiredFileds_Crypto() ", filename, ": ", err))
-	// 	return err
-	// }
 
 	map_fileds := validation.GetMapOfColumnNamesStrings(records[0])
 	err = validation.CheckMapOfColumnNames(map_fileds, "crypto")
 	if err != nil {
-		return err
+		return nil, err
 	}
+
+	ops = make([]CryptoOperation, 0, len(records))
 
 	for i, record := range records {
 
@@ -127,31 +120,54 @@ func ReadFileCrypto(filename string) (err error) {
 			continue
 		}
 
-		operation_id, _ := strconv.Atoi(record[map_fileds["operation id"]-1])
-		network := record[map_fileds["crypto network"]-1]
+		o := CryptoOperation{}
+		o.Id, _ = strconv.Atoi(record[map_fileds["operation id"]-1])
+		o.Network = record[map_fileds["crypto network"]-1]
+		o.Created_at = util.GetDateFromString(record[map_fileds["created at"]-1])
+		o.Operation_type = record[map_fileds["operation type"]-1]
+		o.Payment_amount, _ = strconv.ParseFloat(record[map_fileds["payment amount"]-1], 64)
+		o.Payment_currency_str = record[map_fileds["payment currency"]-1]
+		o.Crypto_amount, _ = strconv.ParseFloat(record[map_fileds["crypto amount"]-1], 64)
+		o.Crypto_currency_str = record[map_fileds["crypto currency"]-1]
 
-		mu.Lock()
-		storage.Crypto[operation_id] = network
-		mu.Unlock()
+		o.Payment_currency = NewCurrency(record[map_fileds["payment currency"]-1])
+		o.Crypto_currency = NewCurrency(record[map_fileds["crypto currency"]-1])
+
+		ops = append(ops, o)
 
 	}
 
-	return nil
+	return ops, nil
 }
 
-func CheckRequiredFileds_Crypto(map_fileds map[string]int) error {
+func PSQL_ReadCrypto() {
 
-	M := []string{"Operation id", "Crypto network"}
-
-	for _, v := range M {
-
-		_, ok := map_fileds[v]
-		if !ok {
-			return fmt.Errorf("отсуствует обязательное поле: %s", v)
-		}
-
+	if storage.Postgres.DB == nil {
+		return
 	}
 
-	return nil
+	start_time := time.Now()
+
+	storage.Crypto = map[int]CryptoOperation{}
+
+	stat := `SELECT * FROM crypto`
+
+	slice_operations := []CryptoOperation{}
+
+	err := storage.Postgres.Select(&slice_operations, stat)
+	if err != nil {
+		logs.Add(logs.INFO, err)
+		return
+	}
+
+	for _, operation := range slice_operations {
+
+		operation.Crypto_currency = NewCurrency(operation.Crypto_currency_str)
+		operation.Payment_currency = NewCurrency(operation.Payment_currency_str)
+
+		storage.Crypto[operation.Id] = operation
+	}
+
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение криптовалютных операций из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Crypto))))
 
 }

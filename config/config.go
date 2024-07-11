@@ -37,7 +37,6 @@ const (
 
 type (
 	Config struct {
-		Async       bool
 		Application Application
 		File_config string
 
@@ -94,10 +93,9 @@ func init() {
 	NumCPU = runtime.NumCPU()
 }
 
-func New(app string, async bool, file_config string) {
+func New(app, file_config string) {
 	cfg = Config{
 		Application: Application(app),
-		Async:       async,
 		File_config: file_config,
 	}
 }

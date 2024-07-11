@@ -3,6 +3,7 @@ package processing
 import (
 	"app/config"
 	"app/logs"
+	"app/querrys"
 	"app/util"
 	"app/validation"
 	"fmt"
@@ -159,6 +160,7 @@ func ReadRates(filename string) (ops []ProviderOperation, err error) {
 			operation := ProviderOperation{}
 			operation.Id, _ = row.Cells[map_fileds["id / operation_id"]-1].Int()
 			operation.Transaction_completed_at, _ = row.Cells[map_fileds["transaction_completed_at"]-1].GetTime(false)
+			operation.Transaction_completed_at_day = operation.Transaction_completed_at
 			operation.Operation_type = row.Cells[map_fileds["operation_type"]-1].String()
 			operation.Country = row.Cells[map_fileds["issuer_country"]-1].String()
 			operation.Payment_type = row.Cells[map_fileds["payment_type_id / payment_method_type"]-1].String()
@@ -230,44 +232,94 @@ func CheckFileSize(filename string) (err error) {
 
 }
 
-func PSQL_ReadProviderRegistry(registry_done chan struct{}) {
+func PSQL_ReadProviderRegistry_async(registry_done chan struct{}) {
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	start_time := time.Now()
 
 	if storage.Postgres.DB == nil {
 		return
 	}
 
 	// MERCHANT_NAME + DATE
-	var merchant_names []string
-	var DateFrom, DateTo time.Time
-	if config.Get().Registry.Storage == config.Clickhouse {
-		merchant_names = config.Get().Registry.Merchant_name
-		DateFrom = config.Get().Registry.DateFrom.Add(-30 * 24 * time.Hour)
-		DateTo = config.Get().Registry.DateTo.Add(5 * 24 * time.Hour)
-	} else {
-		<-registry_done
-		lenght := len(storage.Registry)
-		if lenght > 0 {
-			row := storage.Registry[0]
-			merchant_names = append(merchant_names, row.Merchant_name)
-			DateFrom = storage.Registry[0].Transaction_completed_at.Add(-3 * 24 * time.Hour)
-			DateTo = storage.Registry[lenght-1].Transaction_completed_at.Add(1 * 24 * time.Hour)
-		}
-	}
+	merchant_names, DateFrom, DateTo := GetArgsForProviderRegistry(registry_done)
 
 	if len(merchant_names) == 0 {
 		logs.Add(logs.INFO, `пустой массив "merchant_name" для чтения операций провайдера`)
 		return
 	}
 
+	args := []any{pq.Array(merchant_names), DateFrom, DateTo}
+
+	storage.Rates = make([]ProviderOperation, 0, 1000000)
+
+	channel_dates := GetChannelOfDays(DateFrom, DateTo, 24*time.Hour)
+
+	stat := querrys.Stat_Select_provider_registry()
+
+	wg.Add(config.NumCPU)
+	for i := 1; i <= config.NumCPU; i++ {
+		go func() {
+			defer wg.Done()
+			for period := range channel_dates {
+
+				args = []any{pq.Array(merchant_names), period.startDay, period.endDay}
+
+				res := []ProviderOperation{}
+
+				err := storage.Postgres.Select(&res, stat, args...)
+				if err != nil {
+					logs.Add(logs.INFO, err)
+					return
+				}
+
+				mu.Lock()
+				storage.Rates = append(storage.Rates, res...)
+				mu.Unlock()
+			}
+		}()
+	}
+
+	wg.Wait()
+
+	for i := range storage.Rates {
+		operation := &storage.Rates[i]
+
+		if operation.Provider_currency.Name == "EUR" && operation.Rate != 0 {
+			operation.Rate = 1 / operation.Rate
+		}
+
+		operation.Channel_currency = NewCurrency(operation.Channel_currency_str)
+		operation.Provider_currency = NewCurrency(operation.Provider_currency_str)
+
+		storage.Provider_operations[operation.Id] = *operation
+	}
+
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Rates))))
+
+}
+
+func PSQL_ReadProviderRegistry(registry_done chan struct{}) {
+
+	if storage.Postgres.DB == nil {
+		return
+	}
+
 	start_time := time.Now()
 
-	storage.Provider_operations = map[int]ProviderOperation{}
+	// MERCHANT_NAME + DATE
+	merchant_names, DateFrom, DateTo := GetArgsForProviderRegistry(registry_done)
+
+	if len(merchant_names) == 0 {
+		logs.Add(logs.INFO, `пустой массив "merchant_name" для чтения операций провайдера`)
+		return
+	}
 
 	args := []any{pq.Array(merchant_names), DateFrom, DateTo}
 
-	stat := `SELECT * FROM provider_registry 
-			WHERE merchant_name = ANY($1) 
-			AND transaction_completed_at BETWEEN $2 AND $3` // + condition
+	stat := querrys.Stat_Select_provider_registry()
 
 	err := storage.Postgres.Select(&storage.Rates, stat, args...)
 	if err != nil {
@@ -289,5 +341,26 @@ func PSQL_ReadProviderRegistry(registry_done chan struct{}) {
 	}
 
 	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Rates))))
+
+}
+
+func GetArgsForProviderRegistry(registry_done <-chan struct{}) (merchant_names []string, DateFrom, DateTo time.Time) {
+
+	if config.Get().Registry.Storage == config.Clickhouse {
+		merchant_names = config.Get().Registry.Merchant_name
+		DateFrom = config.Get().Registry.DateFrom.Add(-20 * 24 * time.Hour)
+		DateTo = config.Get().Registry.DateTo.Add(1 * 24 * time.Hour)
+	} else {
+		<-registry_done
+		lenght := len(storage.Registry)
+		if lenght > 0 {
+			row := storage.Registry[0]
+			merchant_names = append(merchant_names, row.Merchant_name)
+			DateFrom = storage.Registry[0].Transaction_completed_at.Add(-3 * 24 * time.Hour)
+			DateTo = storage.Registry[lenght-1].Transaction_completed_at.Add(1 * 24 * time.Hour)
+		}
+	}
+
+	return
 
 }

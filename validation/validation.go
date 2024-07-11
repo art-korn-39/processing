@@ -87,7 +87,8 @@ func fields_tariffs() []string {
 }
 
 func fields_crypto() []string {
-	return []string{"operation id", "crypto network"}
+	return []string{"operation id", "crypto network", "created at", "operation type",
+		"payment amount", "payment currency", "crypto amount", "crypto currency"}
 }
 
 func fields_provider_registry() []string {

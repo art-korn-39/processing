@@ -58,9 +58,8 @@ func Write_CSV_Detailed() {
 	for i := 1; i <= config.NumCPU; i++ {
 		go func() {
 			defer wg.Done()
-			// чтение будет выполняться до момента close(channel_indexes) и полного исчерпания буфера
-			for index := range channel_indexes {
-				o := storage.Registry[index]
+			for i := range channel_indexes {
+				o := storage.Registry[i]
 				detailed_row := NewDetailedRow(o)
 				row := MakeDetailedRow(detailed_row)
 				channel_rows <- row
@@ -68,24 +67,18 @@ func Write_CSV_Detailed() {
 		}()
 	}
 
-	// закрыли канал, когда последняя горутина завершилась
 	go func() {
 		wg.Wait()
 		close(channel_rows)
 	}()
 
-	// запустим отдельным потоком, чтобы операция по записи начала выполняться сразу же
 	go func() {
-		// добавляем индексы строк-операций в канал источник
-		for i := 0; i < len(storage.Registry); i++ {
+		for i := range storage.Registry {
 			channel_indexes <- i
 		}
-		// если не закрыть, то чтение (index := range channel_indexes) будет бесконечным и получим deadlock
 		close(channel_indexes)
 	}()
 
-	// если нет возможности закрыть канал, зато известно сколько в нём будет значений,
-	// то можно использовать цикл: (a := 1; a <= len(registry); a++) и это не привёт к deadlock
 	for row := range channel_rows {
 		writer.Write(row)
 	}

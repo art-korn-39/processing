@@ -13,10 +13,9 @@ func TestProceesing1(t *testing.T) {
 	logs.Testing = true
 
 	app := "processing"
-	async := true
 	file_config := "test\\config1.conf"
 
-	config.New(app, async, file_config)
+	config.New(app, file_config)
 
 	processing.Start()
 
@@ -41,16 +40,15 @@ func TestProceesing1(t *testing.T) {
 
 }
 
-// reg - F; tariff - F; rate - PQ; crypto - F
+// reg - F; tariff - F; rate - PQ; crypto - PQ
 func TestProceesing2(t *testing.T) {
 
 	logs.Testing = true
 
 	app := "processing"
-	async := true
 	file_config := "test\\config2.conf"
 
-	config.New(app, async, file_config)
+	config.New(app, file_config)
 
 	processing.Start()
 

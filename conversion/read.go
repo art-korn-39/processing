@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -19,8 +20,8 @@ func ReadFiles(files []*FileInfo) (ch_operations chan processing.ProviderOperati
 	ch_readed_files = make(chan *FileInfo, 5000) // с запасом, чтобы deadlock не поймать из-за переполнения
 	ch_files := make(chan *FileInfo, 100)
 
-	var count_readed int
-	var count_skipped int
+	var count_readed int64
+	var count_skipped int64
 
 	wg.Add(config.NumCPU)
 	for i := 1; i <= config.NumCPU; i++ {
@@ -40,9 +41,7 @@ func ReadFiles(files []*FileInfo) (ch_operations chan processing.ProviderOperati
 				operations, err := processing.ReadRates(f.Filename)
 				if err != nil {
 					logs.Add(logs.ERROR, fmt.Sprint(filepath.Base(f.Filename), " : ", err))
-					mu.Lock()
-					count_skipped++ // atomic
-					mu.Unlock()
+					atomic.AddInt64(&count_skipped, 1)
 					continue
 				}
 
@@ -59,16 +58,16 @@ func ReadFiles(files []*FileInfo) (ch_operations chan processing.ProviderOperati
 				go func(f *FileInfo) {
 					ticker := time.NewTicker(40 * time.Second)
 					<-ticker.C
-					if !f.Done {
+					f.mu.Lock()
+					if !f.done {
 						f.InsertIntoDB()
 						logs.Add(logs.INFO, fmt.Sprint("Записан в postgres: ", filepath.Base(f.Filename)))
 					}
+					f.mu.Unlock()
 				}(f)
 				//logs.Add(logs.INFO, fmt.Sprint("Прочитан файл: ", filepath.Base(f.Filename)))
 
-				mu.Lock()
-				count_readed++
-				mu.Unlock()
+				atomic.AddInt64(&count_readed, 1)
 			}
 		}()
 	}

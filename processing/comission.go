@@ -1,8 +1,11 @@
 package processing
 
 import (
+	"app/config"
 	"app/logs"
 	"fmt"
+	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -10,22 +13,40 @@ func CalculateCommission() {
 
 	start_time := time.Now()
 
-	var check_fee_counter int
+	channel_indexes := make(chan int, 1000)
 
-	for _, operation := range storage.Registry {
+	var wg sync.WaitGroup
 
-		if operation.Tariff != nil {
-			operation.SetBalanceAmount()
-			operation.SetSRAmount()
-		}
+	var check_fee_counter int64
 
-		operation.SetCheckFee()
-		operation.SetVerification()
+	wg.Add(config.NumCPU)
+	for i := 1; i <= config.NumCPU; i++ {
+		go func() {
+			defer wg.Done()
+			for index := range channel_indexes {
 
-		if operation.CheckFee != 0 {
-			check_fee_counter++
-		}
+				operation := storage.Registry[index]
+				if operation.Tariff != nil {
+					operation.SetBalanceAmount()
+					operation.SetSRAmount()
+				}
+
+				operation.SetCheckFee()
+				operation.SetVerification()
+
+				if operation.CheckFee != 0 {
+					atomic.AddInt64(&check_fee_counter, 1)
+				}
+			}
+		}()
 	}
+
+	for i := range storage.Registry {
+		channel_indexes <- i
+	}
+	close(channel_indexes)
+
+	wg.Wait()
 
 	logs.Add(logs.INFO, fmt.Sprintf("Расчёт комиссии: %v [check fee: %d]", time.Since(start_time), check_fee_counter))
 
