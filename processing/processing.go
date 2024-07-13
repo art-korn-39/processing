@@ -5,15 +5,15 @@ import (
 	"app/logs"
 	"fmt"
 	"sync"
+	"time"
 )
 
 const (
-	Version = "0.8.4"
+	Version = "0.8.5"
 )
 
 var (
 	storage Storage
-	mu      sync.Mutex
 )
 
 func Init() {
@@ -39,17 +39,30 @@ func Start() {
 
 	defer storage.Close()
 
+	st := time.Now()
+
 	// 1. Загрузка источников
 	ReadSources()
+
+	logs.Add(logs.DEBUG, "ReadSources: ", time.Since(st))
+	st = time.Now()
 
 	// 2. Подготовка данных
 	PrepareData()
 
+	logs.Add(logs.DEBUG, "PrepareData: ", time.Since(st))
+	st = time.Now()
+
 	// 3. Комиссия
 	CalculateCommission()
 
+	logs.Add(logs.DEBUG, "CalculateCommission: ", time.Since(st))
+	st = time.Now()
+
 	// 4. Результат
 	SaveResult()
+
+	logs.Add(logs.DEBUG, "SaveResult: ", time.Since(st))
 
 }
 

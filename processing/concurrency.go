@@ -18,7 +18,7 @@ func GetChannelOfDays(startDate, finishDate time.Time, duration time.Duration) c
 				break
 			}
 
-			endDay := startDay.Round(duration).Add(duration).Add(-1 * time.Second) //23:59:59
+			endDay := startDay.Add(duration).Add(-1 * time.Second)
 			if endDay.After(finishDate) {
 				endDay = finishDate
 			}

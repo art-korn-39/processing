@@ -43,6 +43,7 @@ func Read_CSV_Crypto() {
 func ReadFilesCrypto(folder string) {
 
 	var wg sync.WaitGroup
+	var mu sync.Mutex
 
 	channel_files := make(chan string, 1000)
 
@@ -64,7 +65,7 @@ func ReadFilesCrypto(folder string) {
 
 				operations, err := ReadFileCrypto(filename)
 				if err != nil {
-					logs.Add(logs.ERROR, err)
+					logs.Add(logs.ERROR, "ReadFileCrypto() ", err)
 					continue
 				}
 
@@ -102,7 +103,7 @@ func ReadFileCrypto(filename string) (ops []CryptoOperation, err error) {
 
 	records, err := reader.ReadAll()
 	if err != nil {
-		logs.Add(logs.ERROR, fmt.Sprint("reader.ReadAll() ", filename, ": ", err))
+		logs.Add(logs.ERROR, "reader.ReadAll() ", filename, ": ", err)
 		return nil, err
 	}
 

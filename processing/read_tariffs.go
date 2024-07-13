@@ -44,10 +44,6 @@ func Read_XLSX_Tariffs() {
 		return
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Открытие файла с тарифами: %v", time.Since(start_time)))
-
-	start_time = time.Now()
-
 	for _, sheet := range xlFile.Sheets {
 
 		if sheet.Name != "Тарифы" {
@@ -68,6 +64,7 @@ func Read_XLSX_Tariffs() {
 
 		if headerLine == 0 {
 			logs.Add(logs.FATAL, errors.New("[тарифы] не обнаружена строка с названиями колонок (\"Баланс\" в колонке \"B\")"))
+			return
 		}
 
 		map_fileds := validation.GetMapOfColumnNamesCells(sheet.Rows[headerLine].Cells)
@@ -76,12 +73,6 @@ func Read_XLSX_Tariffs() {
 			logs.Add(logs.FATAL, err)
 			return
 		}
-
-		// // проверяем наличие обязательных полей
-		// err = CheckRequiredFileds_Tariffs(map_fileds)
-		// if err != nil {
-		// 	logs.Add(logs.ERROR, err)
-		// }
 
 		for _, row := range sheet.Rows {
 
@@ -139,6 +130,10 @@ func Read_XLSX_Tariffs() {
 			tariff.DateStart, _ = row.Cells[map_fileds["дата старта"]-1].GetTime(false)
 
 			tariff.SetFormula()
+
+			if tariff.Schema == "Crypto" {
+				tariff.IsCrypto = true
+			}
 
 			storage.Tariffs = append(storage.Tariffs, tariff)
 

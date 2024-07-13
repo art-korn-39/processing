@@ -17,6 +17,7 @@ type Tariff struct {
 	Provider              string //`xlsx:"9"`
 
 	Schema         string //`xlsx:"18"`
+	IsCrypto       bool
 	Convertation   string //`xlsx:"19"`
 	Operation_type string //`xlsx:"22"`
 

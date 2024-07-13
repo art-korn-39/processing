@@ -13,11 +13,14 @@ const (
 	INFO LogType = iota
 	ERROR
 	FATAL
+	DEBUG
 )
 
 var Testing bool
 
-func Add(t LogType, value any) {
+func Add(t LogType, v ...any) {
+
+	value := fmt.Sprint(v...)
 
 	if Testing {
 		if t == FATAL {
@@ -33,6 +36,11 @@ func Add(t LogType, value any) {
 
 		file.WriteString(fmt.Sprintf("%s\n", value))
 		log.Println(value)
+
+	case DEBUG:
+		if config.Debug {
+			fmt.Println(value)
+		}
 
 	case ERROR:
 		file, _ := os.OpenFile(config.Get().File_errors, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)

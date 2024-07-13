@@ -49,13 +49,12 @@ func FindTariffForOperation(op *Operation) *Tariff {
 
 	for _, t := range storage.Tariffs {
 
-		if t.DateStart.Before(op.Transaction_completed_at) &&
-			t.Operation_type == op.Operation_type {
+		if t.Merchant_account_id == op.Merchant_account_id {
 
-			// dragonpay - ???
-			if t.Merchant_account_id == op.Merchant_account_id {
+			if t.DateStart.Before(op.Transaction_completed_at) &&
+				t.Operation_type == op.Operation_type {
 
-				if t.Schema == "Crypto" && op.Crypto_network != t.Convertation {
+				if t.IsCrypto && op.Crypto_network != t.Convertation {
 					continue
 				}
 
@@ -74,7 +73,6 @@ func FindTariffForOperation(op *Operation) *Tariff {
 
 			}
 		}
-
 	}
 
 	return nil

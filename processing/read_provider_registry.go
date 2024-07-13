@@ -50,6 +50,7 @@ func Read_XLSX_ProviderRegistry() {
 func ParseFolders_rates(folder string) {
 
 	var wg sync.WaitGroup
+	var mu sync.Mutex
 
 	channel := make(chan string, 1000)
 
@@ -105,7 +106,7 @@ func ReadRates(filename string) (ops []ProviderOperation, err error) {
 
 	defer func() {
 		if r := recover(); r != nil {
-			logs.Add(logs.ERROR, fmt.Sprint("error:", r, " file:", filename))
+			logs.Add(logs.ERROR, "error:", r, " file:", filename)
 		}
 	}()
 
@@ -237,8 +238,6 @@ func PSQL_ReadProviderRegistry_async(registry_done chan struct{}) {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
-	start_time := time.Now()
-
 	if storage.Postgres.DB == nil {
 		return
 	}
@@ -251,7 +250,7 @@ func PSQL_ReadProviderRegistry_async(registry_done chan struct{}) {
 		return
 	}
 
-	args := []any{pq.Array(merchant_names), DateFrom, DateTo}
+	start_time := time.Now()
 
 	storage.Rates = make([]ProviderOperation, 0, 1000000)
 
@@ -265,7 +264,7 @@ func PSQL_ReadProviderRegistry_async(registry_done chan struct{}) {
 			defer wg.Done()
 			for period := range channel_dates {
 
-				args = []any{pq.Array(merchant_names), period.startDay, period.endDay}
+				args := []any{pq.Array(merchant_names), period.startDay, period.endDay}
 
 				res := []ProviderOperation{}
 
@@ -307,8 +306,6 @@ func PSQL_ReadProviderRegistry(registry_done chan struct{}) {
 		return
 	}
 
-	start_time := time.Now()
-
 	// MERCHANT_NAME + DATE
 	merchant_names, DateFrom, DateTo := GetArgsForProviderRegistry(registry_done)
 
@@ -316,6 +313,8 @@ func PSQL_ReadProviderRegistry(registry_done chan struct{}) {
 		logs.Add(logs.INFO, `пустой массив "merchant_name" для чтения операций провайдера`)
 		return
 	}
+
+	start_time := time.Now()
 
 	args := []any{pq.Array(merchant_names), DateFrom, DateTo}
 

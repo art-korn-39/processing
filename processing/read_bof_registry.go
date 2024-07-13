@@ -40,6 +40,7 @@ func Read_Registry(registry_done chan struct{}) {
 func Read_CSV_Registry() {
 
 	var wg sync.WaitGroup
+	var mu sync.Mutex
 
 	if config.Get().Registry.Filename == "" {
 		return
@@ -221,7 +222,7 @@ func CH_ReadRegistry_async() error {
 				res := []*Operation{}
 				err := storage.Clickhouse.Select(&res, stat)
 				if err != nil {
-					// обработка ошибки
+					logs.Add(logs.FATAL, "Clickhouse.Select() - ", err)
 				}
 				for _, o := range res {
 					o.StartingFill()
