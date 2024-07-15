@@ -6,6 +6,7 @@ import (
 	"app/querrys"
 	"app/util"
 	"app/validation"
+	"context"
 	"fmt"
 	"math"
 	"os"
@@ -22,6 +23,10 @@ func Read_ProviderRegistry(registry_done chan struct{}) {
 
 	if config.Get().Rates.Storage == config.PSQL {
 		PSQL_ReadProviderRegistry(registry_done)
+		// PSQL_ReadProviderRegistry_async(registry_done)
+		// PSQL_ReadProviderRegistry_querry(registry_done)
+		// PSQL_ReadProviderRegistry_timeout(registry_done)
+		// PSQL_ReadProviderRegistry_timeout2(registry_done)
 	} else {
 		Read_XLSX_ProviderRegistry()
 	}
@@ -296,7 +301,7 @@ func PSQL_ReadProviderRegistry_async(registry_done chan struct{}) {
 		storage.Provider_operations[operation.Id] = *operation
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Rates))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера из Postgres async: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Rates))))
 
 }
 
@@ -340,6 +345,161 @@ func PSQL_ReadProviderRegistry(registry_done chan struct{}) {
 	}
 
 	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Rates))))
+
+}
+
+func PSQL_ReadProviderRegistry_querry(registry_done chan struct{}) {
+
+	if storage.Postgres.DB == nil {
+		return
+	}
+
+	// MERCHANT_NAME + DATE
+	merchant_names, DateFrom, DateTo := GetArgsForProviderRegistry(registry_done)
+
+	if len(merchant_names) == 0 {
+		logs.Add(logs.INFO, `пустой массив "merchant_name" для чтения операций провайдера`)
+		return
+	}
+
+	start_time := time.Now()
+
+	args := []any{pq.Array(merchant_names), DateFrom, DateTo}
+
+	stat := querrys.Stat_Select_provider_registry()
+
+	rows, err := storage.Postgres.Query(stat, args...)
+	if err != nil {
+		logs.Add(logs.FATAL, err)
+		return
+	}
+	defer rows.Close()
+
+	storage.Rates = make([]ProviderOperation, 0, 1000000)
+
+	for rows.Next() {
+
+		var r ProviderOperation
+		if err := rows.Scan(&r); err != nil {
+			logs.Add(logs.FATAL, err)
+			return
+		}
+
+		if r.Provider_currency.Name == "EUR" && r.Rate != 0 {
+			r.Rate = 1 / r.Rate
+		}
+
+		r.Channel_currency = NewCurrency(r.Channel_currency_str)
+		r.Provider_currency = NewCurrency(r.Provider_currency_str)
+
+		storage.Provider_operations[r.Id] = r
+
+		storage.Rates = append(storage.Rates, r)
+
+	}
+
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера из Postgres Q: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Rates))))
+
+}
+
+func PSQL_ReadProviderRegistry_timeout(registry_done chan struct{}) {
+
+	if storage.Postgres.DB == nil {
+		return
+	}
+
+	// MERCHANT_NAME + DATE
+	merchant_names, DateFrom, DateTo := GetArgsForProviderRegistry(registry_done)
+
+	if len(merchant_names) == 0 {
+		logs.Add(logs.INFO, `пустой массив "merchant_name" для чтения операций провайдера`)
+		return
+	}
+
+	start_time := time.Now()
+
+	args := []any{pq.Array(merchant_names), DateFrom, DateTo}
+
+	stat := querrys.Stat_Select_provider_registry()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+
+	chan_error := make(chan error)
+
+	// запрос к БД
+	go func(ctx context.Context, chan_error chan<- error) {
+		err := storage.Postgres.SelectContext(ctx, &storage.Rates, stat, args...)
+		chan_error <- err
+	}(ctx, chan_error)
+
+	select {
+	case <-ctx.Done():
+		fmt.Println("таймаут, строк в таблице: ", len(storage.Rates), " ", ctx.Err())
+	case err := <-chan_error:
+		fmt.Printf("ошибка: %v, строк в таблице: %d\n", err, len(storage.Rates))
+	}
+
+	for i := range storage.Rates {
+		operation := &storage.Rates[i]
+
+		if operation.Provider_currency.Name == "EUR" && operation.Rate != 0 {
+			operation.Rate = 1 / operation.Rate
+		}
+
+		operation.Channel_currency = NewCurrency(operation.Channel_currency_str)
+		operation.Provider_currency = NewCurrency(operation.Provider_currency_str)
+
+		storage.Provider_operations[operation.Id] = *operation
+	}
+
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера из Postgres timeout: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Rates))))
+
+}
+
+func PSQL_ReadProviderRegistry_timeout2(registry_done chan struct{}) {
+
+	if storage.Postgres.DB == nil {
+		return
+	}
+
+	// MERCHANT_NAME + DATE
+	merchant_names, DateFrom, DateTo := GetArgsForProviderRegistry(registry_done)
+
+	if len(merchant_names) == 0 {
+		logs.Add(logs.INFO, `пустой массив "merchant_name" для чтения операций провайдера`)
+		return
+	}
+
+	start_time := time.Now()
+
+	args := []any{pq.Array(merchant_names), DateFrom, DateTo}
+
+	stat := querrys.Stat_Select_provider_registry()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+
+	err := storage.Postgres.SelectContext(ctx, &storage.Rates, stat, args...)
+	if err != nil {
+		fmt.Printf("ошибка: %v, строк в таблице: %d\n", err, len(storage.Rates))
+		return
+	}
+
+	for i := range storage.Rates {
+		operation := &storage.Rates[i]
+
+		if operation.Provider_currency.Name == "EUR" && operation.Rate != 0 {
+			operation.Rate = 1 / operation.Rate
+		}
+
+		operation.Channel_currency = NewCurrency(operation.Channel_currency_str)
+		operation.Provider_currency = NewCurrency(operation.Provider_currency_str)
+
+		storage.Provider_operations[operation.Id] = *operation
+	}
+
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера из Postgres timeout: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Rates))))
 
 }
 

@@ -65,7 +65,7 @@ func Write_CSV_Detailed() {
 				channel_rows <- row
 			}
 		}()
-	}
+	} // 15% each of all time
 
 	go func() {
 		wg.Wait()
@@ -80,7 +80,7 @@ func Write_CSV_Detailed() {
 	}()
 
 	for row := range channel_rows {
-		writer.Write(row)
+		writer.Write(row) // 90% of all time
 	}
 
 	logs.Add(logs.INFO, fmt.Sprintf("Сохранение детализированных данных в файл: %v", time.Since(start_time)))
@@ -108,9 +108,7 @@ func SetHeaders_detailed(writer *csv.Writer) {
 
 func MakeDetailedRow(d Detailed_row) (row []string) {
 
-	row = make([]string, 0, 50)
-
-	row = append(row,
+	row = []string{
 		fmt.Sprint(d.Merchant_id),
 		d.Merchant_name,
 		fmt.Sprint(d.Operation_id),
@@ -154,7 +152,7 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Tariff_rate_fix), ".", ","),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Tariff_rate_min), ".", ","),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Tariff_rate_max), ".", ","),
-	)
+	}
 
 	return
 }
