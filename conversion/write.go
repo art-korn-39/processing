@@ -33,7 +33,7 @@ func WriteIntoDB(channel_operations chan processing.ProviderOperation, channel_f
 		return
 	}
 
-	counter_rows := 0
+	count_rows := 0
 
 	wg.Add(1)
 	go func() {
@@ -44,7 +44,7 @@ func WriteIntoDB(channel_operations chan processing.ProviderOperation, channel_f
 
 			sliceID := make([]int, 0, len(v))
 			sliceRows := make([]processing.ProviderOperation, 0, len(v))
-			counter_rows = counter_rows + len(v)
+			count_rows = count_rows + len(v)
 			for _, row := range v {
 				sliceID = append(sliceID, row.Id)
 				sliceRows = append(sliceRows, row)
@@ -89,6 +89,7 @@ func WriteIntoDB(channel_operations chan processing.ProviderOperation, channel_f
 	wg.Wait()
 
 	// Штатное завершение, сохраняем статусы всех файлов
+	var count_files int
 	for f := range channel_files {
 		f.mu.Lock()
 		if !f.done {
@@ -96,8 +97,10 @@ func WriteIntoDB(channel_operations chan processing.ProviderOperation, channel_f
 			logs.Add(logs.INFO, fmt.Sprint("Записан в postgres: ", filepath.Base(f.Filename)))
 		}
 		f.mu.Unlock()
+		count_files++
 	}
 
-	logs.Add(logs.INFO, fmt.Sprint("Добавлено/обновлено: ", counter_rows, " строк"))
+	logs.Add(logs.INFO, fmt.Sprint("Добавлено/обновлено: ", count_rows, " строк"))
+	logs.Add(logs.REGL, fmt.Sprintf("Добавлено/обновлено: %d строк (%d файлов)", count_rows, count_files))
 
 }

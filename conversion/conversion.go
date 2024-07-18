@@ -29,6 +29,7 @@ func Start() {
 
 	filenames, err := util.ParseFoldersRecursively(folder)
 	if err != nil {
+		logs.Add(logs.FATAL, "ParseFoldersRecursively(): ", err)
 		return
 	}
 

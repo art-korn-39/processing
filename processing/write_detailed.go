@@ -170,6 +170,7 @@ func PSQL_Insert_Detailed() {
 	const batch_len = 1000
 
 	var wg sync.WaitGroup
+	var once sync.Once
 
 	stat := querrys.Stat_Insert_detailed()
 	_, err := storage.Postgres.PrepareNamed(stat)
@@ -191,11 +192,18 @@ func PSQL_Insert_Detailed() {
 					sliceID = append(sliceID, row.Operation_id)
 				}
 
-				tx.Exec("delete from detailed where id = ANY($1);", pq.Array(sliceID))
+				_, err = tx.Exec("delete from detailed where operation_id = ANY($1);", pq.Array(sliceID))
+				if err != nil {
+					once.Do(func() { logs.Add(logs.INFO, err) })
+					tx.Rollback()
+					return
+				}
 
 				_, err := tx.NamedExec(stat, v)
 				if err != nil {
+					once.Do(func() { logs.Add(logs.INFO, err) })
 					tx.Rollback()
+					return
 				} else {
 					tx.Commit()
 				}

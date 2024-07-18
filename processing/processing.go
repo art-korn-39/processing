@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	Version = "0.8.6"
+	Version = "0.8.8s"
 )
 
 var (
@@ -44,6 +44,8 @@ func Start() {
 	// 1. Загрузка источников
 	ReadSources()
 
+	//return
+
 	logs.Add(logs.DEBUG, "ReadSources: ", time.Since(st))
 	st = time.Now()
 
@@ -71,6 +73,8 @@ func ReadSources() {
 	var wg sync.WaitGroup
 
 	wg.Add(4)
+
+	//wg.Add(1)
 
 	registry_done := make(chan struct{})
 	go func() {
@@ -105,8 +109,10 @@ func PrepareData() {
 	// 2. Тарифы
 	go func() {
 		defer wg.Done()
+
 		// Сортировка тарифов
 		SortTariffs()
+
 		// Подбор тарифов к операциям
 		SelectTariffsInRegistry()
 	}()
@@ -114,8 +120,10 @@ func PrepareData() {
 	// 2. Курсы валют
 	go func() {
 		defer wg.Done()
+
 		// Группировка курсов валют
 		GroupRates()
+
 		// Сортировка курсов валют
 		SortRates()
 	}()

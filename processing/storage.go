@@ -79,8 +79,8 @@ func (s *Storage) Init() (err error) {
 		s.Postgres = connect
 	}
 
-	storage.Crypto = make(map[int]CryptoOperation)
-	storage.Provider_operations = make(map[int]ProviderOperation)
+	storage.Crypto = make(map[int]CryptoOperation, 200000)
+	storage.Provider_operations = make(map[int]ProviderOperation, 1000000)
 
 	return nil
 }

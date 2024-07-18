@@ -14,15 +14,15 @@ func Stat_Select_reports() string {
 	billing__provider_id AS provider_id, 
 	billing__tariff_conditions_id AS tariff_id,
 	IFNULL(operation__provider_payment_id, '') AS provider_payment_id,
-	operation__provider_name AS provider_name,
-	operation__merchant_name AS merchant_name,
-	operation__merchant_account_name AS merchant_account_name,
+	IFNULL(operation__provider_name, '') AS provider_name,
+	IFNULL(operation__merchant_name, '') AS merchant_name,
+	IFNULL(operation__merchant_account_name, '') AS merchant_account_name,
 	IFNULL(operation__account_bank_name, '') AS account_bank_name,
 
-	operation__business_type AS business_type,
-	operation__project_name AS project_name,
+	IFNULL(operation__business_type, '') AS business_type,
+	IFNULL(operation__project_name, '') AS project_name,
 	billing__project_id AS project_id,
-	operation__payment_method_type AS payment_type,
+	IFNULL(operation__payment_method_type, '') AS payment_type,
 	billing__payment_type_id AS payment_type_id,
 	billing__payment_method_id AS payment_method_id,
 
@@ -44,6 +44,7 @@ func Stat_Select_reports() string {
 	WHERE 
 		billing__billing_operation_created_at BETWEEN toDateTime('$1') AND toDateTime('$2')
 		AND billing__merchant_id IN ($3)
+		--AND billing__merchant_id IN (73162, 278, 104, 7201)
 
 	limit 3000000`
 }
@@ -107,11 +108,11 @@ func Stat_Insert_decline() string {
 
 func Stat_Insert_crypto() string {
 	return `INSERT INTO crypto (
-		operation_id, created_at, network, operation_type, 
+		operation_id, created_at, created_at_day, network, operation_type, 
 		payment_amount, payment_currency, crypto_amount, crypto_currency
 	)
 	VALUES (
-		:operation_id, :created_at, :network, :operation_type, 
+		:operation_id, :created_at, :created_at_day, :network, :operation_type, 
 		:payment_amount, :payment_currency, :crypto_amount, :crypto_currency
 		)`
 }

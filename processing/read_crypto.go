@@ -125,6 +125,7 @@ func ReadFileCrypto(filename string) (ops []CryptoOperation, err error) {
 		o.Id, _ = strconv.Atoi(record[map_fileds["operation id"]-1])
 		o.Network = record[map_fileds["crypto network"]-1]
 		o.Created_at = util.GetDateFromString(record[map_fileds["created at"]-1])
+		o.Created_at_day = o.Created_at
 		o.Operation_type = record[map_fileds["operation type"]-1]
 		o.Payment_amount, _ = strconv.ParseFloat(record[map_fileds["payment amount"]-1], 64)
 		o.Payment_currency_str = record[map_fileds["payment currency"]-1]

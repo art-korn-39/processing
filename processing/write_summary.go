@@ -104,6 +104,7 @@ func PSQL_Insert_SummaryMerchant(s []SummaryRowMerchant) {
 	const batch_len = 400
 
 	var wg sync.WaitGroup
+	var once sync.Once
 
 	stat_delete :=
 		`DELETE FROM summary_merchant 
@@ -130,7 +131,7 @@ func PSQL_Insert_SummaryMerchant(s []SummaryRowMerchant) {
 
 				_, err := storage.Postgres.NamedExec(stat_insert, v)
 				if err != nil {
-					logs.Add(logs.ERROR, err)
+					once.Do(func() { logs.Add(logs.INFO, err) })
 					tx.Rollback()
 					return
 				} else {

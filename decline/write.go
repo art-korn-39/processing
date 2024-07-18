@@ -84,4 +84,5 @@ func InsertIntoDB() {
 	wg.Wait()
 
 	logs.Add(logs.INFO, fmt.Sprintf("Загрузка операций decline в Postgres: %v", time.Since(start_time)))
+	logs.Add(logs.REGL, fmt.Sprintf("Загрузка decline в Postgres: %v (%d строк)", time.Since(start_time), len(decline_operations)))
 }

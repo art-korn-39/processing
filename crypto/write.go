@@ -85,4 +85,6 @@ func InsertIntoDB() {
 	wg.Wait()
 
 	logs.Add(logs.INFO, fmt.Sprintf("Загрузка криптовалютных операций в Postgres: %v", time.Since(start_time)))
+	logs.Add(logs.REGL, fmt.Sprintf("Загрузка crypto в Postgres: %v (%d строк)", time.Since(start_time), len(crypto_operations)))
+
 }

@@ -43,6 +43,8 @@ type (
 		File_logs   string `json:"file_logs"`
 		File_errors string `json:"file_errors"`
 
+		Routine_task bool `json:"routine_task"`
+
 		Clickhouse DatabaseConnection `json:"clickhouse"`
 		PSQL       DatabaseConnection `json:"psql"`
 
@@ -130,8 +132,11 @@ func Load() (err error) {
 
 	cfg.SetDBUsage()
 
-	os.Remove(cfg.File_logs)
-	os.Remove(cfg.File_errors)
+	// clean, there can be previous launches
+	if !cfg.Routine_task {
+		os.Remove(cfg.File_logs)
+		os.Remove(cfg.File_errors)
+	}
 
 	return nil
 
