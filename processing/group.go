@@ -15,7 +15,7 @@ type SumFileds struct {
 	SR_channel_currency float64
 	SR_balance_currency float64
 	checkFee            float64
-	PP_amount           float64
+	RR_amount           float64
 }
 
 func (sf *SumFileds) AddValues(o Operation) {
@@ -26,7 +26,10 @@ func (sf *SumFileds) AddValues(o Operation) {
 	sf.SR_channel_currency = sf.SR_channel_currency + o.SR_channel_currency
 	sf.SR_balance_currency = sf.SR_balance_currency + o.SR_balance_currency
 	sf.checkFee = sf.checkFee + o.CheckFee
-	sf.PP_amount = sf.PP_amount + o.PP_amount
+
+	if o.Tariff != nil && o.Operation_group == "IN" {
+		sf.RR_amount = sf.RR_amount + o.Tariff.RR_percent/100*o.Balance_amount
+	}
 }
 
 type KeyFields_SummaryInfo struct {
@@ -54,7 +57,7 @@ type KeyFields_SummaryInfo struct {
 	date_start            time.Time
 	tariff_condition_id   int
 	contract_id           int //???
-	PP_rashold            time.Time
+	RR_date               time.Time
 	Crypto_network        string
 }
 
@@ -86,7 +89,7 @@ func NewKeyFields_SummaryInfo(o Operation) (KF KeyFields_SummaryInfo) {
 		KF.range_max = o.Tariff.RangeMAX
 		KF.date_start = o.Tariff.DateStart
 		KF.tariff_condition_id = o.Tariff.id
-		KF.PP_rashold = o.Document_date.Add(time.Duration(o.Tariff.PP_days * int(time.Hour) * 24))
+		KF.RR_date = o.Document_date.Add(time.Duration(o.Tariff.RR_days * int(time.Hour) * 24))
 		KF.Crypto_network = o.Crypto_network
 		//KF.contract_id = o.Tariff.contract_id
 	}

@@ -61,12 +61,14 @@ func Stat_Insert_provider_registry() string {
 	return `INSERT INTO provider_registry (
 		operation_id, transaction_completed_at, provider_name, merchant_name, merchant_account_name,
 		project_url, payment_method_type, country, rate, operation_type, amount,
-		provider_payment_id, operation_status, account_number, channel_currency, provider_currency, br_amount
+		provider_payment_id, operation_status, account_number, channel_currency, provider_currency, br_amount,
+		transaction_completed_at_day
 	)
 	VALUES (
 		:operation_id, :transaction_completed_at, :provider_name, :merchant_name, :merchant_account_name,
 		:project_url, :payment_method_type, :country, :rate, :operation_type, :amount,
-		:provider_payment_id, :operation_status, :account_number, :channel_currency, :provider_currency, :br_amount
+		:provider_payment_id, :operation_status, :account_number, :channel_currency, :provider_currency, :br_amount,
+		:transaction_completed_at_day
 	)`
 }
 
@@ -123,13 +125,15 @@ func Stat_Insert_summary_merchant() string {
 		merchant_id, merchant_account_id, balance_id, provider_id, country, region, payment_type, channel_currency, 
 		balance_currency, convertation, tariff_date_start, tariff_id, formula, channel_amount, balance_amount, 
 		sr_channel_currency, sr_balance_currency, count_operations, rate,
-		payment_type_id, payment_method_id, rated_account, provider_1c, subdivision_1c, business_type, project_id
+		payment_type_id, payment_method_id, rated_account, provider_1c, subdivision_1c, business_type, project_id,
+		rr_amount, rr_date
 	)
 	VALUES (
 		:document_date, :operation_type, :operation_group, :merchant_id, :merchant_account_id, 
 		:balance_id, :provider_id, :country, :region, :payment_type, :channel_currency, :balance_currency, 
 		:convertation, :tariff_date_start, :tariff_id, :formula, :channel_amount, :balance_amount, 
 		:sr_channel_currency, :sr_balance_currency, :count_operations, :rate,
-		:payment_type_id, :payment_method_id, :rated_account, :provider_1c, :subdivision_1c, :business_type, :project_id
+		:payment_type_id, :payment_method_id, :rated_account, :provider_1c, :subdivision_1c, :business_type, :project_id,
+		:rr_amount, :rr_date
 		)`
 }

@@ -42,6 +42,9 @@ type SummaryRowMerchant struct {
 	Rated_account  string  `db:"rated_account"`
 	Provider_1c    string  `db:"provider_1c"`
 	Subdivision_1c string  `db:"subdivision_1c"`
+
+	RR_amount float64   `db:"rr_amount"`
+	RR_date   time.Time `db:"rr_date"`
 }
 
 func (row *SummaryRowMerchant) AddValues(o Operation) {
@@ -52,6 +55,10 @@ func (row *SummaryRowMerchant) AddValues(o Operation) {
 	row.Balance_amount = row.Balance_amount + o.Balance_amount
 	row.SR_channel_currency = row.SR_channel_currency + o.SR_channel_currency
 	row.SR_balance_currency = row.SR_balance_currency + o.SR_balance_currency
+
+	if o.Tariff != nil && o.Operation_group == "IN" {
+		row.RR_amount = row.RR_amount + o.Tariff.RR_percent/100*o.Balance_amount
+	}
 }
 
 func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
@@ -85,6 +92,10 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 			k.Provider_1c = o.Tariff.Provider1C
 			k.Subdivision_1c = o.Tariff.Subdivision1C
 			k.Rated_account = o.Tariff.RatedAccount
+
+			if o.Operation_group == "IN" {
+				k.RR_date = o.Document_date.AddDate(0, 0, o.Tariff.RR_days)
+			}
 		}
 		return
 	}
@@ -112,6 +123,7 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 		k.Balance_amount = v.Balance_amount
 		k.SR_channel_currency = v.SR_channel_currency
 		k.SR_balance_currency = v.SR_balance_currency
+		k.RR_amount = v.RR_amount
 
 		data = append(data, k)
 	}

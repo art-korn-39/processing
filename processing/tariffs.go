@@ -21,8 +21,8 @@ type Tariff struct {
 	Convertation   string //`xlsx:"19"`
 	Operation_type string //`xlsx:"22"`
 
-	PP_days    int     //`xlsx:"32"`
-	PP_percent float64 //`xlsx:"33"`
+	RR_days    int     //`xlsx:"32"`
+	RR_percent float64 //`xlsx:"33"`
 
 	Subdivision1C string //`xlsx:"36"`
 	Provider1C    string //`xlsx:"37"`

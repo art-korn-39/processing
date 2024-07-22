@@ -96,7 +96,7 @@ func Read_XLSX_Tariffs() {
 			tariff.Schema = row.Cells[map_fileds["схема"]-1].String()
 			tariff.Convertation = row.Cells[map_fileds["конверт"]-1].String()
 			tariff.Operation_type = row.Cells[map_fileds["operation_type"]-1].String()
-			tariff.PP_days, _ = row.Cells[map_fileds["рр, дней (пс)"]-1].Int()
+			tariff.RR_days, _ = row.Cells[map_fileds["рр, дней (пс)"]-1].Int()
 
 			tariff.Balance_id, _ = row.Cells[map_fileds["id баланса в бофе"]-1].Int()
 			tariff.Balance_type = row.Cells[map_fileds["тип баланса в бофе (in/ out/ in-out)"]-1].String()
@@ -124,7 +124,7 @@ func Read_XLSX_Tariffs() {
 			tariff.RangeMAX = util.TR(math.IsNaN(tariff.RangeMAX), float64(0), tariff.RangeMAX).(float64)
 			tariff.RangeMAX = util.TR(tariff.RangeMAX == 0, RANGE_MAX, tariff.RangeMAX).(float64)
 
-			tariff.PP_percent, _ = strconv.ParseFloat(row.Cells[map_fileds["рр, процент (пс)"]-1].String(), 64)
+			tariff.RR_percent, _ = strconv.ParseFloat(row.Cells[map_fileds["рр, процент (пс)"]-1].String(), 64)
 
 			tariff.DateStartPS, _ = row.Cells[map_fileds["дата нач.раб пс"]-1].GetTime(false)
 			tariff.DateStart, _ = row.Cells[map_fileds["дата старта"]-1].GetTime(false)

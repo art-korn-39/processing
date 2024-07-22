@@ -47,11 +47,18 @@ func SelectTariffsInRegistry() {
 
 func FindTariffForOperation(op *Operation) *Tariff {
 
+	var operation_date time.Time
+	if op.IsPerevodix {
+		operation_date = op.Operation_created_at
+	} else {
+		operation_date = op.Transaction_completed_at
+	}
+
 	for _, t := range storage.Tariffs {
 
 		if t.Merchant_account_id == op.Merchant_account_id {
 
-			if t.DateStart.Before(op.Transaction_completed_at) &&
+			if t.DateStart.Before(operation_date) &&
 				t.Operation_type == op.Operation_type {
 
 				if t.IsCrypto && op.Crypto_network != t.Convertation {

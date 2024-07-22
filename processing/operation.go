@@ -2,6 +2,7 @@ package processing
 
 import (
 	"app/util"
+	"strings"
 	"time"
 )
 
@@ -60,13 +61,14 @@ type Operation struct {
 	Balance_amount   float64  // сумма в валюте баланса
 	Balance_currency Currency // валюта баланса
 
-	Rate                float64
-	PP_amount           float64
+	Rate float64
+	//RR_amount           float64
 	SR_channel_currency float64
 	SR_balance_currency float64
 	CheckFee            float64
 	Verification        string
 	IsDragonPay         bool
+	IsPerevodix         bool
 
 	Crypto_network    string
 	ProviderOperation *ProviderOperation
@@ -81,6 +83,9 @@ func (o *Operation) StartingFill() {
 	}
 
 	o.Document_date = util.TruncateToDay(o.Transaction_completed_at)
+
+	o.IsDragonPay = strings.Contains(o.Provider_name, "Dragonpay")
+	o.IsPerevodix = strings.Contains(o.Provider_name, "Perevodix") || o.Provider_name == "SbpQRViaIntervaleE46AltIT"
 
 	o.Provider_currency = NewCurrency(o.Provider_currency_str)
 	o.Msc_currency = NewCurrency(o.Msc_currency_str)

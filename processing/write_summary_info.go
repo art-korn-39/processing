@@ -121,10 +121,10 @@ func Write_XLSX_SummaryInfo(M map[KeyFields_SummaryInfo]SumFileds) {
 		row.AddCell().SetInt(k.tariff_condition_id)
 		row.AddCell().SetInt(k.contract_id)
 
-		if k.PP_rashold.IsZero() {
+		if k.RR_date.IsZero() {
 			row.AddCell().SetString("")
 		} else {
-			row.AddCell().SetDate(k.PP_rashold)
+			row.AddCell().SetDate(k.RR_date)
 		}
 
 		row.AddCell().SetString(k.Crypto_network)
@@ -150,7 +150,7 @@ func Write_XLSX_SummaryInfo(M map[KeyFields_SummaryInfo]SumFileds) {
 		row.AddCell().SetInt(v.count_operations)
 
 		cell = row.AddCell()
-		cell.SetFloat(v.PP_amount)
+		cell.SetFloat(v.RR_amount)
 		cell.SetFormat("0.00")
 	}
 

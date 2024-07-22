@@ -126,14 +126,12 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		Project_id:          util.FR(strconv.Atoi(record[map_fileds["project_id"]-1])).(int),
 		Tariff_condition_id: util.FR(strconv.Atoi(record[map_fileds["tariff_condition_id"]-1])).(int),
 
-		Provider_name: record[map_fileds["provider_name"]-1],
-		IsDragonPay:   strings.Contains(record[map_fileds["provider_name"]-1], "Dragonpay"),
-
 		Provider_payment_id: record[map_fileds["acquirer_id / provider_payment_id"]-1],
 		Payment_type:        record[map_fileds["payment_type_id / payment_method_type"]-1],
 		Operation_type:      record[map_fileds["operation_type"]-1],
 		Country:             record[map_fileds["issuer_country"]-1],
 		Project_name:        record[map_fileds["project_name"]-1],
+		Provider_name:       record[map_fileds["provider_name"]-1],
 
 		Merchant_name:         record[map_fileds["merchant_name"]-1],
 		Merchant_account_name: record[map_fileds["merchant_account_name"]-1],
@@ -152,6 +150,13 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 			Min:     util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_min"]-1], 64)).(float64),
 			Max:     util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_max"]-1], 64)).(float64),
 		},
+	}
+
+	idx := map_fileds["created_at / operation_created_at"]
+	if idx > 0 {
+		op.Operation_created_at = util.GetDateFromString(record[map_fileds["created_at / operation_created_at"]-1])
+	} else {
+		op.Operation_created_at = op.Transaction_completed_at
 	}
 
 	return
