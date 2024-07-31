@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"math"
 	"os"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -29,96 +27,6 @@ func FR(v any, err error) any {
 	// 	log.Println("error encountered when none assumed:", err)
 	// }
 	return v
-}
-
-// С 0 (вкл.) до last (искл.)
-func SubString(s string, first int, last int) string {
-
-	runes := []rune(s)
-	length := len(runes)
-
-	if length <= last {
-		last = length
-	}
-
-	if last == 0 {
-		last = length
-	}
-
-	return string(runes[first:last])
-
-}
-
-func Round(x float64, decimals float64) float64 {
-
-	//0. 0.64496
-	//1. узнать количество знаков после запятой (n) [5]
-	//2. умножить на 10^n (m1), чтобы остались только целые [64496]
-	//3. округлить [64496]
-	//4. поделить на 10^(n-dcm) [64.496]
-	//5. округлить [64]
-	//6. поделить на 10^dcm
-
-	//test cases: 0.235, 0.64496, 0.16499999
-
-	if math.IsNaN(x) {
-		return x
-	}
-
-	if x == 0.0 {
-		return x
-	}
-
-	x = BaseRound(x)
-
-	str := strconv.FormatFloat(x, 'f', -1, 64)
-	i := strings.Index(str, ".")
-	n := len(SubString(str, i+1, 0))
-
-	m1 := math.Pow(10, float64(n))
-	x1 := x * m1
-	x2 := math.Round(x1)
-	m2 := math.Pow(10, float64(n)-decimals)
-	x3 := x2 / m2
-	x4 := math.Round(x3)
-	m3 := math.Pow(10, decimals)
-	x5 := x4 / m3
-
-	return x5
-
-}
-
-// очистка от 9999 или 00001 после запятой
-func BaseRound(x float64) float64 {
-
-	m := 10000000000.0
-	x1 := x * m
-	x2 := math.Round(x1)
-	x3 := x2 / m
-	return x3
-
-}
-
-// Input formats
-// "2024-05-22T12:45:41+0300"
-// "2024-04-17 21:00:35 +0000 UTC"
-func GetDateFromString(s string) time.Time {
-
-	index := strings.Index(s, "+")
-	if index != -1 {
-		s = SubString(s, 0, index)
-		s = strings.TrimSpace(s)
-	}
-	s = strings.ReplaceAll(s, "T", " ")
-
-	v, _ := time.Parse(time.DateTime, s)
-
-	return v
-
-}
-
-func TruncateToDay(t time.Time) time.Time {
-	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 }
 
 // "ptr_struct_in" указатель на структуру приемник, "struct_src" структура источник
@@ -202,31 +110,6 @@ func ParseFoldersRecursively(folder string) ([]string, error) {
 
 }
 
-func FormatInt(n int) string {
-	in := strconv.FormatInt(int64(n), 10)
-	numOfDigits := len(in)
-	if n < 0 {
-		numOfDigits-- // First character is the - sign (not a digit)
-	}
-	numOfCommas := (numOfDigits - 1) / 3
-
-	out := make([]byte, len(in)+numOfCommas)
-	if n < 0 {
-		in, out[0] = in[1:], '-'
-	}
-
-	for i, j, k := len(in)-1, len(out)-1, 0; ; i, j = i-1, j-1 {
-		out[j] = in[i]
-		if i == 0 {
-			return string(out)
-		}
-		if k++; k == 3 {
-			j, k = j-1, 0
-			out[j] = ' '
-		}
-	}
-}
-
 func ReadJsonFile(data any, filename string) error {
 
 	file, err := os.OpenFile(filename, os.O_RDONLY, 0600)
@@ -246,5 +129,41 @@ func ReadJsonFile(data any, filename string) error {
 	}
 
 	return nil
+
+}
+
+type Period struct {
+	StartDay time.Time
+	EndDay   time.Time
+}
+
+func GetChannelOfDays(startDate, finishDate time.Time, duration time.Duration) chan Period {
+
+	channel := make(chan Period, 50)
+
+	go func() {
+		startDay := startDate
+		for {
+			if startDay.After(finishDate) {
+				break
+			}
+
+			endDay := startDay.Add(duration).Add(-1 * time.Second)
+			if endDay.After(finishDate) {
+				endDay = finishDate
+			}
+
+			period := Period{
+				StartDay: startDay,
+				EndDay:   endDay,
+			}
+			channel <- period
+
+			startDay = startDay.Add(duration)
+		}
+		close(channel)
+	}()
+
+	return channel
 
 }

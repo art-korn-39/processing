@@ -3,16 +3,17 @@ package crypto
 import (
 	"app/config"
 	"app/logs"
-	"app/processing"
 	"app/querrys"
+	"app/util"
 	"fmt"
 	"sync"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 )
 
-func InsertIntoDB() {
+func insert_into_db(db *sqlx.DB) {
 
 	if db == nil {
 		return
@@ -20,7 +21,7 @@ func InsertIntoDB() {
 
 	start_time := time.Now()
 
-	channel := make(chan []processing.CryptoOperation, 1000)
+	chan_operations := make(chan []Operation, 1000)
 
 	const batch_len = 100
 
@@ -37,7 +38,7 @@ func InsertIntoDB() {
 	for i := 1; i <= config.NumCPU; i++ {
 		go func() {
 			defer wg.Done()
-			for v := range channel {
+			for v := range chan_operations {
 
 				tx, _ := db.Beginx()
 
@@ -66,25 +67,24 @@ func InsertIntoDB() {
 	}
 
 	var i int
-	batch := make([]processing.CryptoOperation, 0, batch_len)
-	for _, v := range crypto_operations {
+	batch := make([]Operation, 0, batch_len)
+	for _, v := range Registry {
 		batch = append(batch, v)
 		if (i+1)%batch_len == 0 {
-			channel <- batch
-			batch = make([]processing.CryptoOperation, 0, batch_len)
+			chan_operations <- batch
+			batch = make([]Operation, 0, batch_len)
 		}
 		i++
 	}
 
 	if len(batch) != 0 {
-		channel <- batch
+		chan_operations <- batch
 	}
 
-	close(channel)
+	close(chan_operations)
 
 	wg.Wait()
 
-	logs.Add(logs.INFO, fmt.Sprintf("Загрузка криптовалютных операций в Postgres: %v", time.Since(start_time)))
-	logs.Add(logs.REGL, fmt.Sprintf("Загрузка crypto в Postgres: %v (%d строк)", time.Since(start_time), len(crypto_operations)))
+	logs.Add(logs.MAIN, fmt.Sprintf("Загрузка crypto в Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(Registry))))
 
 }

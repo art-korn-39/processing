@@ -1,4 +1,4 @@
-package conversion
+package file
 
 import (
 	"app/logs"
@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type FileInfo struct {
@@ -61,12 +63,15 @@ func GetFiles(filenames []string) []*FileInfo {
 
 }
 
-func (f *FileInfo) InsertIntoDB() {
+func (f *FileInfo) InsertIntoDB(db *sqlx.DB) {
 
 	if db == nil {
 		logs.Add(logs.FATAL, "no connection to postgres")
 		return
 	}
+
+	f.mu.Lock()
+	defer f.mu.Unlock()
 
 	if f.done {
 		return
@@ -105,9 +110,11 @@ func (f *FileInfo) InsertIntoDB() {
 
 	f.done = true
 
+	logs.Add(logs.MAIN, fmt.Sprint("Записан в postgres: ", filepath.Base(f.Filename)))
+
 }
 
-func (f *FileInfo) SetLastUpload() {
+func (f *FileInfo) GetLastUpload(db *sqlx.DB) {
 
 	if db == nil {
 		logs.Add(logs.INFO, "no connection to postgres")
@@ -125,5 +132,16 @@ func (f *FileInfo) SetLastUpload() {
 	db.Get(&f.LastUpload, stat, f.Filename)
 
 	f.LastUpload = f.LastUpload.Local().Add(-3 * time.Hour)
+
+}
+
+func (f *FileInfo) SetLastUpload(db *sqlx.DB) {
+
+	ticker := time.NewTicker(40 * time.Second)
+	defer ticker.Stop()
+
+	<-ticker.C
+
+	f.InsertIntoDB(db)
 
 }

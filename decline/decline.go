@@ -3,21 +3,17 @@ package decline
 import (
 	"app/config"
 	"app/logs"
-	"app/processing"
+	"app/storage"
 	"app/util"
-
-	"github.com/jmoiron/sqlx"
 )
 
 var (
-	db                 *sqlx.DB
-	decline_operations map[int]DeclineOperation
+	decline_operations map[int]Operation
 )
 
 func Start() {
 
-	var err error
-	db, err = processing.PSQL_connect()
+	db, err := storage.PSQL_connect()
 	if err != nil {
 		logs.Add(logs.FATAL, err)
 		return
@@ -26,7 +22,7 @@ func Start() {
 	}
 	defer db.Close()
 
-	decline_operations = make(map[int]DeclineOperation, 1000)
+	decline_operations = make(map[int]Operation, 1000)
 
 	folder := config.Get().Decline.Filename
 	filenames, err := util.ParseFoldersRecursively(folder)
@@ -35,6 +31,6 @@ func Start() {
 	}
 
 	ReadFiles(filenames)
-	InsertIntoDB()
+	InsertIntoDB(db)
 
 }

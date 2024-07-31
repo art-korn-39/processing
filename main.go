@@ -14,6 +14,14 @@ import (
 
 func main() {
 
+	// a := 1000000000
+	// b := float64(a)
+
+	// fmt.Println(strconv.FormatFloat(b, 'f', -1, 64))
+	// fmt.Println(fmt.Sprintf("%.f", b))
+
+	// return
+
 	defer logs.Finish()
 
 	start_time := time.Now()
@@ -43,6 +51,6 @@ func main() {
 		crypto.Start()
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Общее время выполнения: %v", time.Since(start_time)))
+	logs.Add(logs.MAIN, fmt.Sprintf("Общее время выполнения: %v", time.Since(start_time)))
 
 }

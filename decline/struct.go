@@ -2,7 +2,7 @@ package decline
 
 import "time"
 
-type DeclineOperation struct {
+type Operation struct {
 	Message_id   int `db:"message_id"`
 	Operation_id int `db:"operation_id"`
 

@@ -18,9 +18,10 @@ import (
 
 const DUR = 24
 
-func Read_Registry(registry_done chan struct{}) {
+func Read_Registry(registry_done chan querrys.Args) {
 
 	if config.Get().Registry.Storage == config.Clickhouse {
+		registry_done <- NewQuerryArgs(true)
 		close(registry_done)
 		err := CH_ReadRegistry()
 		if err != nil {
@@ -38,8 +39,30 @@ func Read_Registry(registry_done chan struct{}) {
 				return storage.Registry[i].Transaction_completed_at.Before(storage.Registry[j].Transaction_completed_at)
 			},
 		)
+		registry_done <- NewQuerryArgs(false)
 	}
 
+}
+
+func NewQuerryArgs(from_cfg bool) (args querrys.Args) {
+
+	args = querrys.Args{}
+
+	if from_cfg {
+		args.Merhcant = config.Get().Registry.Merchant_name
+		args.DateFrom = config.Get().Registry.DateFrom.Add(-20 * 24 * time.Hour)
+		args.DateTo = config.Get().Registry.DateTo.Add(1 * 24 * time.Hour)
+	} else {
+		lenght := len(storage.Registry)
+		if lenght > 0 {
+			row := storage.Registry[0]
+			args.Merhcant = append(args.Merhcant, row.Merchant_name)
+			args.DateFrom = storage.Registry[0].Transaction_completed_at.Add(-3 * 24 * time.Hour)
+			args.DateTo = storage.Registry[lenght-1].Transaction_completed_at.Add(1 * 24 * time.Hour)
+		}
+	}
+
+	return
 }
 
 func Read_CSV_Registry() {
@@ -126,13 +149,12 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		Project_id:          util.FR(strconv.Atoi(record[map_fileds["project_id"]-1])).(int),
 		Tariff_condition_id: util.FR(strconv.Atoi(record[map_fileds["tariff_condition_id"]-1])).(int),
 
-		Provider_payment_id: record[map_fileds["acquirer_id / provider_payment_id"]-1],
-		Payment_type:        record[map_fileds["payment_type_id / payment_method_type"]-1],
-		Operation_type:      record[map_fileds["operation_type"]-1],
-		Country:             record[map_fileds["issuer_country"]-1],
-		Project_name:        record[map_fileds["project_name"]-1],
-		Provider_name:       record[map_fileds["provider_name"]-1],
-
+		Provider_payment_id:   record[map_fileds["acquirer_id / provider_payment_id"]-1],
+		Payment_type:          record[map_fileds["payment_type_id / payment_method_type"]-1],
+		Operation_type:        record[map_fileds["operation_type"]-1],
+		Country:               record[map_fileds["issuer_country"]-1],
+		Project_name:          record[map_fileds["project_name"]-1],
+		Provider_name:         record[map_fileds["provider_name"]-1],
 		Merchant_name:         record[map_fileds["merchant_name"]-1],
 		Merchant_account_name: record[map_fileds["merchant_account_name"]-1],
 
@@ -144,12 +166,10 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		Fee_currency_str:      record[map_fileds["fee_currency"]-1],
 		Fee_amount:            util.FR(strconv.ParseFloat(record[map_fileds["fee_amount"]-1], 64)).(float64),
 
-		Tariff_bof: &Tariff{
-			Percent: util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_percent"]-1], 64)).(float64) / 100,
-			Fix:     util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_fix"]-1], 64)).(float64),
-			Min:     util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_min"]-1], 64)).(float64),
-			Max:     util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_max"]-1], 64)).(float64),
-		},
+		Tariff_rate_percent: util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_percent"]-1], 64)).(float64) / 100,
+		Tariff_rate_fix:     util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_fix"]-1], 64)).(float64),
+		Tariff_rate_min:     util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_min"]-1], 64)).(float64),
+		Tariff_rate_max:     util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_max"]-1], 64)).(float64),
 	}
 
 	idx := map_fileds["created_at / operation_created_at"]
@@ -214,7 +234,7 @@ func CH_ReadRegistry_async() error {
 
 	storage.Registry = make([]*Operation, 0, count_rows)
 
-	channel_dates := GetChannelOfDays(config.Get().Registry.DateFrom,
+	channel_dates := util.GetChannelOfDays(config.Get().Registry.DateFrom,
 		config.Get().Registry.DateTo,
 		DUR*time.Hour)
 
@@ -226,8 +246,8 @@ func CH_ReadRegistry_async() error {
 		go func() {
 			defer wg.Done()
 			for period := range channel_dates {
-				stat := strings.ReplaceAll(Statement, "$1", period.startDay.Format(time.DateTime))
-				stat = strings.ReplaceAll(stat, "$2", period.endDay.Format(time.DateTime))
+				stat := strings.ReplaceAll(Statement, "$1", period.StartDay.Format(time.DateTime))
+				stat = strings.ReplaceAll(stat, "$2", period.EndDay.Format(time.DateTime))
 
 				res := []*Operation{}
 				err := storage.Clickhouse.Select(&res, stat)
@@ -263,7 +283,7 @@ func CH_ReadRegistry_async2() error {
 
 	storage.Registry = make([]*Operation, 0, 1000000)
 
-	channel_dates := GetChannelOfDays(config.Get().Registry.DateFrom,
+	channel_dates := util.GetChannelOfDays(config.Get().Registry.DateFrom,
 		config.Get().Registry.DateTo,
 		DUR*time.Hour)
 
@@ -275,8 +295,8 @@ func CH_ReadRegistry_async2() error {
 		go func() {
 			defer wg.Done()
 			for period := range channel_dates {
-				stat := strings.ReplaceAll(Statement, "$1", period.startDay.Format(time.DateTime))
-				stat = strings.ReplaceAll(stat, "$2", period.endDay.Format(time.DateTime))
+				stat := strings.ReplaceAll(Statement, "$1", period.StartDay.Format(time.DateTime))
+				stat = strings.ReplaceAll(stat, "$2", period.EndDay.Format(time.DateTime))
 
 				res := []*Operation{}
 				err := storage.Clickhouse.Select(&res, stat)
@@ -311,7 +331,7 @@ func CH_ReadRegistry_async_querry() error {
 
 	storage.Registry = make([]*Operation, 0, 1000000)
 
-	channel_dates := GetChannelOfDays(config.Get().Registry.DateFrom,
+	channel_dates := util.GetChannelOfDays(config.Get().Registry.DateFrom,
 		config.Get().Registry.DateTo,
 		DUR*time.Hour)
 
@@ -323,8 +343,8 @@ func CH_ReadRegistry_async_querry() error {
 		go func() {
 			defer wg.Done()
 			for period := range channel_dates {
-				stat := strings.ReplaceAll(Statement, "$1", period.startDay.Format(time.DateTime))
-				stat = strings.ReplaceAll(stat, "$2", period.endDay.Format(time.DateTime))
+				stat := strings.ReplaceAll(Statement, "$1", period.StartDay.Format(time.DateTime))
+				stat = strings.ReplaceAll(stat, "$2", period.EndDay.Format(time.DateTime))
 
 				res := make([]*Operation, 0, 10000)
 

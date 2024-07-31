@@ -3,7 +3,7 @@ package processing
 import (
 	"app/config"
 	"app/logs"
-	"fmt"
+	stg "app/storage"
 
 	_ "github.com/alexbrainman/odbc"
 	"github.com/jmoiron/sqlx"
@@ -13,41 +13,11 @@ type Storage struct {
 	Postgres   *sqlx.DB
 	Clickhouse *sqlx.DB
 
-	Registry            []*Operation
-	Tariffs             []Tariff
-	Crypto              map[int]CryptoOperation
-	Rates               []ProviderOperation
-	Provider_operations map[int]ProviderOperation
-}
-
-func CH_Connect() (*sqlx.DB, error) {
-
-	connInfo := fmt.Sprintf("driver=ClickHouse ODBC Driver (Unicode);host=%s;port=%d;username=%s;password=%s;dbname=%s",
-		config.Get().Clickhouse.Host, config.Get().Clickhouse.Port, config.Get().Clickhouse.User, config.Get().Clickhouse.Password, config.Get().Clickhouse.Name)
-
-	connect, err := sqlx.Connect("odbc", connInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	return connect, nil
-}
-
-// PostgreSQL only supports 65535 parameters
-// max count 1 batch = 65535 / count columns
-func PSQL_connect() (*sqlx.DB, error) {
-
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		config.Get().PSQL.Host, config.Get().PSQL.Port, config.Get().PSQL.User, config.Get().PSQL.Password, config.Get().PSQL.Name)
-
-	connect, err := sqlx.Connect("postgres", psqlInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	return connect, nil
-
+	Registry []*Operation
+	Tariffs  []Tariff
+	//Crypto   map[int]CryptoOperation
+	// Rates               []ProviderOperation
+	// Provider_operations map[int]ProviderOperation
 }
 
 func (s *Storage) Close() {
@@ -62,7 +32,7 @@ func (s *Storage) Close() {
 func (s *Storage) Init() (err error) {
 
 	if config.Get().Clickhouse.Usage {
-		connect, err := CH_Connect()
+		connect, err := stg.CH_Connect()
 		if err != nil {
 			return err
 		}
@@ -71,7 +41,7 @@ func (s *Storage) Init() (err error) {
 	}
 
 	if config.Get().PSQL.Usage {
-		connect, err := PSQL_connect()
+		connect, err := stg.PSQL_connect()
 		if err != nil {
 			return err
 		}
@@ -79,8 +49,8 @@ func (s *Storage) Init() (err error) {
 		s.Postgres = connect
 	}
 
-	storage.Crypto = make(map[int]CryptoOperation, 200000)
-	storage.Provider_operations = make(map[int]ProviderOperation, 1000000)
+	//storage.Crypto = make(map[int]CryptoOperation, 200000)
+	//storage.Provider_operations = make(map[int]ProviderOperation, 1000000)
 
 	return nil
 }

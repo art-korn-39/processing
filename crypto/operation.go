@@ -1,26 +1,11 @@
-package processing
+package crypto
 
 import (
-	"slices"
-	"strings"
+	"app/currency"
 	"time"
 )
 
-var ExponentCurrencies = []string{"JPY", "KRW", "UGX", "VND", "CLP", "XAF", "RWF", "XOF"}
-
-type Currency struct {
-	Name     string
-	Exponent bool
-}
-
-func NewCurrency(name string) Currency {
-
-	n := strings.ToUpper(name)
-	c := Currency{Name: n, Exponent: slices.Contains(ExponentCurrencies, n)}
-	return c
-}
-
-type CryptoOperation struct {
+type Operation struct {
 	Id                   int       `db:"operation_id"`
 	Network              string    `db:"network"`
 	Created_at           time.Time `db:"created_at"`
@@ -31,6 +16,6 @@ type CryptoOperation struct {
 	Crypto_amount        float64   `db:"crypto_amount"`
 	Crypto_currency_str  string    `db:"crypto_currency"`
 
-	Payment_currency Currency
-	Crypto_currency  Currency
+	Payment_currency currency.Currency
+	Crypto_currency  currency.Currency
 }

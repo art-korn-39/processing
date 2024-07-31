@@ -1,12 +1,18 @@
 package processing
 
 import (
+	"app/currency"
+	"app/holds"
+	"app/provider"
 	"app/util"
 	"strings"
+	"sync"
 	"time"
 )
 
 type Operation struct {
+	mu sync.Mutex
+
 	Operation_id   int `db:"operation_id"`
 	Transaction_id int `db:"transaction_id"`
 	Document_date  time.Time
@@ -44,36 +50,50 @@ type Operation struct {
 
 	Provider_amount       float64 `db:"provider_amount"`
 	Provider_currency_str string  `db:"provider_currency"`
-	Provider_currency     Currency
+	Provider_currency     currency.Currency
 
 	Msc_amount       float64 `db:"msc_amount"`
 	Msc_currency_str string  `db:"msc_currency"`
-	Msc_currency     Currency
+	Msc_currency     currency.Currency
 
 	Channel_amount       float64 `db:"channel_amount"`
 	Channel_currency_str string  `db:"channel_currency"`
-	Channel_currency     Currency
+	Channel_currency     currency.Currency
 
 	Fee_amount       float64 `db:"fee_amount"`
 	Fee_currency_str string  `db:"fee_currency"`
-	Fee_currency     Currency
+	Fee_currency     currency.Currency
 
-	Balance_amount   float64  // сумма в валюте баланса
-	Balance_currency Currency // валюта баланса
+	Balance_amount   float64           // сумма в валюте баланса
+	Balance_currency currency.Currency // валюта баланса
 
-	Rate float64
-	//RR_amount           float64
-	SR_channel_currency float64
-	SR_balance_currency float64
-	CheckFee            float64
-	Verification        string
-	IsDragonPay         bool
-	IsPerevodix         bool
+	Rate                 float64
+	SR_channel_currency  float64
+	SR_balance_currency  float64
+	CheckFee, CheckRates float64
+	Verification         string
+	IsDragonPay          bool
+	IsPerevodix          bool
+	Crypto_network       string
 
-	Crypto_network    string
-	ProviderOperation *ProviderOperation
+	RR_amount float64
+	RR_date   time.Time
+
+	CompensationRC float64
+	CompensationBC float64
+
+	hold_amount float64
+	hold_date   time.Time
+
+	ProviderOperation *provider.Operation
 	Tariff_bof        *Tariff
 	Tariff            *Tariff
+	Hold              *holds.Hold
+
+	Tariff_rate_fix     float64 `db:"billing__tariff_rate_fix"`
+	Tariff_rate_percent float64 `db:"billing__tariff_rate_percent"`
+	Tariff_rate_min     float64 `db:"billing__tariff_rate_min"`
+	Tariff_rate_max     float64 `db:"billing__tariff_rate_max"`
 }
 
 func (o *Operation) StartingFill() {
@@ -87,10 +107,10 @@ func (o *Operation) StartingFill() {
 	o.IsDragonPay = strings.Contains(o.Provider_name, "Dragonpay")
 	o.IsPerevodix = strings.Contains(o.Provider_name, "Perevodix") || o.Provider_name == "SbpQRViaIntervaleE46AltIT"
 
-	o.Provider_currency = NewCurrency(o.Provider_currency_str)
-	o.Msc_currency = NewCurrency(o.Msc_currency_str)
-	o.Channel_currency = NewCurrency(o.Channel_currency_str)
-	o.Fee_currency = NewCurrency(o.Fee_currency_str)
+	o.Provider_currency = currency.New(o.Provider_currency_str)
+	o.Msc_currency = currency.New(o.Msc_currency_str)
+	o.Channel_currency = currency.New(o.Channel_currency_str)
+	o.Fee_currency = currency.New(o.Fee_currency_str)
 
 	o.Provider_amount = util.TR(o.Provider_currency.Exponent, o.Provider_amount, o.Provider_amount/100).(float64)
 	o.Msc_amount = util.TR(o.Msc_currency.Exponent, o.Msc_amount, o.Msc_amount/100).(float64)
@@ -121,6 +141,18 @@ func (o *Operation) StartingFill() {
 		}
 	}
 
+	o.Tariff_rate_fix = util.TR(o.Channel_currency.Exponent, o.Tariff_rate_fix, o.Tariff_rate_fix/100).(float64)
+	o.Tariff_rate_min = util.TR(o.Channel_currency.Exponent, o.Tariff_rate_min, o.Tariff_rate_min/100).(float64)
+	o.Tariff_rate_max = util.TR(o.Channel_currency.Exponent, o.Tariff_rate_max, o.Tariff_rate_max/100).(float64)
+
+	o.Tariff_bof = &Tariff{
+		Percent: o.Tariff_rate_percent,
+		Fix:     o.Tariff_rate_fix,
+		Min:     o.Tariff_rate_min,
+		Max:     o.Tariff_rate_max,
+	}
+	o.Tariff_bof.StartingFill()
+
 }
 
 func (o *Operation) SetBalanceAmount() {
@@ -140,19 +172,23 @@ func (o *Operation) SetBalanceAmount() {
 	} else if t.Convertation == "Реестр" {
 
 		// Поиск в мапе операций провайдера по ID
-		ProviderOperation, ok := storage.Provider_operations[o.Operation_id]
-		o.ProviderOperation = &ProviderOperation
+		//ProviderOperation, ok := storage.Provider_operations[o.Operation_id]
 
-		balance_amount = ProviderOperation.Amount
-		rate = ProviderOperation.Rate
+		ProviderOperation, ok := provider.Registry.Get(o.Operation_id, o.Document_date, o.Channel_amount)
 
-		// если не нашли операцию провайдера по ID, то подбираем курс и считаем через него
-		if !ok {
+		o.ProviderOperation = ProviderOperation //&ProviderOperation
+
+		if ok {
+			balance_amount = ProviderOperation.Amount
+			rate = ProviderOperation.Rate
+		} else {
+			// если не нашли операцию провайдера по ID, то подбираем курс и считаем через него
 			rate = FindRateForOperation(o)
 			if rate != 0 {
 				balance_amount = o.Channel_amount / rate
 			}
 		}
+
 	} else { // крипта скорее всего
 		balance_amount = o.Channel_amount
 	}
@@ -211,48 +247,129 @@ func (o *Operation) SetCheckFee() {
 
 func (o *Operation) SetVerification() {
 
-	var CheckRates float64
 	var Converation string
-	var CurrencyBP Currency
+	var CurrencyBP currency.Currency
+
 	if o.Tariff != nil {
 		Converation = o.Tariff.Convertation
 		CurrencyBP = o.Tariff.CurrencyBP
 		if o.Tariff_bof != nil {
-			s1 := (o.Tariff.Percent + o.Tariff.Fix + o.Tariff.Min + o.Tariff.Max) * 100
+			s1 := (o.Tariff.Percent + o.Tariff.Fix + o.Tariff.Min + o.Tariff.Max) //* 100
 			s2 := o.Tariff_bof.Percent + o.Tariff_bof.Fix + o.Tariff_bof.Min + o.Tariff_bof.Max
-			CheckRates = util.BaseRound(s1 - s2)
+			o.CheckRates = util.BaseRound(s1 - s2)
 		}
 	}
 
-	var Provider_registry_amount float64
-	if o.ProviderOperation != nil {
-		Provider_registry_amount = o.ProviderOperation.Amount
-	}
-
-	if o.CheckFee == 0 {
-		if Converation == "Реестр" {
-			o.Verification = "Валидирован по реестру"
-		} else {
-			o.Verification = "ОК"
-		}
-	} else if o.Tariff == nil {
-		o.Verification = "Не найден тариф"
+	if o.Tariff == nil {
+		o.Verification = VRF_NO_TARIFF
 	} else if Converation == "Реестр" {
-		if o.Balance_amount == 0 { // нет курса и операции провайдера
-			o.Verification = "Нет в реестре"
-		} else if Provider_registry_amount == 0 { // еще не появился в реестре факт
-			o.Verification = "Требует уточнения курса"
-		} else { // есть в реестре факт, но БОФ криво посчитал
-			o.Verification = "Валидирован по реестру (см. CheckFee)"
+		if o.Balance_amount == 0 {
+			o.Verification = VRF_NO_IN_REG // нет курса и операции провайдера
+		} else if o.ProviderOperation == nil {
+			o.Verification = VRF_CHECK_RATE // курс есть, операции еще нет в реестре факт
+		} else if o.CheckFee != 0 {
+			o.Verification = VRF_VALID_REG_FEE // есть в реестре факт, но БОФ криво посчитал
+		} else {
+			o.Verification = VRF_VALID_REG // всё ок
 		}
+	} else if o.CheckFee == 0 {
+		o.Verification = VRF_OK
 	} else if o.Channel_currency != CurrencyBP {
-		o.Verification = "Валюта учёта отлична от валюты в Биллинге"
-	} else if CheckRates != 0 {
-		o.Verification = "Несоответствие тарифа"
+		o.Verification = VRF_CHECK_CURRENCY
+	} else if o.CheckRates != 0 {
+		o.Verification = VRF_CHECK_TARIFF
 	} else if o.IsDragonPay {
-		o.Verification = "Исключение ДрагонПей"
+		o.Verification = VRF_DRAGON_PAY
 	} else {
-		o.Verification = "Провень начисления биллинга"
+		o.Verification = VRF_CHECK_BILLING
 	}
+
+}
+
+const (
+	VRF_OK             = "ОК"
+	VRF_VALID_REG      = "Валидирован по реестру"
+	VRF_VALID_REG_FEE  = "Валидирован по реестру (см. CheckFee)"
+	VRF_NO_TARIFF      = "Не найден тариф"
+	VRF_NO_IN_REG      = "Нет в реестре"
+	VRF_CHECK_RATE     = "Требует уточнения курса"
+	VRF_CHECK_CURRENCY = "Валюта учёта отлична от валюты в Биллинге"
+	VRF_CHECK_TARIFF   = "Несоответствие тарифа"
+	VRF_DRAGON_PAY     = "Исключение ДрагонПей"
+	VRF_CHECK_BILLING  = "Провень начисления биллинга"
+)
+
+func (o *Operation) SetRR() {
+
+	if o.Tariff == nil {
+		return
+	}
+
+	if o.Operation_type != "sale" {
+		return
+	}
+
+	o.RR_date = o.Document_date.AddDate(0, 0, o.Tariff.RR_days)
+	o.RR_amount = o.Balance_amount * o.Tariff.RR_percent / 100
+
+}
+
+func (o *Operation) SetHold() {
+
+	if o.Hold == nil {
+		return
+	}
+
+	if o.Operation_type != "sale" {
+		return
+	}
+
+	o.hold_date = o.Document_date.AddDate(0, 0, o.Hold.Days)
+	o.hold_amount = o.Balance_amount * o.Hold.Percent
+
+}
+
+func (o *Operation) SetDK() {
+
+	t := o.Tariff
+
+	if t.DK_is_zero {
+		return
+	}
+
+	// BALANCE CURRENCY
+	commissionBC := o.Balance_amount*o.Tariff.DK_percent + t.DK_fix
+
+	if t.DK_min != 0 && commissionBC < t.DK_min {
+		commissionBC = t.DK_min
+	} else if t.DK_max != 0 && commissionBC > t.DK_max {
+		commissionBC = t.DK_max
+	}
+
+	if o.Balance_currency.Exponent {
+		commissionBC = util.Round(commissionBC, 0)
+	} else {
+		commissionBC = util.Round(commissionBC, 2)
+	}
+
+	o.CompensationBC = commissionBC - o.SR_balance_currency
+
+	// CHANNEL CURRENCY
+	commissionRC := o.Channel_amount*o.Tariff.DK_percent + t.DK_fix
+	commission_with_rate := commissionRC / util.TR(o.Rate == 0, 1, o.Rate).(float64)
+
+	if t.DK_min != 0 && commission_with_rate < t.DK_min {
+		commissionRC = t.DK_min * o.Rate
+	} else if t.DK_max != 0 && commission_with_rate > t.DK_max {
+		commissionRC = t.DK_max * o.Rate
+	}
+
+	if o.Channel_currency.Exponent {
+		commissionRC = util.Round(commissionRC, 0)
+	} else {
+		commissionRC = util.Round(commissionRC, 2)
+	}
+
+	o.CompensationRC = commissionRC - o.SR_channel_currency
 
 }

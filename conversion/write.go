@@ -1,17 +1,18 @@
 package conversion
 
 import (
+	"app/file"
 	"app/logs"
-	"app/processing"
+	"app/provider"
 	"app/querrys"
+	"context"
 	"fmt"
-	"path/filepath"
 	"sync"
-
-	"github.com/lib/pq"
+	"sync/atomic"
+	"time"
 )
 
-func WriteIntoDB(channel_operations chan processing.ProviderOperation, channel_files chan *FileInfo) {
+func WriteIntoDB(chan_operations chan provider.Operation, chan_readed_files chan *file.FileInfo) {
 
 	if db == nil {
 		logs.Add(logs.FATAL, "no connection to postgres")
@@ -21,9 +22,9 @@ func WriteIntoDB(channel_operations chan processing.ProviderOperation, channel_f
 	var wg sync.WaitGroup
 
 	//1М rows, чтобы читающие горутины на паузу не встали
-	channel_maps := make(chan map[int]processing.ProviderOperation, 1000)
+	chan_batches := make(chan Batch, 1000)
 
-	batch_len := 1000 // 17 fileds
+	batch_len := 1500 // 20 fileds
 
 	statement := querrys.Stat_Insert_provider_registry()
 
@@ -33,74 +34,129 @@ func WriteIntoDB(channel_operations chan processing.ProviderOperation, channel_f
 		return
 	}
 
-	count_rows := 0
+	var count_rows int64
 
 	wg.Add(1)
+	//for i := 1; i <= 1; i++ {
 	go func() {
 		defer wg.Done()
-		for v := range channel_maps {
+		for b := range chan_batches {
 
-			tx, _ := db.Beginx()
+			//tx, _ := db.Beginx()
 
-			sliceID := make([]int, 0, len(v))
-			sliceRows := make([]processing.ProviderOperation, 0, len(v))
-			count_rows = count_rows + len(v)
-			for _, row := range v {
-				sliceID = append(sliceID, row.Id)
-				sliceRows = append(sliceRows, row)
-			}
+			// sliceID := make([]int, 0, len(v))
+			// sliceRows := make([]processing.ProviderOperation, 0, len(v))
+			// count_rows = count_rows + len(v)
+			// for _, row := range v {
+			// 	sliceID = append(sliceID, row.Id)
+			// 	sliceRows = append(sliceRows, row)
+			// }
 
-			_, err = tx.Exec("delete from provider_registry where operation_id = ANY($1);", pq.Array(sliceID))
+			// _, err = tx.NamedQuery(`DELETE from provider_registry
+			// 	WHERE operation_id = :operation_id
+			// 		AND transaction_completed_at_day = :transaction_completed_at_day
+			// 		AND channel_amount = :channel_amount;`, v)
+
+			// if err != nil {
+			// 	logs.Add(logs.ERROR, fmt.Sprint("ошибка при удалении: ", err))
+			// 	tx.Rollback()
+			// 	continue
+			// }
+
+			// query, args, err := sqlx.In(`DELETE FROM provider_registry WHERE operation_id = :operation_id
+			// AND transaction_completed_at_day = :transaction_completed_at_day
+			// AND channel_amount = :channel_amount`, v)
+
+			// fmt.Println(query)
+			// fmt.Println(args...)
+			// fmt.Println(err)
+
+			// log.Fatal()
+
+			v := b.Get()
+
+			_, err := db.NamedExec(statement, v)
+
 			if err != nil {
-				logs.Add(logs.ERROR, fmt.Sprint("ошибка при удалении: ", err))
-				tx.Rollback()
-				continue
-			}
-
-			_, err := tx.NamedExec(statement, sliceRows)
-
-			if err != nil {
-				logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД: ", err))
-				tx.Rollback()
+				logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД: ", err, ", id:", v[0].Id), ", provider:", v[0].Provider_name)
+				//tx.Rollback()
 			} else {
-				tx.Commit()
+				atomic.AddInt64(&count_rows, int64(len(v)))
+				//tx.Commit()
 			}
+
+			b = nil
+			v = nil
 
 		}
 	}()
+	//}
 
-	i := 1
-	batch := map[int]processing.ProviderOperation{}
-	for v := range channel_operations {
-		batch[v.Id] = v
-		if i%batch_len == 0 {
-			channel_maps <- batch
-			batch = map[int]processing.ProviderOperation{}
+	go func() {
+		// i := 1
+		// batch := make([]processing.ProviderOperation, 0, 1000)
+		// for v := range channel_operations {
+		// 	batch = append(batch, v)
+		// 	if i%batch_len == 0 {
+		// 		channel_slices <- batch
+		// 		batch = make([]processing.ProviderOperation, 0, 1000)
+		// 	}
+		// 	i++
+		// }
+		// if len(batch) != 0 {
+		// 	channel_slices <- batch
+		// }
+		// close(channel_slices)
+
+		i := 1
+		batch := Batch{}
+		for v := range chan_operations {
+			batch.Set(v)
+			if i%batch_len == 0 {
+				chan_batches <- batch
+				batch = Batch{}
+			}
+			i++
 		}
-		i++
-	}
+		if len(batch) > 0 {
+			chan_batches <- batch
+		}
+		close(chan_batches)
+	}()
 
-	if len(batch) != 0 {
-		channel_maps <- batch
-	}
+	ctx, cancel := context.WithCancel(context.Background())
 
-	close(channel_maps)
+	go func(ctx context.Context) {
+		ticker := time.NewTicker(time.Second * 30)
+		defer ticker.Stop()
+	loop:
+		for {
+			select {
+			case <-ticker.C:
+				logs.Add(logs.INFO, "Обновлено строк: ", count_rows)
+			case <-ctx.Done():
+				break loop
+			}
+		}
+
+	}(ctx)
 
 	wg.Wait()
 
+	cancel()
+
 	// Штатное завершение, сохраняем статусы всех файлов
 	var count_files int
-	for f := range channel_files {
-		f.mu.Lock()
-		if !f.done {
-			f.InsertIntoDB()
-			logs.Add(logs.INFO, fmt.Sprint("Записан в postgres: ", filepath.Base(f.Filename)))
-		}
-		f.mu.Unlock()
+	for f := range chan_readed_files {
+		//f.mu.Lock()
+		//if !f.done {
+		f.InsertIntoDB(db)
+		//logs.Add(logs.MAIN, fmt.Sprint("Записан в postgres: ", filepath.Base(f.Filename)))
+		//}
+		//f.mu.Unlock()
 		count_files++
 	}
 
-	logs.Add(logs.INFO, fmt.Sprint("Добавлено/обновлено: ", count_rows, " строк"))
-	logs.Add(logs.REGL, fmt.Sprintf("Добавлено/обновлено: %d строк (%d файлов)", count_rows, count_files))
+	logs.Add(logs.MAIN, fmt.Sprintf("Добавлено/обновлено: %d строк (%d файлов)", count_rows, count_files))
 
 }

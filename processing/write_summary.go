@@ -134,6 +134,8 @@ func PSQL_Insert_SummaryMerchant(s []SummaryRowMerchant) {
 					once.Do(func() { logs.Add(logs.INFO, err) })
 					tx.Rollback()
 					return
+				} else if logs.Testing {
+					tx.Rollback()
 				} else {
 					tx.Commit()
 				}

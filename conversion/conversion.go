@@ -2,8 +2,9 @@ package conversion
 
 import (
 	"app/config"
+	"app/file"
 	"app/logs"
-	"app/processing"
+	"app/storage"
 	"app/util"
 	"fmt"
 	"sort"
@@ -16,7 +17,7 @@ var db *sqlx.DB
 func Start() {
 
 	var err error
-	db, err = processing.PSQL_connect()
+	db, err = storage.PSQL_connect()
 	if err != nil {
 		logs.Add(logs.FATAL, err)
 		return
@@ -33,7 +34,7 @@ func Start() {
 		return
 	}
 
-	files := GetFiles(filenames)
+	files := file.GetFiles(filenames)
 
 	logs.Add(logs.INFO, fmt.Sprint("Обнаружено файлов: ", len(files)))
 	logs.Add(logs.INFO, "Выполняется чтение...")
@@ -42,8 +43,8 @@ func Start() {
 		return files[i].Size < files[j].Size
 	})
 
-	ch_operations, ch_readed_files := ReadFiles(files)
+	chan_operations, chan_readed_files := ReadFiles(files)
 
-	WriteIntoDB(ch_operations, ch_readed_files)
+	WriteIntoDB(chan_operations, chan_readed_files)
 
 }

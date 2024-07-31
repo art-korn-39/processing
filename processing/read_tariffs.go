@@ -2,12 +2,13 @@ package processing
 
 import (
 	"app/config"
+	"app/currency"
+	"app/holds"
 	"app/logs"
 	"app/util"
 	"app/validation"
 	"errors"
 	"fmt"
-	"math"
 	"slices"
 	"strconv"
 	"strings"
@@ -46,7 +47,10 @@ func Read_XLSX_Tariffs() {
 
 	for _, sheet := range xlFile.Sheets {
 
-		if sheet.Name != "Тарифы" {
+		if sheet.Name == "Условия холдов" {
+			holds.ReadSheet(sheet)
+			continue
+		} else if sheet.Name != "Тарифы" {
 			continue
 		}
 
@@ -96,7 +100,6 @@ func Read_XLSX_Tariffs() {
 			tariff.Schema = row.Cells[map_fileds["схема"]-1].String()
 			tariff.Convertation = row.Cells[map_fileds["конверт"]-1].String()
 			tariff.Operation_type = row.Cells[map_fileds["operation_type"]-1].String()
-			tariff.RR_days, _ = row.Cells[map_fileds["рр, дней (пс)"]-1].Int()
 
 			tariff.Balance_id, _ = row.Cells[map_fileds["id баланса в бофе"]-1].Int()
 			tariff.Balance_type = row.Cells[map_fileds["тип баланса в бофе (in/ out/ in-out)"]-1].String()
@@ -106,34 +109,48 @@ func Read_XLSX_Tariffs() {
 			tariff.Provider1C = row.Cells[map_fileds["поставщик в 1с"]-1].String()
 			tariff.RatedAccount = row.Cells[map_fileds["расчетный счет"]-1].String()
 
-			tariff.CurrencyBM = NewCurrency(row.Cells[map_fileds["валюта баланса мерчанта в боф"]-1].String())
-			tariff.CurrencyBP = NewCurrency(row.Cells[map_fileds["валюта учетная"]-1].String())
+			tariff.CurrencyBM = currency.New(row.Cells[map_fileds["валюта баланса мерчанта в боф"]-1].String())
+			tariff.CurrencyBP = currency.New(row.Cells[map_fileds["валюта учетная"]-1].String())
 
 			percent_str := strings.ReplaceAll(row.Cells[map_fileds["%"]-1].String(), "%", "")
 			tariff.Percent, _ = strconv.ParseFloat(percent_str, 64)
 			tariff.Percent = tariff.Percent / 100
 
-			tariff.Fix, _ = strconv.ParseFloat(row.Cells[map_fileds["fix"]-1].String(), 64) // "числовой"
-			tariff.Min, _ = strconv.ParseFloat(row.Cells[map_fileds["min"]-1].String(), 64)
-			tariff.Max, _ = strconv.ParseFloat(row.Cells[map_fileds["max"]-1].String(), 64) // "общий"
+			//tariff.Fix, _ = strconv.ParseFloat(row.Cells[map_fileds["fix"]-1].String(), 64) // "числовой"
+			//tariff.Min, _ = strconv.ParseFloat(row.Cells[map_fileds["min"]-1].String(), 64)
+			//tariff.Max, _ = strconv.ParseFloat(row.Cells[map_fileds["max"]-1].String(), 64) // "общий"
 
-			tariff.RangeMIN, _ = row.Cells[map_fileds["range min"]-1].Float() // "все форматы"
-			tariff.RangeMIN = util.TR(math.IsNaN(tariff.RangeMIN), float64(0), tariff.RangeMIN).(float64)
+			tariff.Fix = util.FloatFromCell(row.Cells[map_fileds["fix"]-1])
+			tariff.Min = util.FloatFromCell(row.Cells[map_fileds["min"]-1])
+			tariff.Max = util.FloatFromCell(row.Cells[map_fileds["max"]-1])
 
-			tariff.RangeMAX, _ = row.Cells[map_fileds["range max"]-1].Float()
-			tariff.RangeMAX = util.TR(math.IsNaN(tariff.RangeMAX), float64(0), tariff.RangeMAX).(float64)
-			tariff.RangeMAX = util.TR(tariff.RangeMAX == 0, RANGE_MAX, tariff.RangeMAX).(float64)
+			//tariff.RangeMIN, _ = row.Cells[map_fileds["range min"]-1].Float() // "все форматы"
+			//tariff.RangeMIN = util.TR(math.IsNaN(tariff.RangeMIN), float64(0), tariff.RangeMIN).(float64)
 
+			tariff.RangeMIN = util.FloatFromCell(row.Cells[map_fileds["range min"]-1])
+
+			//tariff.RangeMAX, _ = row.Cells[map_fileds["range max"]-1].Float()
+			//tariff.RangeMAX = util.TR(math.IsNaN(tariff.RangeMAX), float64(0), tariff.RangeMAX).(float64)
+
+			tariff.RangeMAX = util.FloatFromCell(row.Cells[map_fileds["range max"]-1])
+
+			tariff.RR_days, _ = row.Cells[map_fileds["рр, дней (пс)"]-1].Int()
 			tariff.RR_percent, _ = strconv.ParseFloat(row.Cells[map_fileds["рр, процент (пс)"]-1].String(), 64)
 
 			tariff.DateStartPS, _ = row.Cells[map_fileds["дата нач.раб пс"]-1].GetTime(false)
 			tariff.DateStart, _ = row.Cells[map_fileds["дата старта"]-1].GetTime(false)
 
-			tariff.SetFormula()
+			// tariff.DK_percent, _ = strconv.ParseFloat(row.Cells[map_fileds["%дк"]-1].String(), 64)
+			// tariff.DK_fix, _ = strconv.ParseFloat(row.Cells[map_fileds["fixдк"]-1].String(), 64)
+			// tariff.DK_min, _ = strconv.ParseFloat(row.Cells[map_fileds["minдк"]-1].String(), 64)
+			// tariff.DK_max, _ = strconv.ParseFloat(row.Cells[map_fileds["maxдк"]-1].String(), 64)
 
-			if tariff.Schema == "Crypto" {
-				tariff.IsCrypto = true
-			}
+			tariff.DK_percent = util.FloatFromCell(row.Cells[map_fileds["%дк"]-1])
+			tariff.DK_fix = util.FloatFromCell(row.Cells[map_fileds["fixдк"]-1])
+			tariff.DK_min = util.FloatFromCell(row.Cells[map_fileds["minдк"]-1])
+			tariff.DK_max = util.FloatFromCell(row.Cells[map_fileds["maxдк"]-1])
+
+			tariff.StartingFill()
 
 			storage.Tariffs = append(storage.Tariffs, tariff)
 
@@ -142,29 +159,5 @@ func Read_XLSX_Tariffs() {
 	}
 
 	logs.Add(logs.INFO, fmt.Sprintf("Чтение тарифов: %v", time.Since(start_time)))
-
-}
-
-func CheckRequiredFileds_Tariffs(map_fileds map[string]int) error {
-
-	M := []string{
-		"Баланс", "Мерчант", "Merchant Account ID", "Provider", "Валюта баланса мерчанта в БОФ",
-		"Валюта учетная", "Дата Старта", "Конверт", "operation_type",
-		"%", "Fix", "Min", "Max", "Range min", "Range max", "ID Баланса в бофе", "tarif_condition_id",
-
-		"ID Баланса в бофе", "ТИП Баланса в Бофе (IN/ OUT/ IN-OUT)", "Подразделение 1С", "Поставщик в 1С", "Расчетный счет",
-		"РР, Процент (ПС)", "Дата нач.раб ПС", "Схема", "РР, дней (ПС)", "Код Баланса по справочнику",
-	}
-
-	for _, v := range M {
-
-		_, ok := map_fileds[v]
-		if !ok {
-			return errors.New("Отсуствует обязательное поле! (" + v + ")")
-		}
-
-	}
-
-	return nil
 
 }

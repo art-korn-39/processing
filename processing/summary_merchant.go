@@ -47,23 +47,35 @@ type SummaryRowMerchant struct {
 	RR_date   time.Time `db:"rr_date"`
 }
 
-func (row *SummaryRowMerchant) AddValues(o Operation) {
+func (row *SummaryRowMerchant) AddValues(o *Operation) {
 
-	row.Rate = row.Rate + o.Rate
+	//row.Rate = row.Rate + o.Rate
 	row.Count_operations = row.Count_operations + o.Count_operations
 	row.Channel_amount = row.Channel_amount + o.Channel_amount
 	row.Balance_amount = row.Balance_amount + o.Balance_amount
 	row.SR_channel_currency = row.SR_channel_currency + o.SR_channel_currency
 	row.SR_balance_currency = row.SR_balance_currency + o.SR_balance_currency
+	row.RR_amount = row.RR_amount + o.RR_amount
 
-	if o.Tariff != nil && o.Operation_group == "IN" {
-		row.RR_amount = row.RR_amount + o.Tariff.RR_percent/100*o.Balance_amount
+}
+
+func (row *SummaryRowMerchant) SetRate() {
+
+	if row.Balance_amount == 0 || row.Channel_amount == 0 {
+		return
 	}
+
+	if row.Balance_currency_str == "EUR" {
+		row.Rate = row.Balance_amount / row.Channel_amount
+	} else {
+		row.Rate = row.Channel_amount / row.Balance_amount
+	}
+
 }
 
 func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 
-	NewKey := func(o Operation) (k SummaryRowMerchant) {
+	NewKey := func(o *Operation) (k SummaryRowMerchant) {
 		k = SummaryRowMerchant{}
 
 		k.Document_date = o.Document_date
@@ -83,6 +95,7 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 		k.Business_type = o.Business_type
 		k.Channel_currency_str = o.Channel_currency.Name
 		k.Balance_currency_str = o.Balance_currency.Name
+		k.RR_date = o.RR_date
 
 		if o.Tariff != nil {
 			k.Convertation = o.Tariff.Convertation
@@ -92,10 +105,6 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 			k.Provider_1c = o.Tariff.Provider1C
 			k.Subdivision_1c = o.Tariff.Subdivision1C
 			k.Rated_account = o.Tariff.RatedAccount
-
-			if o.Operation_group == "IN" {
-				k.RR_date = o.Document_date.AddDate(0, 0, o.Tariff.RR_days)
-			}
 		}
 		return
 	}
@@ -108,22 +117,25 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 
 	group_data := map[SummaryRowMerchant]SummaryRowMerchant{}
 	for _, operation := range storage.Registry {
-		key := NewKey(*operation) // получили структуру с полями группировки
-		row := group_data[key]    // получили текущие агрегатные данные по ним
-		row.AddValues(*operation) // увеличили агрегатные данные на значения тек. операции
-		group_data[key] = row     // положили обратно в мапу
+		key := NewKey(operation) // получили структуру с полями группировки
+		row := group_data[key]   // получили текущие агрегатные данные по ним
+		row.AddValues(operation) // увеличили агрегатные данные на значения тек. операции
+		group_data[key] = row    // положили обратно в мапу
 	}
 
 	data = make([]SummaryRowMerchant, 0, len(group_data))
 	for k, v := range group_data {
 
-		k.Rate = v.Rate / float64(v.Count_operations)
+		//k.Rate = v.Rate / float64(v.Count_operations)
+		k.Rate = v.Balance_amount / v.Channel_amount
 		k.Count_operations = v.Count_operations
 		k.Channel_amount = v.Channel_amount
 		k.Balance_amount = v.Balance_amount
 		k.SR_channel_currency = v.SR_channel_currency
 		k.SR_balance_currency = v.SR_balance_currency
 		k.RR_amount = v.RR_amount
+
+		k.SetRate()
 
 		data = append(data, k)
 	}

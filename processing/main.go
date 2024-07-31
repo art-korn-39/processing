@@ -2,14 +2,18 @@ package processing
 
 import (
 	"app/config"
+	"app/crypto"
+	"app/holds"
 	"app/logs"
+	"app/provider"
+	"app/querrys"
 	"fmt"
 	"sync"
 	"time"
 )
 
 const (
-	Version = "0.8.9"
+	Version = "1.2.1"
 )
 
 var (
@@ -36,7 +40,6 @@ func Init() {
 func Start() {
 
 	Init()
-
 	defer storage.Close()
 
 	st := time.Now()
@@ -55,13 +58,13 @@ func Start() {
 	logs.Add(logs.DEBUG, "PrepareData: ", time.Since(st))
 	st = time.Now()
 
-	// 3. Комиссия
-	CalculateCommission()
+	// 3.
+	HandleDataInOperations()
 
 	logs.Add(logs.DEBUG, "CalculateCommission: ", time.Since(st))
 	st = time.Now()
 
-	// 4. Результат
+	// 5. Результат
 	SaveResult()
 
 	logs.Add(logs.DEBUG, "SaveResult: ", time.Since(st))
@@ -76,7 +79,7 @@ func ReadSources() {
 
 	//wg.Add(1)
 
-	registry_done := make(chan struct{})
+	registry_done := make(chan querrys.Args, 1)
 	go func() {
 		defer wg.Done()
 		Read_Registry(registry_done)
@@ -84,7 +87,8 @@ func ReadSources() {
 
 	go func() {
 		defer wg.Done()
-		Read_ProviderRegistry(registry_done)
+		//Read_ProviderRegistry(registry_done)
+		provider.Read_Registry(storage.Postgres, registry_done)
 	}()
 
 	go func() {
@@ -94,7 +98,8 @@ func ReadSources() {
 
 	go func() {
 		defer wg.Done()
-		Read_Crypto()
+		//Read_Crypto()
+		crypto.Read_Registry(storage.Postgres)
 	}()
 
 	wg.Wait()
@@ -110,8 +115,9 @@ func PrepareData() {
 	go func() {
 		defer wg.Done()
 
-		// Сортировка тарифов
+		// Сортировка
 		SortTariffs()
+		holds.Sort()
 
 		// Подбор тарифов к операциям
 		SelectTariffsInRegistry()
@@ -122,13 +128,38 @@ func PrepareData() {
 		defer wg.Done()
 
 		// Группировка курсов валют
-		GroupRates()
+		provider.Rates = provider.Rates.Group()
 
 		// Сортировка курсов валют
-		SortRates()
+		provider.Rates.Sort()
 	}()
 
 	wg.Wait()
+
+}
+
+func HandleDataInOperations() {
+
+	// var wg sync.WaitGroup
+
+	// wg.Add(2)
+
+	// // 3. Комиссия
+	// go func() {
+	// 	defer wg.Done()
+	// 	CalculateCommission()
+	// }()
+
+	// // 4. Холды
+	// go func() {
+	// 	defer wg.Done()
+	// 	HandleHolds()
+	// }()
+
+	// wg.Wait()
+
+	CalculateCommission()
+	HandleHolds()
 
 }
 

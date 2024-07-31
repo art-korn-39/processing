@@ -1,5 +1,13 @@
 package querrys
 
+import "time"
+
+type Args struct {
+	Merhcant []string
+	DateFrom time.Time
+	DateTo   time.Time
+}
+
 func Stat_Select_reports() string {
 	return `
 	SELECT 
@@ -37,7 +45,12 @@ func Stat_Select_reports() string {
 	IFNULL(operation__channel_amount, 0) AS channel_amount,
 	IFNULL(operation__channel_currency, '') AS channel_currency,
 	IFNULL(operation__fee_amount, 0) AS fee_amount,
-	IFNULL(operation__fee_currency, '') AS fee_currency
+	IFNULL(operation__fee_currency, '') AS fee_currency,
+
+	IFNULL(billing__tariff_rate_fix, 0) AS billing__tariff_rate_fix,
+	IFNULL(billing__tariff_rate_percent, 0) AS billing__tariff_rate_percent,
+	IFNULL(billing__tariff_rate_min, 0) AS billing__tariff_rate_min,
+	IFNULL(billing__tariff_rate_max, 0) AS billing__tariff_rate_max
 
 	FROM reports
 	
@@ -51,10 +64,25 @@ func Stat_Select_reports() string {
 
 func Stat_Select_provider_registry() string {
 	return `SELECT operation_id, transaction_completed_at, operation_type, country,
-		payment_method_type, merchant_name, rate, amount, channel_currency, provider_currency
+		payment_method_type, merchant_name, rate, amount, channel_amount, channel_currency, provider_currency
 		FROM provider_registry 
 		WHERE merchant_name = ANY($1) 
 		AND transaction_completed_at BETWEEN $2 AND $3`
+}
+
+func Stat_Insert_provider_registry2() string {
+	return `INSERT INTO provider_registry (
+		operation_id, transaction_completed_at, provider_name, merchant_name, merchant_account_name,
+		project_url, payment_method_type, country, rate, operation_type, amount,
+		provider_payment_id, operation_status, account_number, channel_currency, provider_currency, br_amount,
+		transaction_completed_at_day, channel_amount
+	)
+	VALUES (
+		:operation_id, :transaction_completed_at, :provider_name, :merchant_name, :merchant_account_name,
+		:project_url, :payment_method_type, :country, :rate, :operation_type, :amount,
+		:provider_payment_id, :operation_status, :account_number, :channel_currency, :provider_currency, :br_amount,
+		:transaction_completed_at_day, :channel_amount
+	)`
 }
 
 func Stat_Insert_provider_registry() string {
@@ -62,14 +90,17 @@ func Stat_Insert_provider_registry() string {
 		operation_id, transaction_completed_at, provider_name, merchant_name, merchant_account_name,
 		project_url, payment_method_type, country, rate, operation_type, amount,
 		provider_payment_id, operation_status, account_number, channel_currency, provider_currency, br_amount,
-		transaction_completed_at_day
+		transaction_completed_at_day, channel_amount
 	)
 	VALUES (
 		:operation_id, :transaction_completed_at, :provider_name, :merchant_name, :merchant_account_name,
 		:project_url, :payment_method_type, :country, :rate, :operation_type, :amount,
 		:provider_payment_id, :operation_status, :account_number, :channel_currency, :provider_currency, :br_amount,
-		:transaction_completed_at_day
-	)`
+		:transaction_completed_at_day, :channel_amount
+	)
+	ON CONFLICT ON CONSTRAINT pk_id_date_amount DO UPDATE
+	SET rate = EXCLUDED.rate, amount = EXCLUDED.amount, br_amount = EXCLUDED.br_amount,
+		operation_status = EXCLUDED.operation_status`
 }
 
 func Stat_Insert_detailed() string {

@@ -40,10 +40,14 @@ func CheckMapOfColumnNames(map_fileds map[string]int, table string) error {
 		s = fields_bof_registry()
 	case "tariffs":
 		s = fields_tariffs()
+	case "holds":
+		s = fields_holds()
 	case "crypto":
 		s = fields_crypto()
 	case "provider_registry":
 		s = fields_provider_registry()
+	case "provider_registry_rub":
+		s = fields_provider_registry_rub()
 	default:
 		return fmt.Errorf("table %s is not supported", table)
 	}
@@ -83,6 +87,13 @@ func fields_tariffs() []string {
 		"%", "fix", "min", "max", "range min", "range max", "id баланса в бофе", "tarif_condition_id",
 		"id баланса в бофе", "тип баланса в бофе (in/ out/ in-out)", "подразделение 1с", "поставщик в 1с", "расчетный счет",
 		"рр, процент (пс)", "дата нач.раб пс", "схема", "рр, дней (пс)", "код баланса по справочнику",
+		"%дк", "fixдк", "minдк", "maxдк",
+	}
+}
+
+func fields_holds() []string {
+	return []string{
+		"схема", "валюта", "ma_id", "ma_name", "дата старта", "процент холда", "кол-во дней",
 	}
 }
 
@@ -96,8 +107,19 @@ func fields_provider_registry() []string {
 		"id / operation_id", "transaction_completed_at",
 		"operation_type", "issuer_country",
 		"payment_type_id / payment_method_type",
-		"merchant_name", "real_currency / channel_currency",
+		"merchant_name", "real_currency / channel_currency", "real_amount / channel_amount",
 		"provider_currency", "курс", "provider_amount",
+		"provider_name", "merchant_account_name", "acquirer_id / provider_payment_id",
+		"project_url", "operation_status",
+	}
+}
+
+func fields_provider_registry_rub() []string {
+	return []string{
+		"id / operation_id", "transaction_completed_at",
+		"operation_type", "issuer_country",
+		"payment_type_id / payment_method_type",
+		"merchant_name", "real_currency / channel_currency", "real_amount / channel_amount",
 		"provider_name", "merchant_account_name", "acquirer_id / provider_payment_id",
 		"project_url", "operation_status",
 	}

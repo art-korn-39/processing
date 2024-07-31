@@ -52,7 +52,7 @@ func ReadFiles(filenames []string) {
 				}
 
 				if len(M) > 5 {
-					o := DeclineOperation{}
+					o := Operation{}
 
 					o.Date = util.GetDateFromString(message.Date_str)
 					o.Created_at = util.GetDateFromString(M["created at"])

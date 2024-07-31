@@ -8,10 +8,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 )
 
-func InsertIntoDB() {
+func InsertIntoDB(db *sqlx.DB) {
 
 	if db == nil {
 		return
@@ -19,7 +20,7 @@ func InsertIntoDB() {
 
 	start_time := time.Now()
 
-	channel := make(chan []DeclineOperation, 1000)
+	channel := make(chan []Operation, 1000)
 
 	const batch_len = 100
 
@@ -65,12 +66,12 @@ func InsertIntoDB() {
 	}
 
 	var i int
-	batch := make([]DeclineOperation, 0, batch_len)
+	batch := make([]Operation, 0, batch_len)
 	for _, v := range decline_operations {
 		batch = append(batch, v)
 		if (i+1)%batch_len == 0 {
 			channel <- batch
-			batch = make([]DeclineOperation, 0, batch_len)
+			batch = make([]Operation, 0, batch_len)
 		}
 		i++
 	}
