@@ -16,8 +16,10 @@ var db *sqlx.DB
 
 func Start() {
 
+	cfg := config.Get()
+
 	var err error
-	db, err = storage.PSQL_connect()
+	db, err = storage.PSQL_connect(cfg)
 	if err != nil {
 		logs.Add(logs.FATAL, err)
 		return
@@ -26,7 +28,7 @@ func Start() {
 	}
 	defer db.Close()
 
-	folder := config.Get().Rates.Filename
+	folder := cfg.Rates.Filename
 
 	filenames, err := util.ParseFoldersRecursively(folder)
 	if err != nil {
@@ -34,7 +36,7 @@ func Start() {
 		return
 	}
 
-	files := file.GetFiles(filenames)
+	files := file.GetFiles(filenames, file.REG_PROVIDER, ".xlsx")
 
 	logs.Add(logs.INFO, fmt.Sprint("Обнаружено файлов: ", len(files)))
 	logs.Add(logs.INFO, "Выполняется чтение...")

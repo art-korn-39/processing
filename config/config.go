@@ -21,6 +21,9 @@ var (
 	//go:embed databases.conf
 	databases embed.FS
 
+	//go:embed cloud.conf
+	cloud embed.FS
+
 	NumCPU int
 )
 
@@ -31,6 +34,7 @@ const (
 	PSQL       Storage     = "PSQL"
 	Clickhouse Storage     = "CH"
 	File       Storage     = "FILE"
+	AWS        Storage     = "AWS"
 	PROCESSING Application = "processing"
 	TRANSFER   Application = "transfer"
 )
@@ -45,8 +49,10 @@ type (
 
 		Routine_task bool `json:"routine_task"`
 
+		// подключения к базам
 		Clickhouse DatabaseConnection `json:"clickhouse"`
 		PSQL       DatabaseConnection `json:"psql"`
+		AWS        CloudConnection    `json:"aws"`
 
 		Registry    Registry   `json:"registry"`
 		Tariffs     ImportData `json:"tariffs"`
@@ -65,6 +71,16 @@ type (
 		Port     int    `json:"port"`
 		User     string `json:"user"`
 		Password string `json:"password"`
+		Key      string `json:"key"`
+		Secret   string `json:"secret"`
+	}
+
+	CloudConnection struct {
+		Usage  bool
+		Key    string `json:"key"`
+		Secret string `json:"secret"`
+		Bucket string `json:"bucket"`
+		Region string `json:"region"`
 	}
 
 	Registry struct {
@@ -108,7 +124,12 @@ func Get() Config {
 
 func Load() (err error) {
 
-	err = cfg.ReadDatabasesConfig()
+	err = cfg.ReadEmbedFile(databases, "databases.conf")
+	if err != nil {
+		return err
+	}
+
+	err = cfg.ReadEmbedFile(cloud, "cloud.conf")
 	if err != nil {
 		return err
 	}
@@ -142,9 +163,9 @@ func Load() (err error) {
 
 }
 
-func (c *Config) ReadDatabasesConfig() error {
+func (c *Config) ReadEmbedFile(fs embed.FS, name string) error {
 
-	file, err := databases.Open("databases.conf")
+	file, err := fs.Open(name)
 	if err != nil {
 		return err
 	}
@@ -197,5 +218,11 @@ func (c *Config) SetDBUsage() {
 		c.Summary.Storage == PSQL ||
 		c.SummaryInfo.Storage == PSQL ||
 		c.Detailed.Storage == PSQL
+
+	c.AWS.Usage = c.Registry.Storage == AWS
+	if c.AWS.Usage {
+		c.Clickhouse.Usage = true
+		c.PSQL.Usage = true
+	}
 
 }

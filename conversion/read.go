@@ -53,7 +53,7 @@ func ReadFiles(files []*file.FileInfo) (chan_operations chan provider.Operation,
 				chan_readed_files <- f
 
 				// через 40 сек после чтение ставим новую временную метку в БД
-				go f.SetLastUpload(db)
+				go f.InsertIntoDB(db, 40*time.Second)
 
 				atomic.AddInt64(&count_readed, 1)
 			}

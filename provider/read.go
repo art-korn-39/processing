@@ -222,7 +222,7 @@ func Read_rub_sheet(sheet *xlsx.Sheet, filename string) (ops []Operation, err er
 	idx_br := map_fileds["br"] - 1
 	idx_account := map_fileds["customer_purse / account_number"] - 1
 	idx_operation_id := map_fileds["id / operation_id"] - 1
-	//idx_provider_amount := map_fileds["provider_amount"] - 1
+	idx_balance := map_fileds["баланс"] - 1
 
 	ops = make([]Operation, 0, len(sheet.Rows))
 
@@ -272,6 +272,10 @@ func Read_rub_sheet(sheet *xlsx.Sheet, filename string) (ops []Operation, err er
 		if len(row.Cells) > idx_br && idx_br >= 0 {
 			operation.BR_amount, _ = row.Cells[idx_br].Float()
 			operation.BR_amount = util.TR(math.IsNaN(operation.BR_amount), float64(0), operation.BR_amount).(float64)
+		}
+
+		if len(row.Cells) > idx_balance && idx_balance >= 0 {
+			operation.Balance = row.Cells[map_fileds["баланс"]-1].String()
 		}
 
 		operation.StartingFill(true)

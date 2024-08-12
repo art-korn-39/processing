@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	Version = "1.2.1"
+	Version = "1.2.3"
 )
 
 var (
@@ -30,7 +30,7 @@ func Init() {
 	}
 	logs.Add(logs.INFO, fmt.Sprintf("Загружен файл конфигурации (ver %s)", Version))
 
-	err = storage.Init()
+	err = storage.Connect()
 	if err != nil {
 		logs.Add(logs.FATAL, err)
 	}
@@ -47,8 +47,6 @@ func Start() {
 	// 1. Загрузка источников
 	ReadSources()
 
-	//return
-
 	logs.Add(logs.DEBUG, "ReadSources: ", time.Since(st))
 	st = time.Now()
 
@@ -58,13 +56,13 @@ func Start() {
 	logs.Add(logs.DEBUG, "PrepareData: ", time.Since(st))
 	st = time.Now()
 
-	// 3.
+	// 3. Комиссия и холды
 	HandleDataInOperations()
 
 	logs.Add(logs.DEBUG, "CalculateCommission: ", time.Since(st))
 	st = time.Now()
 
-	// 5. Результат
+	// 4. Результат
 	SaveResult()
 
 	logs.Add(logs.DEBUG, "SaveResult: ", time.Since(st))
@@ -77,8 +75,6 @@ func ReadSources() {
 
 	wg.Add(4)
 
-	//wg.Add(1)
-
 	registry_done := make(chan querrys.Args, 1)
 	go func() {
 		defer wg.Done()
@@ -87,7 +83,6 @@ func ReadSources() {
 
 	go func() {
 		defer wg.Done()
-		//Read_ProviderRegistry(registry_done)
 		provider.Read_Registry(storage.Postgres, registry_done)
 	}()
 
@@ -98,7 +93,6 @@ func ReadSources() {
 
 	go func() {
 		defer wg.Done()
-		//Read_Crypto()
 		crypto.Read_Registry(storage.Postgres)
 	}()
 
@@ -139,24 +133,6 @@ func PrepareData() {
 }
 
 func HandleDataInOperations() {
-
-	// var wg sync.WaitGroup
-
-	// wg.Add(2)
-
-	// // 3. Комиссия
-	// go func() {
-	// 	defer wg.Done()
-	// 	CalculateCommission()
-	// }()
-
-	// // 4. Холды
-	// go func() {
-	// 	defer wg.Done()
-	// 	HandleHolds()
-	// }()
-
-	// wg.Wait()
 
 	CalculateCommission()
 	HandleHolds()

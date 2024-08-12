@@ -20,8 +20,10 @@ func init() {
 
 func Start() {
 
+	cfg := config.Get()
+
 	var err error
-	db, err := storage.PSQL_connect()
+	db, err := storage.PSQL_connect(cfg)
 	if err != nil {
 		logs.Add(logs.FATAL, err)
 		return

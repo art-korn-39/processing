@@ -13,7 +13,9 @@ var (
 
 func Start() {
 
-	db, err := storage.PSQL_connect()
+	cfg := config.Get()
+
+	db, err := storage.PSQL_connect(cfg)
 	if err != nil {
 		logs.Add(logs.FATAL, err)
 		return
@@ -24,7 +26,7 @@ func Start() {
 
 	decline_operations = make(map[int]Operation, 1000)
 
-	folder := config.Get().Decline.Filename
+	folder := cfg.Decline.Filename
 	filenames, err := util.ParseFoldersRecursively(folder)
 	if err != nil {
 		return

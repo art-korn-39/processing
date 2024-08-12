@@ -16,20 +16,27 @@ import (
 	"time"
 )
 
-const DUR = 24
+const DUR = 2
+
+// GET + Q best?
 
 func Read_Registry(registry_done chan querrys.Args) {
 
 	if config.Get().Registry.Storage == config.Clickhouse {
 		registry_done <- NewQuerryArgs(true)
 		close(registry_done)
+
 		err := CH_ReadRegistry()
 		if err != nil {
 			logs.Add(logs.FATAL, err)
 		}
+
+		//CH_ReadRegistry_uno_querry_cap()
 		//CH_ReadRegistry_async()
 		//CH_ReadRegistry_async2()
 		//CH_ReadRegistry_async_querry()
+
+		//CH_ReadRegistry_async_querry_cap()
 	} else {
 		defer close(registry_done)
 		Read_CSV_Registry()
@@ -48,11 +55,11 @@ func NewQuerryArgs(from_cfg bool) (args querrys.Args) {
 
 	args = querrys.Args{}
 
-	if from_cfg {
+	if from_cfg { // clickhouse
 		args.Merhcant = config.Get().Registry.Merchant_name
 		args.DateFrom = config.Get().Registry.DateFrom.Add(-20 * 24 * time.Hour)
-		args.DateTo = config.Get().Registry.DateTo.Add(1 * 24 * time.Hour)
-	} else {
+		args.DateTo = config.Get().Registry.DateTo.Add(4 * 24 * time.Hour)
+	} else { // file
 		lenght := len(storage.Registry)
 		if lenght > 0 {
 			row := storage.Registry[0]
@@ -375,6 +382,81 @@ func CH_ReadRegistry_async_querry() error {
 	wg.Wait()
 
 	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра из Clickhouse async NO GET + Q: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Registry))))
+
+	return nil
+}
+
+func CH_ReadRegistry_async_querry_cap() error {
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	start_time := time.Now()
+
+	merchant_str := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(config.Get().Registry.Merchant_id)), ","), "[]")
+
+	Statement := `SELECT COUNT(*) 
+	FROM reports
+	WHERE 
+		billing__billing_operation_created_at BETWEEN toDateTime('$1') AND toDateTime('$2')
+		AND billing__merchant_id IN ($3)`
+	Statement = strings.ReplaceAll(Statement, "$1", config.Get().Registry.DateFrom.Format(time.DateTime))
+	Statement = strings.ReplaceAll(Statement, "$2", config.Get().Registry.DateTo.Format(time.DateTime))
+	Statement = strings.ReplaceAll(Statement, "$3", merchant_str)
+
+	var count_rows int
+	storage.Clickhouse.Get(&count_rows, Statement)
+
+	storage.Registry = make([]*Operation, 0, count_rows)
+
+	channel_dates := util.GetChannelOfDays(config.Get().Registry.DateFrom,
+		config.Get().Registry.DateTo,
+		DUR*time.Hour)
+
+	Statement = querrys.Stat_Select_reports()
+	Statement = strings.ReplaceAll(Statement, "$3", merchant_str)
+
+	//fmt.Println(config.NumCPU)
+
+	wg.Add(config.NumCPU)
+	for i := 1; i <= config.NumCPU; i++ {
+		go func() {
+			defer wg.Done()
+			for period := range channel_dates {
+				stat := strings.ReplaceAll(Statement, "$1", period.StartDay.Format(time.DateTime))
+				stat = strings.ReplaceAll(stat, "$2", period.EndDay.Format(time.DateTime))
+
+				res := make([]*Operation, 0, 100000)
+
+				rows, err := storage.Clickhouse.Queryx(stat)
+				if err != nil {
+					logs.Add(logs.FATAL, err)
+					return
+				}
+
+				for rows.Next() {
+					var op Operation
+					if err := rows.StructScan(&op); err != nil {
+						logs.Add(logs.FATAL, err)
+						return
+					}
+					op.StartingFill()
+					res = append(res, &op)
+				}
+
+				//fmt.Println(len(res))
+
+				mu.Lock()
+				storage.Registry = append(storage.Registry, res...)
+				mu.Unlock()
+
+			}
+		}()
+	}
+
+	wg.Wait()
+
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра из Clickhouse async GET + Q: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Registry))))
 
 	return nil
 }

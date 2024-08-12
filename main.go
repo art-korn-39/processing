@@ -1,6 +1,7 @@
 package main
 
 import (
+	"app/aws"
 	"app/config"
 	"app/conversion"
 	"app/crypto"
@@ -29,7 +30,7 @@ func main() {
 	var app string
 	var file_config string
 
-	flag.StringVar(&app, "app", "processing", "") // processing | conversion | decline | crypto
+	flag.StringVar(&app, "app", "processing", "") // processing | conversion | decline | crypto | aws
 	flag.StringVar(&file_config, "file_config", "", "")
 	flag.Parse()
 
@@ -49,6 +50,8 @@ func main() {
 		decline.Start()
 	case "crypto":
 		crypto.Start()
+	case "aws":
+		aws.Start()
 	}
 
 	logs.Add(logs.MAIN, fmt.Sprintf("Общее время выполнения: %v", time.Since(start_time)))

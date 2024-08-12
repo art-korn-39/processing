@@ -150,7 +150,7 @@ func WriteIntoDB(chan_operations chan provider.Operation, chan_readed_files chan
 	for f := range chan_readed_files {
 		//f.mu.Lock()
 		//if !f.done {
-		f.InsertIntoDB(db)
+		f.InsertIntoDB(db, 0)
 		//logs.Add(logs.MAIN, fmt.Sprint("Записан в postgres: ", filepath.Base(f.Filename)))
 		//}
 		//f.mu.Unlock()

@@ -29,10 +29,12 @@ func (s *Storage) Close() {
 	}
 }
 
-func (s *Storage) Init() (err error) {
+func (s *Storage) Connect() (err error) {
+
+	cfg := config.Get()
 
 	if config.Get().Clickhouse.Usage {
-		connect, err := stg.CH_Connect()
+		connect, err := stg.CH_Connect(cfg)
 		if err != nil {
 			return err
 		}
@@ -41,7 +43,7 @@ func (s *Storage) Init() (err error) {
 	}
 
 	if config.Get().PSQL.Usage {
-		connect, err := stg.PSQL_connect()
+		connect, err := stg.PSQL_connect(cfg)
 		if err != nil {
 			return err
 		}

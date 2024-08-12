@@ -2,6 +2,7 @@ package file
 
 import (
 	"app/logs"
+	"app/querrys"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,24 +13,33 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+const (
+	REG_BOF      = "BOF registry"
+	REG_PROVIDER = "provider registry"
+	CRYPTO       = "crypto"
+	DECLINE      = "decline"
+)
+
 type FileInfo struct {
 	Filename   string    `db:"filename"`
+	Category   string    `db:"category"`
 	Size       int       `db:"size"`
 	Size_mb    int       `db:"size_mb"`
 	Modified   time.Time `db:"modified"`
 	Rows       int       `db:"rows"`
 	LastUpload time.Time `db:"last_upload"`
-	done       bool
-	mu         sync.Mutex
+
+	done bool
+	mu   sync.Mutex
 }
 
-func GetFiles(filenames []string) []*FileInfo {
+func GetFiles(filenames []string, category string, extension string) []*FileInfo {
 
 	files := make([]*FileInfo, 0, len(filenames))
 
 	for _, f := range filenames {
 
-		if strings.Contains(f, "~$") || filepath.Ext(f) != ".xlsx" {
+		if strings.Contains(f, "~$") || filepath.Ext(f) != extension {
 			continue
 		}
 
@@ -50,6 +60,7 @@ func GetFiles(filenames []string) []*FileInfo {
 
 		fileInfo := &FileInfo{
 			Filename: f,
+			Category: category,
 			Size:     int(stat.Size()),
 			Size_mb:  int(stat.Size()) / 1024000,
 			Modified: stat.ModTime(),
@@ -63,11 +74,38 @@ func GetFiles(filenames []string) []*FileInfo {
 
 }
 
-func (f *FileInfo) InsertIntoDB(db *sqlx.DB) {
+func (f *FileInfo) GetLastUpload(db *sqlx.DB) {
+
+	if db == nil {
+		logs.Add(logs.INFO, "no connection to postgres")
+		return
+	}
+
+	stat := `select last_upload from source_files where filename = $1;`
+
+	_, err := db.PrepareNamed(stat)
+	if err != nil {
+		logs.Add(logs.INFO, err)
+		return
+	}
+
+	db.Get(&f.LastUpload, stat, f.Filename)
+
+	f.LastUpload = f.LastUpload.Local().Add(-3 * time.Hour)
+
+}
+
+func (f *FileInfo) InsertIntoDB(db *sqlx.DB, duration time.Duration) {
 
 	if db == nil {
 		logs.Add(logs.FATAL, "no connection to postgres")
 		return
+	}
+
+	if duration != 0 {
+		ticker := time.NewTicker(duration)
+		<-ticker.C
+		ticker.Stop()
 	}
 
 	f.mu.Lock()
@@ -77,12 +115,7 @@ func (f *FileInfo) InsertIntoDB(db *sqlx.DB) {
 		return
 	}
 
-	stat := `INSERT INTO source_files (
-		filename, size, size_mb, modified, rows, last_upload
-	)
-	VALUES (
-		:filename, :size, :size_mb, :modified, :rows, :last_upload
-		)`
+	stat := querrys.Stat_Insert_source_files()
 
 	_, err := db.PrepareNamed(stat)
 	if err != nil {
@@ -111,37 +144,5 @@ func (f *FileInfo) InsertIntoDB(db *sqlx.DB) {
 	f.done = true
 
 	logs.Add(logs.MAIN, fmt.Sprint("Записан в postgres: ", filepath.Base(f.Filename)))
-
-}
-
-func (f *FileInfo) GetLastUpload(db *sqlx.DB) {
-
-	if db == nil {
-		logs.Add(logs.INFO, "no connection to postgres")
-		return
-	}
-
-	stat := `select last_upload from source_files where filename = $1;`
-
-	_, err := db.PrepareNamed(stat)
-	if err != nil {
-		logs.Add(logs.INFO, err)
-		return
-	}
-
-	db.Get(&f.LastUpload, stat, f.Filename)
-
-	f.LastUpload = f.LastUpload.Local().Add(-3 * time.Hour)
-
-}
-
-func (f *FileInfo) SetLastUpload(db *sqlx.DB) {
-
-	ticker := time.NewTicker(40 * time.Second)
-	defer ticker.Stop()
-
-	<-ticker.C
-
-	f.InsertIntoDB(db)
 
 }

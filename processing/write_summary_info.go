@@ -6,6 +6,7 @@ import (
 	"app/util"
 	"fmt"
 	"slices"
+	"strconv"
 	"time"
 
 	"github.com/tealeg/xlsx"
@@ -40,7 +41,7 @@ func Write_XLSX_SummaryInfo(M map[KeyFields_SummaryInfo]SumFileds) {
 	add_page_copy1(f, M)
 	add_page_copy2(f, M)
 	add_page_1_makeTariff(f, M)
-	add_page_2_checkBilling(f, M)
+	add_page_2_checkBilling(f)
 	add_page_3_checkRate(f, M)
 	add_page_4_noProviderReg(f)
 
@@ -410,11 +411,11 @@ func add_page_1_makeTariff(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) 
 
 }
 
-func add_page_2_checkBilling(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
+func add_page_2_checkBilling(f *xlsx.File) {
 
 	sheet, _ := f.AddSheet("2. Сверься с Биллингом")
 
-	headers := []string{
+	headers := []string{"id / operation_id",
 		"Проверка", "Конвертация", "operation_type", "merchant_name", "merchant_account_name",
 		"merchant_account_id", "real_currency / channel_currency", "Валюта баланса", "Старт тарифа",
 		"DragonPay MA tariff",
@@ -441,64 +442,78 @@ func add_page_2_checkBilling(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds
 		cell.SetStyle(style)
 	}
 
-	sheet.SetColWidth(0, 2, 15) // operation_type
-	sheet.SetColWidth(4, 4, 35) // merchant_account_name
-	sheet.SetColWidth(6, 9, 14) // real_currency / channel_currency
-	sheet.SetColWidth(13, 17, 16)
+	sheet.SetColWidth(0, 2, 15)  // operation_type
+	sheet.SetColWidth(5, 5, 35)  // merchant_account_name
+	sheet.SetColWidth(7, 10, 14) // real_currency / channel_currency
+	sheet.SetColWidth(14, 18, 16)
 
 	var cell *xlsx.Cell
 
-	for k, v := range M {
+	for _, op := range storage.Registry {
 
-		if v.checkFee == 0 || k.verification == VRF_NO_IN_REG {
+		if op.CheckFee == 0 || op.Verification == VRF_NO_IN_REG {
 			continue
 		}
 
-		row := sheet.AddRow()
-		row.AddCell().SetString(k.verification)          //0
-		row.AddCell().SetString(k.tariff.Convertation)   //1
-		row.AddCell().SetString(k.operation_type)        //2
-		row.AddCell().SetString(k.merchant_name)         //3
-		row.AddCell().SetString(k.merchant_account_name) //4
-		row.AddCell().SetInt(k.merchant_account_id)      //5
-		row.AddCell().SetString(k.channel_currency.Name) //6
-		row.AddCell().SetString(k.balance_currency.Name) //7 Валюта баланса
-
-		if k.tariff.DateStart.IsZero() { //8
-			row.AddCell().SetString("")
-		} else {
-			row.AddCell().SetDate(k.tariff.DateStart)
+		var t Tariff
+		if op.Tariff != nil {
+			t = *op.Tariff
 		}
 
-		row.AddCell().SetString("")               //9 dragonpay
-		row.AddCell().SetString(k.tariff.Formula) //10
+		row := sheet.AddRow()
 
-		//if k.tariff.id > 0 { //11
-		row.AddCell().SetInt(k.tariff.id)
+		cell = row.AddCell() //0
+		cell.SetString(strconv.Itoa(op.Operation_id))
+		cell.SetFormat("0")
+
+		row.AddCell().SetString(op.Verification)          //1
+		row.AddCell().SetString(t.Convertation)           //2
+		row.AddCell().SetString(op.Operation_type)        //3
+		row.AddCell().SetString(op.Merchant_name)         //4
+		row.AddCell().SetString(op.Merchant_account_name) //5
+		row.AddCell().SetInt(op.Merchant_account_id)      //6
+		row.AddCell().SetString(op.Channel_currency.Name) //7
+		row.AddCell().SetString(op.Balance_currency.Name) //8 Валюта баланса
+
+		if t.DateStart.IsZero() { //9
+			row.AddCell().SetString("")
+		} else {
+			row.AddCell().SetDate(t.DateStart)
+		}
+
+		row.AddCell().SetString("")        //10 dragonpay
+		row.AddCell().SetString(t.Formula) //11
+
+		//if k.tariff.id > 0 { //12
+		row.AddCell().SetInt(t.id)
 		//} else {
 		//	row.AddCell().SetInt(k.tariff_condition_id)
 		//}
 
-		row.AddCell().SetString(k.tariff_bof.Formula) //12
+		if op.Tariff_bof != nil { //13
+			row.AddCell().SetString(op.Tariff_bof.Formula)
+		} else {
+			row.AddCell().SetString("")
+		}
 
-		cell = row.AddCell() //13 сумма в валюте канала
-		cell.SetFloat(v.channel_amount)
+		cell = row.AddCell() //14 сумма в валюте канала
+		cell.SetFloat(op.Channel_amount)
 		cell.SetFormat("0.00")
 
-		cell = row.AddCell() //14 Сумма в валюте баланса
-		cell.SetFloat(v.balance_amount)
+		cell = row.AddCell() //15 Сумма в валюте баланса
+		cell.SetFloat(op.Balance_amount)
 		cell.SetFormat("0.00")
 
-		cell = row.AddCell() //15
-		cell.SetFloat(v.SR_balance_currency)
+		cell = row.AddCell() //16
+		cell.SetFloat(op.SR_balance_currency)
 		cell.SetFormat("0.00")
 
-		cell = row.AddCell() //16 BOF fee amount
-		cell.SetFloat(v.fee_amount)
+		cell = row.AddCell() //17 BOF fee amount
+		cell.SetFloat(op.Fee_amount)
 		cell.SetFormat("0.00")
 
-		cell = row.AddCell() //17 check fee
-		cell.SetFloat(v.checkFee)
+		cell = row.AddCell() //18 check fee
+		cell.SetFloat(op.CheckFee)
 		cell.SetFormat("0.00")
 	}
 
@@ -663,7 +678,7 @@ func add_page_4_noProviderReg(f *xlsx.File) {
 		row := sheet.AddRow()
 
 		cell = row.AddCell() //0
-		cell.SetInt(o.Operation_id)
+		cell.SetString(strconv.Itoa(o.Operation_id))
 		cell.SetFormat("0")
 
 		if o.Tariff != nil { //1
