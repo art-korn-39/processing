@@ -163,24 +163,27 @@ func (o *Operation) SetBalanceAmount() {
 	rate := float64(1)
 	balance_amount := float64(0)
 
-	if o.Channel_currency == o.Balance_currency {
+	// у KGX может быть RUB-RUB, но комсу надо брать из операции провайдера
+	if o.Channel_currency == o.Balance_currency && t.Schema != "KGX" {
 		balance_amount = o.Channel_amount
 	} else if t.Convertation == "Без конверта" {
 		balance_amount = o.Channel_amount
 	} else if t.Convertation == "Колбек" {
 		balance_amount = o.Provider_amount
-	} else if t.Convertation == "Реестр" {
+	} else if t.Convertation == "Реестр" || t.Schema == "KGX" {
 
 		// Поиск в мапе операций провайдера по ID
-		//ProviderOperation, ok := storage.Provider_operations[o.Operation_id]
-
 		ProviderOperation, ok := provider.Registry.Get(o.Operation_id, o.Document_date, o.Channel_amount)
-
-		o.ProviderOperation = ProviderOperation //&ProviderOperation
-
+		o.ProviderOperation = ProviderOperation
 		if ok {
 			balance_amount = ProviderOperation.Amount
 			rate = ProviderOperation.Rate
+
+			if t.Schema == "KGX" {
+				o.Provider_name = ProviderOperation.Balance //!!!
+				o.Balance_currency = ProviderOperation.Provider_currency
+			}
+
 		} else {
 			// если не нашли операцию провайдера по ID, то подбираем курс и считаем через него
 			rate = FindRateForOperation(o)
@@ -202,6 +205,10 @@ func (o *Operation) SetSRAmount() {
 
 	t := o.Tariff
 
+	if t == nil {
+		return
+	}
+
 	// SR В ВАЛЮТЕ БАЛАНСА
 	commission := o.Balance_amount*t.Percent + t.Fix
 
@@ -216,6 +223,11 @@ func (o *Operation) SetSRAmount() {
 		o.SR_channel_currency = commission * o.Rate
 	} else {
 		o.SR_channel_currency = commission
+	}
+
+	// для KGX подставляем BR в SR_balance_currency
+	if t.Schema == "KGX" && o.ProviderOperation != nil {
+		commission = o.ProviderOperation.BR_amount
 	}
 
 	// ОКРУГЛЕНИЕ
@@ -247,11 +259,12 @@ func (o *Operation) SetCheckFee() {
 
 func (o *Operation) SetVerification() {
 
-	var Converation string
+	var Converation, Schema string
 	var CurrencyBP currency.Currency
 
 	if o.Tariff != nil {
 		Converation = o.Tariff.Convertation
+		Schema = o.Tariff.Schema
 		CurrencyBP = o.Tariff.CurrencyBP
 		if o.Tariff_bof != nil {
 			s1 := (o.Tariff.Percent + o.Tariff.Fix + o.Tariff.Min + o.Tariff.Max) //* 100
@@ -262,11 +275,13 @@ func (o *Operation) SetVerification() {
 
 	if o.Tariff == nil {
 		o.Verification = VRF_NO_TARIFF
-	} else if Converation == "Реестр" {
+	} else if Converation == "Реестр" || Schema == "KGX" {
 		if o.Balance_amount == 0 {
 			o.Verification = VRF_NO_IN_REG // нет курса и операции провайдера
 		} else if o.ProviderOperation == nil {
 			o.Verification = VRF_CHECK_RATE // курс есть, операции еще нет в реестре факт
+		} else if o.Channel_amount != o.ProviderOperation.Channel_amount {
+			o.Verification = VRF_DIFF_CHAN_AMOUNT // channel amount разный в БОФ и реестре пров.
 		} else if o.CheckFee != 0 {
 			o.Verification = VRF_VALID_REG_FEE // есть в реестре факт, но БОФ криво посчитал
 		} else {
@@ -287,16 +302,17 @@ func (o *Operation) SetVerification() {
 }
 
 const (
-	VRF_OK             = "ОК"
-	VRF_VALID_REG      = "Валидирован по реестру"
-	VRF_VALID_REG_FEE  = "Валидирован по реестру (см. CheckFee)"
-	VRF_NO_TARIFF      = "Не найден тариф"
-	VRF_NO_IN_REG      = "Нет в реестре"
-	VRF_CHECK_RATE     = "Требует уточнения курса"
-	VRF_CHECK_CURRENCY = "Валюта учёта отлична от валюты в Биллинге"
-	VRF_CHECK_TARIFF   = "Несоответствие тарифа"
-	VRF_DRAGON_PAY     = "Исключение ДрагонПей"
-	VRF_CHECK_BILLING  = "Провень начисления биллинга"
+	VRF_OK               = "ОК"
+	VRF_VALID_REG        = "Валидирован по реестру"
+	VRF_VALID_REG_FEE    = "Валидирован по реестру (см. CheckFee)"
+	VRF_NO_TARIFF        = "Не найден тариф"
+	VRF_NO_IN_REG        = "Нет в реестре"
+	VRF_CHECK_RATE       = "Требует уточнения курса"
+	VRF_DIFF_CHAN_AMOUNT = "Real amount отличается от реестра"
+	VRF_CHECK_CURRENCY   = "Валюта учёта отлична от валюты в Биллинге"
+	VRF_CHECK_TARIFF     = "Несоответствие тарифа"
+	VRF_DRAGON_PAY       = "Исключение ДрагонПей"
+	VRF_CHECK_BILLING    = "Провень начисления биллинга"
 )
 
 func (o *Operation) SetRR() {

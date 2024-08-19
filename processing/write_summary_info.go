@@ -106,8 +106,8 @@ func add_page_copy1(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 	for k, v := range M {
 		row := sheet.AddRow()
-		row.AddCell().SetString(k.tariff.Balance_name)
-		row.AddCell().SetInt(k.balance_id)
+		row.AddCell().SetString(k.balance_name) //k.tariff.Balance_name)
+		row.AddCell().SetString(fmt.Sprint(k.balance_id, "_", k.tariff.Balance_type))
 		row.AddCell().SetDate(k.document_date)
 		row.AddCell().SetString(k.verification)
 		row.AddCell().SetString(k.operation_type)
@@ -236,7 +236,7 @@ func add_page_copy2(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 	for k, v := range M {
 		row := sheet.AddRow()
-		row.AddCell().SetString(k.tariff.Balance_name)   //0
+		row.AddCell().SetString(k.balance_name)          //k.tariff.Balance_name)   //0
 		row.AddCell().SetInt(k.balance_id)               //1
 		row.AddCell().SetDate(k.document_date)           //2
 		row.AddCell().SetString(k.verification)          //3

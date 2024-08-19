@@ -102,9 +102,13 @@ func Stat_Insert_provider_registry() string {
 		:provider_payment_id, :operation_status, :account_number, :channel_currency, :provider_currency, :br_amount,
 		:transaction_completed_at_day, :channel_amount, :balance
 	)
-	ON CONFLICT ON CONSTRAINT pk_id_date_amount DO UPDATE
+	
+	ON CONFLICT ON CONSTRAINT pk_id DO UPDATE
+
 	SET rate = EXCLUDED.rate, amount = EXCLUDED.amount, br_amount = EXCLUDED.br_amount,
 		operation_status = EXCLUDED.operation_status, balance = EXCLUDED.balance`
+
+	//ON CONFLICT ON CONSTRAINT pk_id_date_amount DO UPDATE
 }
 
 func Stat_Insert_detailed() string {

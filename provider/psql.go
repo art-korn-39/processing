@@ -82,7 +82,7 @@ func PSQL_read_registry_async(db *sqlx.DB, registry_done <-chan querrys.Args) {
 
 				args := []any{pq.Array(Args.Merhcant), period.StartDay, period.EndDay}
 
-				res := []Operation{}
+				res := make([]Operation, 0, 10000)
 
 				err := db.Select(&res, stat, args...)
 				if err != nil {
@@ -107,53 +107,7 @@ func PSQL_read_registry_async(db *sqlx.DB, registry_done <-chan querrys.Args) {
 		Registry.Set(*operation)
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера из Postgres async: %v [%s строк]", time.Since(start_time), util.FormatInt(len(Rates))))
-
-}
-
-func PSQL_read_registry_querry(db *sqlx.DB, registry_done <-chan querrys.Args) {
-
-	if db == nil {
-		return
-	}
-
-	// MERCHANT_NAME + DATE
-	Args := <-registry_done
-
-	if len(Args.Merhcant) == 0 {
-		logs.Add(logs.INFO, `пустой массив "merchant_name" для чтения операций провайдера`)
-		return
-	}
-
-	start_time := time.Now()
-
-	args := []any{pq.Array(Args.Merhcant), Args.DateFrom, Args.DateTo}
-
-	stat := querrys.Stat_Select_provider_registry()
-
-	rows, err := db.Queryx(stat, args...)
-	if err != nil {
-		logs.Add(logs.FATAL, err)
-		return
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-
-		var op Operation
-		if err := rows.StructScan(&op); err != nil {
-			logs.Add(logs.FATAL, err)
-			return
-		}
-
-		op.StartingFill(false)
-
-		Registry.Set(op)
-		Rates = append(Rates, op)
-
-	}
-
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера из Postgres Q: %v [%s строк]", time.Since(start_time), util.FormatInt(len(Rates))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(Rates))))
 
 }
 

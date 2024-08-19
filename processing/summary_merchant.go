@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+//key = ДатаДокумента + Мерчант + ТипКонвертации
+
 type SummaryRowMerchant struct {
 	Document_date       time.Time `db:"document_date"`
 	Convertation        string    `db:"convertation"`
@@ -126,7 +128,6 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 	data = make([]SummaryRowMerchant, 0, len(group_data))
 	for k, v := range group_data {
 
-		//k.Rate = v.Rate / float64(v.Count_operations)
 		k.Rate = v.Balance_amount / v.Channel_amount
 		k.Count_operations = v.Count_operations
 		k.Channel_amount = v.Channel_amount

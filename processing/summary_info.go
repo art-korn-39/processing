@@ -49,6 +49,7 @@ type KeyFields_SummaryInfo struct {
 	merchant_name         string
 	project_name          string
 	merchant_account_name string
+	balance_name          string
 	merchant_account_id   int
 	tariff_condition_id   int
 
@@ -101,6 +102,14 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 
 	if o.Tariff != nil {
 		KF.tariff = *o.Tariff
+
+		if o.Tariff.Schema == "KGX" {
+			if o.ProviderOperation != nil {
+				KF.balance_name = o.Provider_name // тут уже лежит баланс из реестра провайдера
+			}
+		} else {
+			KF.balance_name = o.Tariff.Balance_name
+		}
 	}
 
 	if o.Tariff_bof != nil {

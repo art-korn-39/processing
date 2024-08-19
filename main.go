@@ -15,14 +15,6 @@ import (
 
 func main() {
 
-	// a := 1000000000
-	// b := float64(a)
-
-	// fmt.Println(strconv.FormatFloat(b, 'f', -1, 64))
-	// fmt.Println(fmt.Sprintf("%.f", b))
-
-	// return
-
 	defer logs.Finish()
 
 	start_time := time.Now()
@@ -30,7 +22,7 @@ func main() {
 	var app string
 	var file_config string
 
-	flag.StringVar(&app, "app", "processing", "") // processing | conversion | decline | crypto | aws
+	flag.StringVar(&app, "app", "conversion", "") // processing | conversion | decline | crypto | aws
 	flag.StringVar(&file_config, "file_config", "", "")
 	flag.Parse()
 

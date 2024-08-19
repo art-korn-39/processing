@@ -22,7 +22,7 @@ func WriteIntoDB(chan_operations chan provider.Operation, chan_readed_files chan
 	var wg sync.WaitGroup
 
 	//1М rows, чтобы читающие горутины на паузу не встали
-	chan_batches := make(chan Batch, 1000)
+	chan_batches := make(chan Batch2, 1000)
 
 	batch_len := 1500 // 20 fileds
 
@@ -109,12 +109,12 @@ func WriteIntoDB(chan_operations chan provider.Operation, chan_readed_files chan
 		// close(channel_slices)
 
 		i := 1
-		batch := Batch{}
+		batch := Batch2{}
 		for v := range chan_operations {
 			batch.Set(v)
 			if i%batch_len == 0 {
 				chan_batches <- batch
-				batch = Batch{}
+				batch = Batch2{}
 			}
 			i++
 		}

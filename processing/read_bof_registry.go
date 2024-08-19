@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-const DUR = 2
+const DUR = 24
 
 // GET + Q best?
 
