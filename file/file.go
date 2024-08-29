@@ -43,27 +43,33 @@ func GetFiles(filenames []string, category string, extension string) []*FileInfo
 			continue
 		}
 
-		file, err := os.OpenFile(f, os.O_RDONLY, os.FileMode(0400))
+		// file, err := os.OpenFile(f, os.O_RDONLY, os.FileMode(0400))
+		// if err != nil {
+		// 	err = fmt.Errorf("os.OpenFile() %v", err)
+		// 	logs.Add(logs.ERROR, err)
+		// 	continue
+		// }
+		// defer file.Close()
+
+		// stat, err := file.Stat()
+		// if err != nil {
+		// 	err = fmt.Errorf("file.Stat() %v", err)
+		// 	logs.Add(logs.ERROR, err)
+		// 	continue
+		// }
+
+		// fileInfo := &FileInfo{
+		// 	Filename: f,
+		// 	Category: category,
+		// 	Size:     int(stat.Size()),
+		// 	Size_mb:  int(stat.Size()) / 1024000,
+		// 	Modified: stat.ModTime(),
+		// }
+
+		fileInfo, err := New(f, category)
 		if err != nil {
-			err = fmt.Errorf("os.OpenFile() %v", err)
 			logs.Add(logs.ERROR, err)
 			continue
-		}
-		defer file.Close()
-
-		stat, err := file.Stat()
-		if err != nil {
-			err = fmt.Errorf("file.Stat() %v", err)
-			logs.Add(logs.ERROR, err)
-			continue
-		}
-
-		fileInfo := &FileInfo{
-			Filename: f,
-			Category: category,
-			Size:     int(stat.Size()),
-			Size_mb:  int(stat.Size()) / 1024000,
-			Modified: stat.ModTime(),
 		}
 
 		files = append(files, fileInfo)
@@ -71,6 +77,35 @@ func GetFiles(filenames []string, category string, extension string) []*FileInfo
 	}
 
 	return files
+
+}
+
+func New(filename, category string) (*FileInfo, error) {
+
+	file, err := os.OpenFile(filename, os.O_RDONLY, os.FileMode(0400))
+	if err != nil {
+		err = fmt.Errorf("os.OpenFile() %v", err)
+		//logs.Add(logs.ERROR, err)
+		return nil, err
+	}
+	defer file.Close()
+
+	stat, err := file.Stat()
+	if err != nil {
+		err = fmt.Errorf("file.Stat() %v", err)
+		//logs.Add(logs.ERROR, err)
+		return nil, err
+	}
+
+	fileInfo := &FileInfo{
+		Filename: filename,
+		Category: category,
+		Size:     int(stat.Size()),
+		Size_mb:  int(stat.Size()) / 1024000,
+		Modified: stat.ModTime(),
+	}
+
+	return fileInfo, nil
 
 }
 

@@ -7,10 +7,6 @@ import (
 	"app/util"
 )
 
-var (
-	decline_operations map[int]Operation
-)
-
 func Start() {
 
 	cfg := config.Get()
@@ -24,15 +20,13 @@ func Start() {
 	}
 	defer db.Close()
 
-	decline_operations = make(map[int]Operation, 1000)
-
 	folder := cfg.Decline.Filename
 	filenames, err := util.ParseFoldersRecursively(folder)
 	if err != nil {
 		return
 	}
 
-	ReadFiles(filenames)
-	InsertIntoDB(db)
+	decline_operations, files := ReadFiles(db, filenames)
+	InsertIntoDB(db, decline_operations, files)
 
 }

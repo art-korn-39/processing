@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	Version = "1.2.5"
+	Version = "1.2.6"
 )
 
 var (
@@ -143,19 +143,17 @@ func SaveResult() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(3)
+	wg.Add(2)
+
+	// Итоговые данные
+	// Делаем сначала, т.к. они id документа проставляют
+	summary := GroupRegistryToSummaryMerchant()
+	Write_Summary(summary)
 
 	// Детализированные записи
 	go func() {
 		defer wg.Done()
 		Write_Detailed()
-	}()
-
-	// Итоговые данные
-	go func() {
-		defer wg.Done()
-		summary := GroupRegistryToSummaryMerchant()
-		Write_Summary(summary)
 	}()
 
 	// Выгрузка в эксель

@@ -2,77 +2,7 @@ package querrys
 
 import (
 	"fmt"
-	"time"
 )
-
-type Args struct {
-	Merhcant []string
-	DateFrom time.Time
-	DateTo   time.Time
-}
-
-func Stat_Select_reports() string {
-	return `
-	SELECT 
-	operation__operation_id AS operation_id, 
-	billing__transaction_id AS transaction_id,
-	date_add(HOUR, 3, billing__billing_operation_created_at) AS operation_created_at,
-	IFNULL(billing__merchant_id, 0) AS merchant_id, 
-	IFNULL(operation__merchant_account_id, 0) AS merchant_account_id,
-	IFNULL(billing__balance_id, 0) AS balance_id, 
-	IFNULL(billing__company_id, 0) AS company_id, 
-	IFNULL(billing__contract_id, 0) AS contract_id, 
-	IFNULL(billing__provider_id, 0) AS provider_id, 
-	IFNULL(billing__tariff_conditions_id, 0) AS tariff_id,
-	IFNULL(operation__provider_payment_id, '') AS provider_payment_id,
-	IFNULL(operation__provider_name, '') AS provider_name,
-	IFNULL(operation__merchant_name, '') AS merchant_name,
-	IFNULL(operation__merchant_account_name, '') AS merchant_account_name,
-	IFNULL(operation__account_bank_name, '') AS account_bank_name,
-
-	IFNULL(operation__business_type, '') AS business_type,
-	IFNULL(operation__project_name, '') AS project_name,
-	IFNULL(billing__project_id, 0) AS project_id,
-	IFNULL(operation__payment_method_type, '') AS payment_type,
-	IFNULL(billing__payment_type_id, 0) AS payment_type_id,
-	IFNULL(billing__payment_method_id, 0) AS payment_method_id,
-
-	IFNULL(operation__issuer_country, '') AS country,
-	IFNULL(operation__issuer_region, '') AS region,
-	IFNULL(billing__operation_type_id, 0) AS operation_type_id,
-	1 AS count_operations,
-	IFNULL(operation__msc_amount, 0) AS msc_amount,
-	IFNULL(operation__msc_currency, '') AS msc_currency,
-	IFNULL(operation__provider_amount, 0) AS provider_amount,
-	IFNULL(operation__provider_currency, '') AS provider_currency,	 
-	IFNULL(operation__channel_amount, 0) AS channel_amount,
-	IFNULL(operation__channel_currency, '') AS channel_currency,
-	IFNULL(operation__fee_amount, 0) AS fee_amount,
-	IFNULL(operation__fee_currency, '') AS fee_currency,
-
-	IFNULL(billing__tariff_rate_fix, 0) AS billing__tariff_rate_fix,
-	IFNULL(billing__tariff_rate_percent, 0) AS billing__tariff_rate_percent,
-	IFNULL(billing__tariff_rate_min, 0) AS billing__tariff_rate_min,
-	IFNULL(billing__tariff_rate_max, 0) AS billing__tariff_rate_max
-
-	FROM reports
-	
-	WHERE 
-		operation__operation_status = 'success'
-		AND billing__billing_operation_created_at BETWEEN toDateTime('$1') AND toDateTime('$2')
-		AND billing__merchant_id IN ($3)
-		--AND billing__merchant_id IN (73162, 278, 104, 7201)
-
-	limit 5000000`
-}
-
-func Stat_Select_provider_registry() string {
-	return `SELECT operation_id, transaction_completed_at, operation_type, country,
-		payment_method_type, merchant_name, rate, amount, channel_amount, channel_currency, provider_currency
-		FROM provider_registry 
-		WHERE merchant_name = ANY($1) 
-		AND transaction_completed_at BETWEEN $2 AND $3`
-}
 
 func Stat_Insert_provider_registry_prev() string {
 	return `INSERT INTO provider_registry (
@@ -107,13 +37,11 @@ func Stat_Insert_provider_registry() string {
 
 	SET rate = EXCLUDED.rate, amount = EXCLUDED.amount, br_amount = EXCLUDED.br_amount,
 		operation_status = EXCLUDED.operation_status, balance = EXCLUDED.balance`
-
-	//ON CONFLICT ON CONSTRAINT pk_id_date_amount DO UPDATE
 }
 
 func Stat_Insert_detailed() string {
 	return `INSERT INTO detailed (
-		operation_id, transaction_completed_at, merchant_id, merchant_account_id, balance_id, company_id,
+		document_id, operation_id, transaction_completed_at, merchant_id, merchant_account_id, balance_id, company_id,
 		contract_id, project_id, provider_id, provider_payment_id, provider_name, merchant_name, merchant_account_name,
 		account_bank_name, project_name, payment_type, country, region, operation_type, provider_amount,
 		provider_currency, msc_amount, msc_currency, channel_amount, channel_currency, fee_amount, fee_currency,
@@ -123,7 +51,7 @@ func Stat_Insert_detailed() string {
 		tariff_rate_percent, tariff_rate_fix, tariff_rate_min, tariff_rate_max
 	)
 	VALUES (
-		:operation_id, :transaction_completed_at, :merchant_id, :merchant_account_id, :balance_id, :company_id,
+		:document_id, :operation_id, :transaction_completed_at, :merchant_id, :merchant_account_id, :balance_id, :company_id,
 		:contract_id, :project_id, :provider_id, :provider_payment_id, :provider_name, :merchant_name, :merchant_account_name,
 		:account_bank_name, :project_name, :payment_type, :country, :region, :operation_type, :provider_amount,
 		:provider_currency, :msc_amount, :msc_currency, :channel_amount, :channel_currency, :fee_amount, :fee_currency,
@@ -155,12 +83,28 @@ func Stat_Insert_crypto() string {
 	VALUES (
 		:operation_id, :created_at, :created_at_day, :network, :operation_type, 
 		:payment_amount, :payment_currency, :crypto_amount, :crypto_currency
+	)
+
+	ON CONFLICT ON CONSTRAINT pk_operation_id DO UPDATE
+
+	SET created_at = EXCLUDED.created_at, created_at_day = EXCLUDED.created_at_day,
+		payment_amount = EXCLUDED.payment_amount, crypto_amount = EXCLUDED.crypto_amount`
+}
+
+func Stat_Insert_crypto_arch() string {
+	return `INSERT INTO crypto (
+		operation_id, created_at, created_at_day, network, operation_type, 
+		payment_amount, payment_currency, crypto_amount, crypto_currency
+	)
+	VALUES (
+		:operation_id, :created_at, :created_at_day, :network, :operation_type, 
+		:payment_amount, :payment_currency, :crypto_amount, :crypto_currency
 		)`
 }
 
 func Stat_Insert_summary_merchant() string {
 	return `INSERT INTO summary_merchant (
-		document_date, operation_type, operation_group, 
+		document_id, document_date, operation_type, operation_group, 
 		merchant_id, merchant_account_id, balance_id, provider_id, country, region, payment_type, channel_currency, 
 		balance_currency, convertation, tariff_date_start, tariff_id, formula, channel_amount, balance_amount, 
 		sr_channel_currency, sr_balance_currency, count_operations, rate,
@@ -168,7 +112,7 @@ func Stat_Insert_summary_merchant() string {
 		rr_amount, rr_date
 	)
 	VALUES (
-		:document_date, :operation_type, :operation_group, :merchant_id, :merchant_account_id, 
+		:document_id, :document_date, :operation_type, :operation_group, :merchant_id, :merchant_account_id, 
 		:balance_id, :provider_id, :country, :region, :payment_type, :channel_currency, :balance_currency, 
 		:convertation, :tariff_date_start, :tariff_id, :formula, :channel_amount, :balance_amount, 
 		:sr_channel_currency, :sr_balance_currency, :count_operations, :rate,

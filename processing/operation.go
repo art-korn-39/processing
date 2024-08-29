@@ -15,7 +15,9 @@ type Operation struct {
 
 	Operation_id   int `db:"operation_id"`
 	Transaction_id int `db:"transaction_id"`
-	Document_date  time.Time
+
+	Document_date time.Time
+	Document_id   int
 
 	Transaction_completed_at time.Time
 	Operation_created_at     time.Time `db:"operation_created_at"`
@@ -219,11 +221,14 @@ func (o *Operation) SetSRAmount() {
 	}
 
 	// SR В ВАЛЮТЕ КАНАЛА
-	if t.Convertation == "Реестр" {
+	if t.Convertation == "Реестр" || t.Schema == "KGX" {
 		o.SR_channel_currency = commission * o.Rate
 	} else {
 		o.SR_channel_currency = commission
 	}
+
+	//добавить
+	//[merchant_name] IN {"Perevodix";"Monetix}
 
 	// для KGX подставляем BR в SR_balance_currency
 	if t.Schema == "KGX" && o.ProviderOperation != nil {
@@ -259,12 +264,14 @@ func (o *Operation) SetCheckFee() {
 
 func (o *Operation) SetVerification() {
 
-	var Converation, Schema string
+	//schema = KGX заменить на Converation
+
+	var Converation string
 	var CurrencyBP currency.Currency
 
 	if o.Tariff != nil {
 		Converation = o.Tariff.Convertation
-		Schema = o.Tariff.Schema
+		//Schema = o.Tariff.Schema
 		CurrencyBP = o.Tariff.CurrencyBP
 		if o.Tariff_bof != nil {
 			s1 := (o.Tariff.Percent + o.Tariff.Fix + o.Tariff.Min + o.Tariff.Max) //* 100
@@ -275,7 +282,7 @@ func (o *Operation) SetVerification() {
 
 	if o.Tariff == nil {
 		o.Verification = VRF_NO_TARIFF
-	} else if Converation == "Реестр" || Schema == "KGX" {
+	} else if Converation == "Реестр" || Converation == "KGX" {
 		if o.Balance_amount == 0 {
 			o.Verification = VRF_NO_IN_REG // нет курса и операции провайдера
 		} else if o.ProviderOperation == nil {
@@ -289,12 +296,14 @@ func (o *Operation) SetVerification() {
 		}
 	} else if o.CheckFee == 0 {
 		o.Verification = VRF_OK
-	} else if o.Channel_currency != CurrencyBP {
+	} else if o.Channel_currency != CurrencyBP && Converation != "Колбек" {
 		o.Verification = VRF_CHECK_CURRENCY
 	} else if o.CheckRates != 0 {
 		o.Verification = VRF_CHECK_TARIFF
 	} else if o.IsDragonPay {
 		o.Verification = VRF_DRAGON_PAY
+		//для частичных выплат и когда channel_amount != operation_actual_amount
+		//чё то пишем
 	} else {
 		o.Verification = VRF_CHECK_BILLING
 	}

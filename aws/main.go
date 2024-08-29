@@ -64,15 +64,6 @@ func getFiles(cfg config.Config, storage *storage.Storage) ([]*file.FileInfo, er
 
 		if match {
 
-			// date := util.SubString(name, 15, 20)
-			// day, _ := strconv.Atoi(util.SubString(date, 3, 5))
-			// month, _ := strconv.Atoi(util.SubString(date, 0, 2))
-
-			// num := month*50 + day
-			// if num < 325 {
-			// 	continue
-			// }
-
 			file := &file.FileInfo{
 				Filename: name,
 				Category: file.REG_BOF,
@@ -83,9 +74,6 @@ func getFiles(cfg config.Config, storage *storage.Storage) ([]*file.FileInfo, er
 
 			files = append(files, file)
 
-			//!!!!
-			//fmt.Println(file.Filename)
-			//return files, nil
 		}
 	}
 

@@ -2,6 +2,7 @@ package decline
 
 import (
 	"app/config"
+	"app/file"
 	"app/logs"
 	"app/querrys"
 	"fmt"
@@ -12,7 +13,7 @@ import (
 	"github.com/lib/pq"
 )
 
-func InsertIntoDB(db *sqlx.DB) {
+func InsertIntoDB(db *sqlx.DB, decline_operations map[int]Operation, files []*file.FileInfo) {
 
 	if db == nil {
 		return
@@ -84,6 +85,10 @@ func InsertIntoDB(db *sqlx.DB) {
 
 	wg.Wait()
 
-	logs.Add(logs.INFO, fmt.Sprintf("Загрузка операций decline в Postgres: %v", time.Since(start_time)))
-	logs.Add(logs.REGL, fmt.Sprintf("Загрузка decline в Postgres: %v (%d строк)", time.Since(start_time), len(decline_operations)))
+	for _, f := range files {
+		f.InsertIntoDB(db, 0)
+	}
+
+	//logs.Add(logs.INFO, fmt.Sprintf("Загрузка decline в Postgres: %v", time.Since(start_time)))
+	logs.Add(logs.MAIN, fmt.Sprintf("Загрузка decline в Postgres: %v (%d строк)", time.Since(start_time), len(decline_operations)))
 }

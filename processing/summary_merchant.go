@@ -4,12 +4,14 @@ import (
 	"app/config"
 	"app/logs"
 	"fmt"
+	"strconv"
 	"time"
 )
 
 //key = ДатаДокумента + Мерчант + ТипКонвертации
 
 type SummaryRowMerchant struct {
+	Document_id         int       `db:"document_id"`
 	Document_date       time.Time `db:"document_date"`
 	Convertation        string    `db:"convertation"`
 	Operation_type      string    `db:"operation_type"`
@@ -47,11 +49,12 @@ type SummaryRowMerchant struct {
 
 	RR_amount float64   `db:"rr_amount"`
 	RR_date   time.Time `db:"rr_date"`
+
+	//ID_list []int
 }
 
 func (row *SummaryRowMerchant) AddValues(o *Operation) {
 
-	//row.Rate = row.Rate + o.Rate
 	row.Count_operations = row.Count_operations + o.Count_operations
 	row.Channel_amount = row.Channel_amount + o.Channel_amount
 	row.Balance_amount = row.Balance_amount + o.Balance_amount
@@ -72,6 +75,33 @@ func (row *SummaryRowMerchant) SetRate() {
 	} else {
 		row.Rate = row.Channel_amount / row.Balance_amount
 	}
+
+}
+
+func (row *SummaryRowMerchant) SetID() {
+
+	//id merch len = 5
+	//days len = 5
+	//conv len = 1
+
+	var conv int
+	if row.Convertation == "Реестр" {
+		conv = 2
+	} else if row.Convertation == "Без конверта" {
+		conv = 1
+	}
+
+	date_01_01_2024 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	duration := row.Document_date.Sub(date_01_01_2024)
+
+	days := int(duration.Hours() / 24)
+	days_str := fmt.Sprintf("%05d", days)
+
+	merch_str := fmt.Sprintf("%05d", row.Merchant_id)
+
+	id_str := fmt.Sprint(10, days_str, merch_str, conv)
+	row.Document_id, _ = strconv.Atoi(id_str)
 
 }
 
@@ -108,6 +138,8 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 			k.Subdivision_1c = o.Tariff.Subdivision1C
 			k.Rated_account = o.Tariff.RatedAccount
 		}
+
+		k.SetID()
 		return
 	}
 
@@ -123,6 +155,7 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 		row := group_data[key]   // получили текущие агрегатные данные по ним
 		row.AddValues(operation) // увеличили агрегатные данные на значения тек. операции
 		group_data[key] = row    // положили обратно в мапу
+		operation.Document_id = key.Document_id
 	}
 
 	data = make([]SummaryRowMerchant, 0, len(group_data))

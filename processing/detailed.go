@@ -5,6 +5,7 @@ import "time"
 type Detailed_row struct {
 	Operation_id             int       `db:"operation_id"`
 	Transaction_completed_at time.Time `db:"transaction_completed_at"`
+	Document_id              int       `db:"document_id"`
 
 	Merchant_id         int    `db:"merchant_id"`
 	Merchant_account_id int    `db:"merchant_account_id"`
@@ -76,6 +77,7 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 
 	d.Operation_id = o.Operation_id
 	d.Transaction_completed_at = o.Transaction_completed_at
+	d.Document_id = o.Document_id
 	d.Merchant_id = o.Merchant_id
 	d.Merchant_account_id = o.Merchant_account_id
 	d.Balance_id = o.Balance_id

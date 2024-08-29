@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 )
 
 func insert_into_db(db *sqlx.DB) {
@@ -40,26 +39,32 @@ func insert_into_db(db *sqlx.DB) {
 			defer wg.Done()
 			for v := range chan_operations {
 
-				tx, _ := db.Beginx()
+				//tx, _ := db.Beginx()
 
-				sliceID := make([]int, 0, len(v))
-				for _, row := range v {
-					sliceID = append(sliceID, row.Id)
-				}
+				// sliceID := make([]int, 0, len(v))
+				// for _, row := range v {
+				// 	sliceID = append(sliceID, row.Id)
+				// }
 
-				_, err := tx.Exec("delete from crypto where operation_id = ANY($1);", pq.Array(sliceID))
-				if err != nil {
-					logs.Add(logs.ERROR, fmt.Sprint("ошибка при удалении: ", err))
-					tx.Rollback()
-					continue
-				}
+				// _, err := tx.Exec("delete from crypto where operation_id = ANY($1);", pq.Array(sliceID))
+				// if err != nil {
+				// 	logs.Add(logs.ERROR, fmt.Sprint("ошибка при удалении: ", err))
+				// 	tx.Rollback()
+				// 	continue
+				// }
 
-				_, err = tx.NamedExec(stat, v)
+				// _, err = tx.NamedExec(stat, v)
+				// if err != nil {
+				// 	logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД: ", err))
+				// 	tx.Rollback()
+				// } else {
+				// 	tx.Commit()
+				// }
+
+				_, err := db.NamedExec(stat, v)
+
 				if err != nil {
 					logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД: ", err))
-					tx.Rollback()
-				} else {
-					tx.Commit()
 				}
 
 			}

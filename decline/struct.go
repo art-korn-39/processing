@@ -1,6 +1,9 @@
 package decline
 
-import "time"
+import (
+	"app/file"
+	"time"
+)
 
 type Operation struct {
 	Message_id   int `db:"message_id"`
@@ -34,6 +37,7 @@ type Operation struct {
 
 type DeclineFile struct {
 	Messages []Message `json:"messages"`
+	fileInfo *file.FileInfo
 }
 
 type Message struct {

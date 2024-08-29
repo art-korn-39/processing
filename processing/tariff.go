@@ -171,6 +171,7 @@ func FindTariffForOperation(op *Operation) *Tariff {
 			if t.DateStart.Before(operation_date) &&
 				t.Operation_type == op.Operation_type {
 
+				// тип сети будет колонка в тарифе и проверять на неё
 				if t.IsCrypto && op.Crypto_network != t.Convertation {
 					continue
 				}

@@ -78,7 +78,7 @@ func WriteIntoDB(chan_operations chan provider.Operation, chan_readed_files chan
 			_, err := db.NamedExec(statement, v)
 
 			if err != nil {
-				logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД: ", err, ", id:", v[0].Id), ", provider:", v[0].Provider_name)
+				logs.Add(logs.ERROR, fmt.Sprintf("не удалось записать в БД: %v, date: %s, provider: %s, merchant: %s", err, v[0].Transaction_completed_at_day.Format(time.DateOnly), v[0].Provider_name, v[0].Merchant_name))
 				//tx.Rollback()
 			} else {
 				atomic.AddInt64(&count_rows, int64(len(v)))
