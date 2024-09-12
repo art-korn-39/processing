@@ -27,6 +27,7 @@ type Tariff struct {
 	IsCrypto       bool
 	Convertation   string //`xlsx:"19"`
 	Operation_type string //`xlsx:"22"`
+	NetworkType    string
 
 	RR_days    int     //`xlsx:"32"`
 	RR_percent float64 //`xlsx:"33"`
@@ -41,13 +42,17 @@ type Tariff struct {
 	DateStartPS time.Time         //`xlsx:"12"`
 	CurrencyBM  currency.Currency //`xlsx:"15"`
 	CurrencyBP  currency.Currency //`xlsx:"16"`
-	DateStart   time.Time         //`xlsx:"17"`
-	RangeMIN    float64           //`xlsx:"20"`
-	RangeMAX    float64           //`xlsx:"21"`
-	Percent     float64           //`xlsx:"23"`
-	Fix         float64           //`xlsx:"24"`
-	Min         float64           //`xlsx:"25"`
-	Max         float64           //`xlsx:"26"`
+
+	DateStart time.Time //`xlsx:"17"`
+	RangeMIN  float64   //`xlsx:"20"`
+	RangeMAX  float64   //`xlsx:"21"`
+	Percent   float64   //`xlsx:"23"`
+	Fix       float64   //`xlsx:"24"`
+	Min       float64   //`xlsx:"25"`
+	Max       float64   //`xlsx:"26"`
+
+	CurrencyCommission      string
+	AmountInChannelCurrency bool
 
 	DK_is_zero bool
 	DK_percent float64
@@ -64,6 +69,10 @@ func (t *Tariff) StartingFill() {
 
 	if t.Schema == "Crypto" {
 		t.IsCrypto = true
+	}
+
+	if t.CurrencyCommission == "балансовая" {
+		t.AmountInChannelCurrency = true
 	}
 
 	t.RangeMAX = util.TR(t.RangeMAX == 0, RANGE_MAX, t.RangeMAX).(float64) // ставим в конце, чтобы формуле не мешал
@@ -172,7 +181,7 @@ func FindTariffForOperation(op *Operation) *Tariff {
 				t.Operation_type == op.Operation_type {
 
 				// тип сети будет колонка в тарифе и проверять на неё
-				if t.IsCrypto && op.Crypto_network != t.Convertation {
+				if t.IsCrypto && !(op.Crypto_network == t.Convertation || op.Crypto_network == t.NetworkType) {
 					continue
 				}
 

@@ -5,6 +5,7 @@ import (
 	"app/holds"
 	"app/logs"
 	"app/provider"
+	"app/util"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -37,6 +38,7 @@ func CalculateCommission() {
 					operation.SetSRAmount()
 					operation.SetRR()
 					operation.SetDK()
+					operation.SetProvider1c()
 				}
 
 				operation.SetCheckFee()
@@ -58,7 +60,7 @@ func CalculateCommission() {
 
 	wg.Wait()
 
-	logs.Add(logs.INFO, fmt.Sprintf("Расчёт комиссии: %v [check fee: %d]", time.Since(start_time), check_fee_counter))
+	logs.Add(logs.INFO, fmt.Sprintf("Расчёт комиссии: %v [check fee: %s]", time.Since(start_time), util.FormatInt(check_fee_counter)))
 
 }
 

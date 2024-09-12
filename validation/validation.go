@@ -42,6 +42,8 @@ func CheckMapOfColumnNames(map_fileds map[string]int, table string) error {
 		s = fields_tariffs()
 	case "holds":
 		s = fields_holds()
+	case "kgx":
+		s = fields_kgx()
 	case "crypto":
 		s = fields_crypto()
 	case "provider_registry":
@@ -94,6 +96,12 @@ func fields_tariffs() []string {
 func fields_holds() []string {
 	return []string{
 		"схема", "валюта", "ma_id", "ma_name", "дата старта", "процент холда", "кол-во дней",
+	}
+}
+
+func fields_kgx() []string {
+	return []string{
+		"баланс", "operation_type", "валюта баланса", "payment_type_id / payment_method_type", "поставщик 1с",
 	}
 }
 

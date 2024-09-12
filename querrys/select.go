@@ -64,8 +64,8 @@ func Stat_Select_reports() string {
 }
 
 func Stat_Select_provider_registry() string {
-	return `SELECT operation_id, transaction_completed_at, operation_type, country,
-		payment_method_type, merchant_name, rate, amount, channel_amount, channel_currency, provider_currency
+	return `SELECT operation_id, transaction_completed_at, operation_type, country, payment_method_type, 
+			merchant_name, rate, amount, channel_amount, channel_currency, provider_currency, br_amount, balance
 		FROM provider_registry 
 		WHERE merchant_name = ANY($1) 
 		AND transaction_completed_at BETWEEN $2 AND $3`

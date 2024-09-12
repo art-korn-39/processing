@@ -181,9 +181,14 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 
 	idx := map_fileds["created_at / operation_created_at"]
 	if idx > 0 {
-		op.Operation_created_at = util.GetDateFromString(record[map_fileds["created_at / operation_created_at"]-1])
+		op.Operation_created_at = util.GetDateFromString(record[idx-1])
 	} else {
 		op.Operation_created_at = op.Transaction_completed_at
+	}
+
+	idx = map_fileds["operation_actual_amount"]
+	if idx > 0 {
+		op.Actual_amount = util.FR(strconv.ParseFloat(record[idx-1], 64)).(float64)
 	}
 
 	return

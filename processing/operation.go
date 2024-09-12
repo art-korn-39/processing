@@ -3,6 +3,7 @@ package processing
 import (
 	"app/currency"
 	"app/holds"
+	"app/kgx"
 	"app/provider"
 	"app/util"
 	"strings"
@@ -69,14 +70,18 @@ type Operation struct {
 	Balance_amount   float64           // сумма в валюте баланса
 	Balance_currency currency.Currency // валюта баланса
 
+	Actual_amount float64
+
 	Rate                 float64
 	SR_channel_currency  float64
 	SR_balance_currency  float64
 	CheckFee, CheckRates float64
 	Verification         string
+	Verification_KGX     string
 	IsDragonPay          bool
 	IsPerevodix          bool
 	Crypto_network       string
+	Provider1c           string
 
 	RR_amount float64
 	RR_date   time.Time
@@ -107,7 +112,8 @@ func (o *Operation) StartingFill() {
 	o.Document_date = util.TruncateToDay(o.Transaction_completed_at)
 
 	o.IsDragonPay = strings.Contains(o.Provider_name, "Dragonpay")
-	o.IsPerevodix = strings.Contains(o.Provider_name, "Perevodix") || o.Provider_name == "SbpQRViaIntervaleE46AltIT"
+	//o.IsPerevodix = strings.Contains(o.Provider_name, "Perevodix") || o.Provider_name == "SbpQRViaIntervaleE46AltIT"
+	o.IsPerevodix = o.Merchant_id == 73162
 
 	o.Provider_currency = currency.New(o.Provider_currency_str)
 	o.Msc_currency = currency.New(o.Msc_currency_str)
@@ -166,13 +172,15 @@ func (o *Operation) SetBalanceAmount() {
 	balance_amount := float64(0)
 
 	// у KGX может быть RUB-RUB, но комсу надо брать из операции провайдера
-	if o.Channel_currency == o.Balance_currency && t.Schema != "KGX" {
+	if o.Channel_currency == o.Balance_currency && t.Convertation != "KGX" {
 		balance_amount = o.Channel_amount
 	} else if t.Convertation == "Без конверта" {
 		balance_amount = o.Channel_amount
+	} else if t.Convertation == "Частичные выплаты" {
+		balance_amount = o.Channel_amount
 	} else if t.Convertation == "Колбек" {
 		balance_amount = o.Provider_amount
-	} else if t.Convertation == "Реестр" || t.Schema == "KGX" {
+	} else if t.Convertation == "Реестр" || t.Convertation == "KGX" {
 
 		// Поиск в мапе операций провайдера по ID
 		ProviderOperation, ok := provider.Registry.Get(o.Operation_id, o.Document_date, o.Channel_amount)
@@ -181,7 +189,7 @@ func (o *Operation) SetBalanceAmount() {
 			balance_amount = ProviderOperation.Amount
 			rate = ProviderOperation.Rate
 
-			if t.Schema == "KGX" {
+			if t.Convertation == "KGX" {
 				o.Provider_name = ProviderOperation.Balance //!!!
 				o.Balance_currency = ProviderOperation.Provider_currency
 			}
@@ -198,7 +206,7 @@ func (o *Operation) SetBalanceAmount() {
 		balance_amount = o.Channel_amount
 	}
 
-	o.Rate = rate
+	o.Rate = util.TR(rate == 0, float64(1), rate).(float64)
 	o.Balance_amount = balance_amount
 
 }
@@ -211,8 +219,13 @@ func (o *Operation) SetSRAmount() {
 		return
 	}
 
-	// SR В ВАЛЮТЕ БАЛАНСА
-	commission := o.Balance_amount*t.Percent + t.Fix
+	// SR В ВАЛЮТЕ КОМИССИИ (обычно это валюта баланса)
+	var commission float64
+	if t.AmountInChannelCurrency {
+		commission = o.Channel_amount*t.Percent + t.Fix
+	} else {
+		commission = o.Balance_amount*t.Percent + t.Fix
+	}
 
 	if t.Min != 0 && commission < t.Min {
 		commission = t.Min
@@ -221,33 +234,62 @@ func (o *Operation) SetSRAmount() {
 	}
 
 	// SR В ВАЛЮТЕ КАНАЛА
-	if t.Convertation == "Реестр" || t.Schema == "KGX" {
-		o.SR_channel_currency = commission * o.Rate
+	var SR_channel_currency float64
+	if t.Convertation == "Реестр" || t.Convertation == "KGX" {
+		if t.AmountInChannelCurrency {
+			SR_channel_currency = commission
+		} else { // тариф в валюте баланса и комса тоже, поэтому умножаем на курс
+			SR_channel_currency = commission * o.Rate
+		}
 	} else {
-		o.SR_channel_currency = commission
+		SR_channel_currency = commission
 	}
 
-	//добавить
-	//[merchant_name] IN {"Perevodix";"Monetix}
+	// SR В ВАЛЮТЕ БАЛАНСА
+	var SR_balance_currency float64
+	if (t.Convertation == "Реестр" || t.Convertation == "KGX") && t.AmountInChannelCurrency {
+		SR_balance_currency = commission / o.Rate
+	} else {
+		SR_balance_currency = commission
+	}
 
-	// для KGX подставляем BR в SR_balance_currency
-	if t.Schema == "KGX" && o.ProviderOperation != nil {
-		commission = o.ProviderOperation.BR_amount
+	// для KGX используем BR
+	if t.Convertation == "KGX" && o.ProviderOperation != nil {
+		if t.AmountInChannelCurrency {
+			SR_channel_currency = o.ProviderOperation.BR_amount
+		} else {
+			SR_balance_currency = o.ProviderOperation.BR_amount
+		}
 	}
 
 	// ОКРУГЛЕНИЕ
 	if o.Balance_currency.Exponent {
 		o.Balance_amount = util.Round(o.Balance_amount, 0)
-		o.SR_balance_currency = util.Round(commission, 0)
+		o.SR_balance_currency = util.Round(SR_balance_currency, 0)
 	} else {
 		o.Balance_amount = util.Round(o.Balance_amount, 2)
-		o.SR_balance_currency = util.Round(commission, 2)
+		o.SR_balance_currency = util.Round(SR_balance_currency, 2)
 	}
 
 	if o.Channel_currency.Exponent {
-		o.SR_channel_currency = util.Round(o.SR_channel_currency, 0)
+		o.SR_channel_currency = util.Round(SR_channel_currency, 0)
 	} else {
-		o.SR_channel_currency = util.Round(o.SR_channel_currency, 2)
+		o.SR_channel_currency = util.Round(SR_channel_currency, 2)
+	}
+
+}
+
+func (o *Operation) SetProvider1c() {
+
+	if o.Tariff != nil && o.IsPerevodix && o.Tariff.Convertation == "KGX" {
+
+		//o.Provider1c = kgx.GetProvider1c(o.ProviderOperation.Balance, o.Operation_type, o.Payment_type, o.Balance_currency)
+		o.Provider1c = kgx.GetProvider1c(o.Provider_name, o.Operation_type, o.Payment_type, o.Balance_currency)
+
+	} else if o.Tariff != nil {
+
+		o.Provider1c = o.Tariff.Provider1C
+
 	}
 
 }
@@ -271,7 +313,6 @@ func (o *Operation) SetVerification() {
 
 	if o.Tariff != nil {
 		Converation = o.Tariff.Convertation
-		//Schema = o.Tariff.Schema
 		CurrencyBP = o.Tariff.CurrencyBP
 		if o.Tariff_bof != nil {
 			s1 := (o.Tariff.Percent + o.Tariff.Fix + o.Tariff.Min + o.Tariff.Max) //* 100
@@ -280,6 +321,7 @@ func (o *Operation) SetVerification() {
 		}
 	}
 
+	// если реестр и валюты одинаковые, то вылетает "требует уточ. курса"
 	if o.Tariff == nil {
 		o.Verification = VRF_NO_TARIFF
 	} else if Converation == "Реестр" || Converation == "KGX" {
@@ -300,28 +342,48 @@ func (o *Operation) SetVerification() {
 		o.Verification = VRF_CHECK_CURRENCY
 	} else if o.CheckRates != 0 {
 		o.Verification = VRF_CHECK_TARIFF
+	} else if Converation == "Частичные выплаты" && o.Channel_amount != o.Actual_amount {
+		o.Verification = VRF_PARTIAL_PAYMENTS
 	} else if o.IsDragonPay {
 		o.Verification = VRF_DRAGON_PAY
-		//для частичных выплат и когда channel_amount != operation_actual_amount
-		//чё то пишем
 	} else {
 		o.Verification = VRF_CHECK_BILLING
+	}
+
+	if o.Tariff != nil && o.IsPerevodix && o.Tariff.Convertation == "KGX" {
+
+		if kgx.GetDataLen() == 0 {
+			o.Verification_KGX = VRF_NO_DATA_PEREVODIX_KGX
+		} else if !kgx.LineContains(o.Provider_name, o.Operation_type, o.Payment_type, o.Balance_currency) {
+			o.Verification_KGX = VRF_NO_MAPPING_KGX_LIST
+		} else if o.Provider1c == "" {
+			o.Verification_KGX = VRF_NO_FILLED_KGX_LIST
+		} else {
+			o.Verification_KGX = VRF_OK
+		}
+
+	} else {
+		o.Verification_KGX = VRF_OK
 	}
 
 }
 
 const (
-	VRF_OK               = "ОК"
-	VRF_VALID_REG        = "Валидирован по реестру"
-	VRF_VALID_REG_FEE    = "Валидирован по реестру (см. CheckFee)"
-	VRF_NO_TARIFF        = "Не найден тариф"
-	VRF_NO_IN_REG        = "Нет в реестре"
-	VRF_CHECK_RATE       = "Требует уточнения курса"
-	VRF_DIFF_CHAN_AMOUNT = "Real amount отличается от реестра"
-	VRF_CHECK_CURRENCY   = "Валюта учёта отлична от валюты в Биллинге"
-	VRF_CHECK_TARIFF     = "Несоответствие тарифа"
-	VRF_DRAGON_PAY       = "Исключение ДрагонПей"
-	VRF_CHECK_BILLING    = "Провень начисления биллинга"
+	VRF_OK                    = "ОК"
+	VRF_VALID_REG             = "Валидирован по реестру"
+	VRF_VALID_REG_FEE         = "Валидирован по реестру (см. CheckFee)"
+	VRF_NO_TARIFF             = "Не найден тариф"
+	VRF_NO_IN_REG             = "Нет в реестре"
+	VRF_CHECK_RATE            = "Требует уточнения курса"
+	VRF_DIFF_CHAN_AMOUNT      = "Real amount отличается от реестра"
+	VRF_CHECK_CURRENCY        = "Валюта учёта отлична от валюты в Биллинге"
+	VRF_CHECK_TARIFF          = "Несоответствие тарифа"
+	VRF_DRAGON_PAY            = "Исключение ДрагонПей"
+	VRF_CHECK_BILLING         = "Провень начисления биллинга"
+	VRF_NO_DATA_PEREVODIX_KGX = "В тарифах нет данных на странице KGX"
+	VRF_NO_MAPPING_KGX_LIST   = "Нет совпадения на листе KGX"
+	VRF_NO_FILLED_KGX_LIST    = "Не заполнен поставщик 1С на листе KGX"
+	VRF_PARTIAL_PAYMENTS      = "Частичные выплаты"
 )
 
 func (o *Operation) SetRR() {
@@ -362,6 +424,50 @@ func (o *Operation) SetDK() {
 		return
 	}
 
+	// DK В ВАЛЮТЕ КОМИССИИ (обычно это валюта баланса)
+	var commission float64
+	if t.AmountInChannelCurrency {
+		commission = o.Channel_amount*t.DK_percent + t.DK_fix
+	} else {
+		commission = o.Balance_amount*t.DK_percent + t.DK_fix
+	}
+
+	if t.DK_min != 0 && commission < t.DK_min {
+		commission = t.DK_min
+	} else if t.DK_max != 0 && commission > t.DK_min {
+		commission = t.DK_max
+	}
+
+	if t.AmountInChannelCurrency {
+		o.CompensationRC = o.SR_channel_currency - commission
+		o.CompensationBC = o.SR_balance_currency - commission/o.Rate
+	} else {
+		o.CompensationBC = o.SR_balance_currency - commission
+		o.CompensationRC = o.SR_channel_currency - commission*o.Rate
+	}
+
+	if o.Balance_currency.Exponent {
+		o.CompensationBC = util.Round(o.CompensationBC, 0)
+	} else {
+		o.CompensationBC = util.Round(o.CompensationBC, 2)
+	}
+
+	if o.Channel_currency.Exponent {
+		o.CompensationRC = util.Round(o.CompensationRC, 0)
+	} else {
+		o.CompensationRC = util.Round(o.CompensationRC, 2)
+	}
+
+}
+
+func (o *Operation) SetDK_old() {
+
+	t := o.Tariff
+
+	if t.DK_is_zero {
+		return
+	}
+
 	// BALANCE CURRENCY
 	commissionBC := o.Balance_amount*o.Tariff.DK_percent + t.DK_fix
 
@@ -381,7 +487,7 @@ func (o *Operation) SetDK() {
 
 	// CHANNEL CURRENCY
 	commissionRC := o.Channel_amount*o.Tariff.DK_percent + t.DK_fix
-	commission_with_rate := commissionRC / util.TR(o.Rate == 0, 1, o.Rate).(float64)
+	commission_with_rate := commissionRC / o.Rate
 
 	if t.DK_min != 0 && commission_with_rate < t.DK_min {
 		commissionRC = t.DK_min * o.Rate

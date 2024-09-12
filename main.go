@@ -22,7 +22,7 @@ func main() {
 	var app string
 	var file_config string
 
-	flag.StringVar(&app, "app", "processing", "") // processing | conversion | decline | crypto | aws
+	flag.StringVar(&app, "app", "conversion", "") // processing | conversion | decline | crypto | aws
 	flag.StringVar(&file_config, "file_config", "", "")
 	flag.Parse()
 

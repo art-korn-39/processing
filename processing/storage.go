@@ -15,9 +15,6 @@ type Storage struct {
 
 	Registry []*Operation
 	Tariffs  []Tariff
-	//Crypto   map[int]CryptoOperation
-	// Rates               []ProviderOperation
-	// Provider_operations map[int]ProviderOperation
 }
 
 func (s *Storage) Close() {

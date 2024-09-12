@@ -32,7 +32,8 @@ type Operation struct {
 	Coverted_amount   float64 `db:"coverted_amount"`
 	Coverted_currency string  `db:"coverted_currency"`
 
-	Link string `db:"link"`
+	Link      string `db:"link"`
+	Bank_card int    `db:"bank_card"`
 }
 
 type DeclineFile struct {

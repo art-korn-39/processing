@@ -38,12 +38,14 @@ func Write_XLSX_SummaryInfo(M map[KeyFields_SummaryInfo]SumFileds) {
 
 	f := xlsx.NewFile()
 
-	add_page_copy1(f, M)
-	add_page_copy2(f, M)
+	//add_page_copy1(f, M)
+	add_page_copy2(f, M) // теперь это лист "копируем"
+	add_page_svodno(f, M)
 	add_page_1_makeTariff(f, M)
 	add_page_2_checkBilling(f)
 	add_page_3_checkRate(f, M)
 	add_page_4_noProviderReg(f)
+	add_page_5_no_Perevodix_KGX_verification(f)
 
 	err := f.Save(config.Get().SummaryInfo.Filename)
 	if err != nil {
@@ -105,6 +107,11 @@ func add_page_copy1(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 	var cell *xlsx.Cell
 
 	for k, v := range M {
+
+		if k.verification == VRF_CHECK_RATE {
+			continue
+		}
+
 		row := sheet.AddRow()
 		row.AddCell().SetString(k.balance_name) //k.tariff.Balance_name)
 		row.AddCell().SetString(fmt.Sprint(k.balance_id, "_", k.tariff.Balance_type))
@@ -118,7 +125,7 @@ func add_page_copy1(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		row.AddCell().SetString(k.merchant_account_name)
 		row.AddCell().SetString(k.tariff.Subdivision1C)
 		row.AddCell().SetString(k.tariff.RatedAccount)
-		row.AddCell().SetString(k.tariff.Provider1C)
+		row.AddCell().SetString(k.provider1c)
 		row.AddCell().SetString(k.channel_currency.Name)
 		row.AddCell().SetString(k.balance_currency.Name)
 
@@ -155,7 +162,7 @@ func add_page_copy1(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 			row.AddCell().SetDate(k.RR_date)
 		}
 
-		row.AddCell().SetString(k.Crypto_network)
+		row.AddCell().SetString(k.crypto_network)
 
 		cell = row.AddCell()
 		cell.SetFloat(v.channel_amount)
@@ -185,7 +192,7 @@ func add_page_copy1(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 func add_page_copy2(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
-	sheet, _ := f.AddSheet("Копируем2")
+	sheet, _ := f.AddSheet("Детализация")
 
 	headers := []string{"Баланс", "IDBALANCE", "Дата", "Проверка", "operation_type",
 		"payment_method_type", "merchant_name", "merchant_account_name", "Подразделение", "Рассчетный счет",
@@ -193,7 +200,8 @@ func add_page_copy2(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		"Старт тарифа", "tariff_condition_id", "contract_id", "PPрасхолд", "ДатаРасхолдМ", "CryptoNetWork",
 		"ДК тариф формула", "Компенсация BC", "Компенсация RC",
 		"real_amount / channel_amount", "real_amount, fee", "Сумма в валюте баланса",
-		"SR Balance Currency", "ChecFee", "Кол-во операций", "Сумма холда", "СуммаХолдаМ"}
+		"SR Balance Currency", "ChecFee", "Кол-во операций", "Сумма холда", "СуммаХолдаМ",
+		"К возврату на баланс, оборот", "К возврату на баланс, комиссия"}
 
 	style := xlsx.NewStyle()
 	style.Fill.FgColor = "5B9BD5"
@@ -230,11 +238,16 @@ func add_page_copy2(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 	sheet.SetColWidth(16, 16, 16) // tariff_condition_id
 	sheet.SetColWidth(17, 17, 12) // contract_id
 	sheet.SetColWidth(18, 19, 12) // PPрасхолд
-	sheet.SetColWidth(20, 31, 16)
+	sheet.SetColWidth(20, 33, 16)
 
 	var cell *xlsx.Cell
 
 	for k, v := range M {
+
+		if k.verification == VRF_CHECK_RATE {
+			continue
+		}
+
 		row := sheet.AddRow()
 		row.AddCell().SetString(k.balance_name)          //k.tariff.Balance_name)   //0
 		row.AddCell().SetInt(k.balance_id)               //1
@@ -246,7 +259,7 @@ func add_page_copy2(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		row.AddCell().SetString(k.merchant_account_name) //7
 		row.AddCell().SetString(k.tariff.Subdivision1C)  //8
 		row.AddCell().SetString(k.tariff.RatedAccount)   //9
-		row.AddCell().SetString(k.tariff.Provider1C)     //10
+		row.AddCell().SetString(k.provider1c)            //10
 		row.AddCell().SetString(k.channel_currency.Name) //11
 		row.AddCell().SetString(k.balance_currency.Name) //12 Валюта баланса
 		row.AddCell().SetString(k.tariff.Formula)        //13 Формула
@@ -258,11 +271,11 @@ func add_page_copy2(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 			row.AddCell().SetDate(k.tariff.DateStart)
 		}
 
-		//if k.tariff.id > 0 { //16
-		row.AddCell().SetInt(k.tariff.id)
-		//} else {
-		//	row.AddCell().SetInt(k.tariff_condition_id)
-		//}
+		if k.tariff.id > 0 { //16
+			row.AddCell().SetInt(k.tariff.id)
+		} else {
+			row.AddCell().SetInt(k.tariff_condition_id)
+		}
 
 		row.AddCell().SetInt(k.contract_id) //17
 
@@ -278,7 +291,7 @@ func add_page_copy2(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 			row.AddCell().SetDate(k.hold_date)
 		}
 
-		row.AddCell().SetString(k.Crypto_network)    //20 CryptoNetWork
+		row.AddCell().SetString(k.crypto_network)    //20 CryptoNetWork
 		row.AddCell().SetString(k.tariff.DK_formula) //21 ДК тариф формула
 
 		cell = row.AddCell() //22 Компенсация BC
@@ -314,6 +327,133 @@ func add_page_copy2(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 		cell = row.AddCell() //31 СуммаХолдаМ
 		cell.SetFloat(v.hold_amount)
+		cell.SetFormat("0.00")
+
+		cell = row.AddCell() //32 возврат на баланс, оборот
+		cell.SetFloat(v.BalanceRefund_turnover)
+		cell.SetFormat("0.00")
+
+		cell = row.AddCell() //33 возврат на баланс, комиссия
+		cell.SetFloat(v.BalanceRefund_fee)
+		cell.SetFormat("0.00")
+	}
+
+}
+
+func add_page_svodno(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
+
+	M1 := make(map[KeyFields_SummaryInfo]SumFileds)
+	for k, v := range M {
+
+		key := KeyFields_SummaryInfo{
+			balance_name:     k.balance_name,
+			balance_id:       k.balance_id,
+			document_date:    k.document_date,
+			verification:     k.verification,
+			operation_type:   k.operation_type,
+			merchant_name:    k.merchant_name,
+			tariff:           k.tariff,
+			provider1c:       k.provider1c,
+			channel_currency: k.channel_currency,
+			balance_currency: k.balance_currency,
+		}
+
+		sf := M1[key]
+		sf.AddValuesFromSF(v)
+		M1[key] = sf
+	}
+
+	sheet, _ := f.AddSheet("Сводный")
+
+	headers := []string{"Баланс", "IDBALANCE", "Дата", "Проверка", "operation_type", //"payment_method_type",
+		"merchant_name", "Подразделение",
+		"Поставщик 1С", "real_currency / channel_currency", "Валюта баланса",
+		"real_amount / channel_amount", "real_amount, fee", "Сумма в валюте баланса",
+		"SR Balance Currency", "ChecFee", "Кол-во операций",
+		"К возврату на баланс, оборот", "К возврату на баланс, комиссия", "Компенсация в валюте баланса"}
+
+	style := xlsx.NewStyle()
+	style.Fill.FgColor = "5B9BD5"
+	style.Fill.PatternType = "solid"
+	style.ApplyFill = true
+	style.Alignment.WrapText = true
+	style.Alignment.Horizontal = "center"
+	style.Alignment.Vertical = "center"
+	style.ApplyAlignment = true
+	style.Font.Bold = true
+	style.Font.Color = "FFFFFF"
+
+	row := sheet.AddRow()
+
+	for _, v := range headers {
+		cell := row.AddCell()
+		cell.SetString(v)
+		cell.SetStyle(style)
+	}
+
+	sheet.SetColWidth(0, 0, 30) // баланс
+	sheet.SetColWidth(1, 1, 11) // idbalance
+	sheet.SetColWidth(2, 2, 12) // дата
+	sheet.SetColWidth(3, 3, 16) // проверка
+	sheet.SetColWidth(4, 4, 15) // operation_type
+	//sheet.SetColWidth(5, 5, 18) // payment_method_type
+	//sheet.SetColWidth(7, 7, 35)  // merchant_account_name
+	sheet.SetColWidth(7, 8, 16) // подразделение
+	sheet.SetColWidth(8, 9, 14) // real_currency / channel_currency
+	sheet.SetColWidth(10, 18, 16)
+
+	var cell *xlsx.Cell
+
+	for k, v := range M1 {
+
+		if k.verification == VRF_CHECK_RATE {
+			continue
+		}
+
+		row := sheet.AddRow()
+		row.AddCell().SetString(k.balance_name)   //k.tariff.Balance_name)   //0
+		row.AddCell().SetInt(k.balance_id)        //1
+		row.AddCell().SetDate(k.document_date)    //2
+		row.AddCell().SetString(k.verification)   //3
+		row.AddCell().SetString(k.operation_type) //4
+		//row.AddCell().SetString(k.payment_type)          //5
+		row.AddCell().SetString(k.merchant_name) //5
+		//row.AddCell().SetString(k.merchant_account_name) //6
+		row.AddCell().SetString(k.tariff.Subdivision1C) //7
+
+		row.AddCell().SetString(k.provider1c)            //8
+		row.AddCell().SetString(k.channel_currency.Name) //9
+		row.AddCell().SetString(k.balance_currency.Name) //10 Валюта баланса
+
+		cell = row.AddCell() //11
+		cell.SetFloat(v.channel_amount)
+		cell.SetFormat("0.00")
+
+		cell = row.AddCell() //12
+		cell.SetFloat(v.SR_channel_currency)
+		cell.SetFormat("0.00")
+
+		cell = row.AddCell() //13 Сумма в валюте баланса
+		cell.SetFloat(v.balance_amount)
+		cell.SetFormat("0.00")
+
+		cell = row.AddCell() //14
+		cell.SetFloat(v.SR_balance_currency)
+		cell.SetFormat("0.00")
+
+		row.AddCell().SetFloat(v.checkFee)       //15
+		row.AddCell().SetInt(v.count_operations) //16
+
+		cell = row.AddCell() //17 возврат на баланс, оборот
+		cell.SetFloat(v.BalanceRefund_turnover)
+		cell.SetFormat("0.00")
+
+		cell = row.AddCell() //18 возврат на баланс, комиссия
+		cell.SetFloat(v.BalanceRefund_fee)
+		cell.SetFormat("0.00")
+
+		cell = row.AddCell() //19 Компенсация BC
+		cell.SetFloat(v.CompensationBC)
 		cell.SetFormat("0.00")
 	}
 
@@ -451,13 +591,17 @@ func add_page_2_checkBilling(f *xlsx.File) {
 
 	for _, op := range storage.Registry {
 
-		if op.CheckFee == 0 || op.Verification == VRF_NO_IN_REG {
+		if op.CheckFee == 0 || op.Verification == VRF_NO_IN_REG || op.Verification == VRF_VALID_REG_FEE {
 			continue
 		}
 
-		var t Tariff
+		var t, t_bof Tariff
 		if op.Tariff != nil {
 			t = *op.Tariff
+		}
+
+		if op.Tariff_bof != nil {
+			t_bof = *op.Tariff_bof
 		}
 
 		row := sheet.AddRow()
@@ -484,17 +628,18 @@ func add_page_2_checkBilling(f *xlsx.File) {
 		row.AddCell().SetString("")        //10 dragonpay
 		row.AddCell().SetString(t.Formula) //11
 
-		//if k.tariff.id > 0 { //12
-		row.AddCell().SetInt(t.id)
-		//} else {
-		//	row.AddCell().SetInt(k.tariff_condition_id)
-		//}
-
-		if op.Tariff_bof != nil { //13
-			row.AddCell().SetString(op.Tariff_bof.Formula)
+		if t.id > 0 { //12
+			row.AddCell().SetInt(t.id)
 		} else {
-			row.AddCell().SetString("")
+			row.AddCell().SetInt(t_bof.id)
 		}
+
+		row.AddCell().SetString(t_bof.Formula)
+		// if op.Tariff_bof != nil { //13
+		// 	row.AddCell().SetString(op.Tariff_bof.Formula)
+		// } else {
+		// 	row.AddCell().SetString("")
+		// }
 
 		cell = row.AddCell() //14 сумма в валюте канала
 		cell.SetFloat(op.Channel_amount)
@@ -599,11 +744,11 @@ func add_page_3_checkRate(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		row.AddCell().SetFloat(k.tariff.Min)
 		row.AddCell().SetFloat(k.tariff.Max)
 
-		//if k.tariff.id > 0 { //7
-		row.AddCell().SetInt(k.tariff.id)
-		//} else {
-		//	row.AddCell().SetInt(k.tariff_condition_id)
-		//}
+		if k.tariff.id > 0 { //7
+			row.AddCell().SetInt(k.tariff.id)
+		} else {
+			row.AddCell().SetInt(k.tariff_condition_id)
+		}
 
 		cell = row.AddCell() //8
 		cell.SetFloat(k.tariff_bof.Percent)
@@ -671,53 +816,108 @@ func add_page_4_noProviderReg(f *xlsx.File) {
 
 	for _, o := range storage.Registry {
 
-		if o.Verification != VRF_NO_IN_REG {
+		if o.Verification == VRF_NO_IN_REG || o.Verification == VRF_CHECK_RATE {
+
+			row := sheet.AddRow()
+
+			cell = row.AddCell() //0
+			cell.SetString(strconv.Itoa(o.Operation_id))
+			cell.SetFormat("0")
+
+			if o.Tariff != nil { //1
+				row.AddCell().SetString(o.Tariff.Balance_name)
+			} else {
+				row.AddCell().SetString("")
+			}
+
+			row.AddCell().SetInt(o.Balance_id)
+			row.AddCell().SetDate(o.Document_date) //3
+			row.AddCell().SetString(o.Verification)
+			row.AddCell().SetString(o.Operation_type) //5
+			row.AddCell().SetString(o.Merchant_name)
+			row.AddCell().SetString(o.Merchant_account_name) //7
+
+			if o.Tariff != nil { //8
+				row.AddCell().SetString(o.Tariff.Convertation)
+			} else {
+				row.AddCell().SetString("")
+			}
+
+			row.AddCell().SetString(o.Channel_currency.Name) //9
+			row.AddCell().SetString(o.Balance_currency.Name) //10
+
+			cell = row.AddCell() //1
+			cell.SetFloat(0)
+			cell.SetFormat("0.00")
+
+			cell = row.AddCell() //12
+			cell.SetFloat(o.Channel_amount)
+			cell.SetFormat("0.00")
+
+			cell = row.AddCell() //13
+			cell.SetFloat(o.SR_channel_currency)
+			cell.SetFormat("0.00")
+
+			cell = row.AddCell() //14
+			cell.SetFloat(o.Balance_amount)
+			cell.SetFormat("0.00")
+		}
+	}
+
+}
+
+func add_page_5_no_Perevodix_KGX_verification(f *xlsx.File) {
+
+	sheet, _ := f.AddSheet("5. Проверка KGX_Perevodix")
+
+	headers := []string{"Баланс", "operation_type", "Валюта баланса",
+		"payment_method_type", "Поставщик 1С", "Проверка"}
+
+	style := xlsx.NewStyle()
+	style.Fill.FgColor = "5B9BD5"
+	style.Fill.PatternType = "solid"
+	style.ApplyFill = true
+	style.Alignment.WrapText = true
+	style.Alignment.Horizontal = "center"
+	style.Alignment.Vertical = "center"
+	style.ApplyAlignment = true
+	style.Font.Bold = true
+	style.Font.Color = "FFFFFF"
+
+	row := sheet.AddRow()
+
+	for _, v := range headers {
+		cell := row.AddCell()
+		cell.SetString(v)
+		cell.SetStyle(style)
+	}
+
+	sheet.SetColWidth(0, 5, 15) //
+
+	already_write := make([]string, 0, 100)
+
+	for _, o := range storage.Registry {
+
+		if o.Verification_KGX == VRF_OK {
 			continue
+		}
+
+		hash := fmt.Sprint(o.Provider_name, o.Operation_type, o.Balance_currency.Name, o.Payment_type)
+
+		if slices.Contains(already_write, hash) {
+			continue
+		} else {
+			already_write = append(already_write, hash)
 		}
 
 		row := sheet.AddRow()
 
-		cell = row.AddCell() //0
-		cell.SetString(strconv.Itoa(o.Operation_id))
-		cell.SetFormat("0")
-
-		if o.Tariff != nil { //1
-			row.AddCell().SetString(o.Tariff.Balance_name)
-		} else {
-			row.AddCell().SetString("")
-		}
-
-		row.AddCell().SetInt(o.Balance_id)
-		row.AddCell().SetDate(o.Document_date) //3
-		row.AddCell().SetString(o.Verification)
-		row.AddCell().SetString(o.Operation_type) //5
-		row.AddCell().SetString(o.Merchant_name)
-		row.AddCell().SetString(o.Merchant_account_name) //7
-
-		if o.Tariff != nil { //8
-			row.AddCell().SetString(o.Tariff.Convertation)
-		} else {
-			row.AddCell().SetString("")
-		}
-
-		row.AddCell().SetString(o.Channel_currency.Name) //9
-		row.AddCell().SetString(o.Balance_currency.Name) //10
-
-		cell = row.AddCell() //1
-		cell.SetFloat(0)
-		cell.SetFormat("0.00")
-
-		cell = row.AddCell() //12
-		cell.SetFloat(o.Channel_amount)
-		cell.SetFormat("0.00")
-
-		cell = row.AddCell() //13
-		cell.SetFloat(o.SR_channel_currency)
-		cell.SetFormat("0.00")
-
-		cell = row.AddCell() //14
-		cell.SetFloat(o.Balance_amount)
-		cell.SetFormat("0.00")
+		row.AddCell().SetString(o.Provider_name)
+		row.AddCell().SetString(o.Operation_type)
+		row.AddCell().SetString(o.Balance_currency.Name)
+		row.AddCell().SetString(o.Payment_type)
+		row.AddCell().SetString(o.Provider1c)
+		row.AddCell().SetString(o.Verification_KGX)
 
 	}
 

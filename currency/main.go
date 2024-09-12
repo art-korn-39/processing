@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-var exponent = []string{"JPY", "KRW", "UGX", "VND", "CLP", "XAF", "RWF", "XOF"}
+var exponent = []string{"JPY", "KRW", "UGX", "VND", "CLP", "XAF", "RWF", "XOF", "GNF"}
 
 type Currency struct {
 	Name     string
@@ -15,6 +15,6 @@ type Currency struct {
 func New(name string) Currency {
 
 	n := strings.ToUpper(name)
-	c := Currency{Name: n, Exponent: slices.Contains(exponent, n)}
-	return c
+	return Currency{Name: n, Exponent: slices.Contains(exponent, n)}
+
 }

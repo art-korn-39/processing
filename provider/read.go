@@ -94,7 +94,7 @@ func ReadRates(filename string) (ops []Operation, err error) {
 		var operations []Operation
 
 		sheet_name := util.SubString(strings.ToLower(sheet.Name), 0, 7)
-		if sheet_name == "конверт" || sheet_name == "реестр" {
+		if sheet_name == "конверт" || sheet_name == "реестр" || sheet_name == "sale" || sheet_name == "payout" {
 
 			operations, err = Read_convert_sheet(sheet, filename)
 			if err != nil {

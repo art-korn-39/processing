@@ -62,9 +62,24 @@ func ReadFiles(db *sqlx.DB, filenames []string) (map[int]Operation, []*file.File
 				continue
 			}
 
-			text, ok := message.Text[1]["text"]
-			if !ok {
+			// берём элемент с ключом "plain" из text_entities
+			// у него находим элемент в котором type = plain
+			var text string
+			for _, map_ := range message.Text {
+				if map_["type"] == "plain" {
+					text = text + map_["text"]
+				}
+			}
+
+			if text == "" {
 				continue
+			}
+
+			var bank_card int
+			for _, map_ := range message.Text {
+				if map_["type"] == "bank_card" {
+					bank_card, _ = strconv.Atoi(map_["text"])
+				}
 			}
 
 			ops := strings.Split(text, "\n\n\n")
@@ -101,6 +116,11 @@ func ReadFiles(db *sqlx.DB, filenames []string) (map[int]Operation, []*file.File
 
 					o.Incoming_amount, o.Incoming_currency = GetAmountAndCurrency(M["incoming amount"])
 					o.Coverted_amount, o.Coverted_currency = GetAmountAndCurrency(M["coverted amount"])
+
+					o.Bank_card = bank_card
+					if o.Operation_id == 0 {
+						o.Operation_id = bank_card
+					}
 
 					decline_operations[o.Operation_id] = o
 				}

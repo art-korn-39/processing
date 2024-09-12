@@ -64,7 +64,7 @@ func Equals(numA, numB float64) bool {
 	return delta < TOLERANCE
 }
 
-func FormatInt(n int) string {
+func FormatInt[v int | int64](n v) string {
 	in := strconv.FormatInt(int64(n), 10)
 	numOfDigits := len(in)
 	if n < 0 {

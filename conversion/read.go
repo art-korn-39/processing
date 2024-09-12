@@ -30,10 +30,12 @@ func ReadFiles(files []*file.FileInfo) (chan_operations chan provider.Operation,
 			defer wg.Done()
 
 			for f := range chan_files {
-				f.GetLastUpload(db)
-				if f.LastUpload.After(f.Modified) {
-					atomic.AddInt64(&count_skipped, 1)
-					continue
+				if !config.Debug {
+					f.GetLastUpload(db)
+					if f.LastUpload.After(f.Modified) {
+						atomic.AddInt64(&count_skipped, 1)
+						continue
+					}
 				}
 
 				operations, err := provider.ReadRates(f.Filename)

@@ -20,7 +20,8 @@ func Stat_Insert_provider_registry_prev() string {
 }
 
 func Stat_Insert_provider_registry() string {
-	return `INSERT INTO provider_registry (
+	return `
+	INSERT INTO provider_registry (
 		operation_id, transaction_completed_at, provider_name, merchant_name, merchant_account_name,
 		project_url, payment_method_type, country, rate, operation_type, amount,
 		provider_payment_id, operation_status, account_number, channel_currency, provider_currency, br_amount,
@@ -36,7 +37,10 @@ func Stat_Insert_provider_registry() string {
 	ON CONFLICT ON CONSTRAINT pk_id DO UPDATE
 
 	SET rate = EXCLUDED.rate, amount = EXCLUDED.amount, br_amount = EXCLUDED.br_amount,
-		operation_status = EXCLUDED.operation_status, balance = EXCLUDED.balance`
+		channel_amount = EXCLUDED.channel_amount, provider_currency = EXCLUDED.provider_currency,
+		transaction_completed_at = EXCLUDED.transaction_completed_at, 
+		transaction_completed_at_day = EXCLUDED.transaction_completed_at_day, 
+		operation_status = EXCLUDED.operation_status, balance = EXCLUDED.balance;`
 }
 
 func Stat_Insert_detailed() string {
@@ -66,12 +70,12 @@ func Stat_Insert_decline() string {
 	return `INSERT INTO decline (
 		operation_id, message_id, date, merchant_id, merchant_account_id, provider_id, provider_name, 
 		merchant_name, merchant_account_name, operation_type, incoming_amount, coverted_amount, created_at,
-		incoming_currency, coverted_currency, comment, date_day, created_at_day
+		incoming_currency, coverted_currency, comment, date_day, created_at_day, bank_card
 	)
 	VALUES (
 		:operation_id, :message_id, :date, :merchant_id, :merchant_account_id, :provider_id, :provider_name, 
 		:merchant_name, :merchant_account_name,	:operation_type, :incoming_amount, :coverted_amount, :created_at,
-		:incoming_currency, :coverted_currency, :comment, :date_day, :created_at_day
+		:incoming_currency, :coverted_currency, :comment, :date_day, :created_at_day, :bank_card
 		)`
 }
 

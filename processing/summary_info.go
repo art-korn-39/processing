@@ -9,18 +9,20 @@ import (
 )
 
 type SumFileds struct {
-	count_operations    int
-	channel_amount      float64
-	balance_amount      float64
-	fee_amount          float64
-	SR_channel_currency float64
-	SR_balance_currency float64
-	checkFee            float64
-	checkRates          float64
-	RR_amount           float64
-	hold_amount         float64
-	CompensationRC      float64
-	CompensationBC      float64
+	count_operations       int
+	channel_amount         float64
+	balance_amount         float64
+	fee_amount             float64
+	SR_channel_currency    float64
+	SR_balance_currency    float64
+	checkFee               float64
+	checkRates             float64
+	RR_amount              float64
+	hold_amount            float64
+	CompensationRC         float64
+	CompensationBC         float64
+	BalanceRefund_turnover float64
+	BalanceRefund_fee      float64
 }
 
 func (sf *SumFileds) AddValues(o *Operation) {
@@ -36,6 +38,32 @@ func (sf *SumFileds) AddValues(o *Operation) {
 	sf.hold_amount = sf.hold_amount + o.hold_amount
 	sf.CompensationBC = sf.CompensationBC + o.CompensationBC
 	sf.CompensationRC = sf.CompensationRC + o.CompensationRC
+	sf.BalanceRefund_turnover = sf.BalanceRefund_turnover + o.Channel_amount - o.Actual_amount
+}
+
+func (sf *SumFileds) AddValuesFromSF(sf2 SumFileds) {
+	sf.count_operations = sf.count_operations + sf2.count_operations
+	sf.channel_amount = sf.channel_amount + sf2.channel_amount
+	sf.balance_amount = sf.balance_amount + sf2.balance_amount
+	sf.fee_amount = sf.fee_amount + sf2.fee_amount
+	sf.SR_channel_currency = sf.SR_channel_currency + sf2.SR_channel_currency
+	sf.SR_balance_currency = sf.SR_balance_currency + sf2.SR_balance_currency
+	sf.checkFee = sf.checkFee + sf2.checkFee
+	sf.checkRates = sf.checkRates + sf2.checkRates
+	sf.RR_amount = sf.RR_amount + sf2.RR_amount
+	sf.hold_amount = sf.hold_amount + sf2.hold_amount
+	sf.CompensationBC = sf.CompensationBC + sf2.CompensationBC
+	sf.CompensationRC = sf.CompensationRC + sf2.CompensationRC
+	sf.BalanceRefund_turnover = sf.BalanceRefund_turnover + sf2.BalanceRefund_turnover
+}
+
+func (sf *SumFileds) SetBalanceRefund(convertation string, percent float64) {
+	if convertation == "Частичные выплаты" {
+		sf.BalanceRefund_fee = percent
+	} else {
+		sf.BalanceRefund_turnover = 0
+		sf.BalanceRefund_fee = 0
+	}
 }
 
 type KeyFields_SummaryInfo struct {
@@ -59,25 +87,11 @@ type KeyFields_SummaryInfo struct {
 	tariff     Tariff
 	tariff_bof Tariff
 
-	// balance_name  string
-	// subdivision1C string
-	// provider1C    string
-	// ratedAccount  string
-
-	// currencyBP                currency.Currency
-	// percent                   float64
-	// fix                       float64
-	// min                       float64
-	// max                       float64
-	// range_min                 float64
-	// range_max                 float64
-	// date_start                time.Time
-	// tariff_condition_id       int
 	contract_id    int //???
 	RR_date        time.Time
 	hold_date      time.Time
-	Crypto_network string
-	// Formula, FormulaDK, Range string
+	crypto_network string
+	provider1c     string
 }
 
 func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
@@ -95,15 +109,16 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		tariff_condition_id:   o.Tariff_condition_id,
 		channel_currency:      o.Channel_currency,
 		balance_currency:      o.Balance_currency,
-		Crypto_network:        o.Crypto_network,
+		crypto_network:        o.Crypto_network,
 		RR_date:               o.RR_date,
 		hold_date:             o.hold_date,
+		provider1c:            o.Provider1c,
 	}
 
 	if o.Tariff != nil {
 		KF.tariff = *o.Tariff
 
-		if o.Tariff.Schema == "KGX" {
+		if o.Tariff.Convertation == "KGX" {
 			if o.ProviderOperation != nil {
 				KF.balance_name = o.Provider_name // тут уже лежит баланс из реестра провайдера
 			}
@@ -115,25 +130,6 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 	if o.Tariff_bof != nil {
 		KF.tariff_bof = *o.Tariff_bof
 	}
-
-	// if o.Tariff != nil {
-	// 	KF.balance_name = o.Tariff.Balance_name
-	// 	KF.subdivision1C = o.Tariff.Subdivision1C
-	// 	KF.ratedAccount = o.Tariff.RatedAccount
-	// 	KF.provider1C = o.Tariff.Provider1C
-	// 	KF.currencyBP = o.Tariff.CurrencyBP
-	// 	KF.percent = o.Tariff.Percent
-	// 	KF.fix = o.Tariff.Fix
-	// 	KF.min = o.Tariff.Min
-	// 	KF.max = o.Tariff.Max
-	// 	KF.range_min = o.Tariff.RangeMIN
-	// 	KF.range_max = o.Tariff.RangeMAX
-	// 	KF.date_start = o.Tariff.DateStart
-	// 	KF.tariff_condition_id = o.Tariff.id
-	// 	KF.Formula = o.Tariff.Formula
-	// 	KF.FormulaDK = o.Tariff.DK_formula
-	// 	KF.Range = o.Tariff.Range
-	// }
 
 	return
 
@@ -157,6 +153,7 @@ func GroupRegistryToSummaryInfo() (group_data map[KeyFields_SummaryInfo]SumFiled
 
 	for k, v := range group_data {
 		v.checkRates = v.checkRates / float64(v.count_operations)
+		v.SetBalanceRefund(k.tariff.Convertation, k.tariff.Percent)
 		group_data[k] = v
 	}
 
