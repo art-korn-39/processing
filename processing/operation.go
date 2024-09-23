@@ -31,6 +31,7 @@ type Operation struct {
 	Provider_id         int    `db:"provider_id"`
 	Tariff_condition_id int    `db:"tariff_id"`
 	Provider_payment_id string `db:"provider_payment_id"`
+	Endpoint_id         string `db:"endpoint_id"`
 
 	Provider_name         string `db:"provider_name"`
 	Merchant_name         string `db:"merchant_name"`
@@ -111,7 +112,7 @@ func (o *Operation) StartingFill() {
 
 	o.Document_date = util.TruncateToDay(o.Transaction_completed_at)
 
-	o.IsDragonPay = strings.Contains(o.Provider_name, "Dragonpay")
+	o.IsDragonPay = strings.Contains(strings.ToLower(o.Provider_name), "dragonpay")
 	//o.IsPerevodix = strings.Contains(o.Provider_name, "Perevodix") || o.Provider_name == "SbpQRViaIntervaleE46AltIT"
 	o.IsPerevodix = o.Merchant_id == 73162
 
@@ -123,6 +124,7 @@ func (o *Operation) StartingFill() {
 	o.Provider_amount = util.TR(o.Provider_currency.Exponent, o.Provider_amount, o.Provider_amount/100).(float64)
 	o.Msc_amount = util.TR(o.Msc_currency.Exponent, o.Msc_amount, o.Msc_amount/100).(float64)
 	o.Channel_amount = util.TR(o.Channel_currency.Exponent, o.Channel_amount, o.Channel_amount/100).(float64)
+	o.Actual_amount = util.TR(o.Channel_currency.Exponent, o.Actual_amount, o.Actual_amount/100).(float64)
 	o.Fee_amount = util.TR(o.Fee_currency.Exponent, o.Fee_amount, o.Fee_amount/100).(float64)
 
 	if o.Operation_type == "" {
@@ -345,7 +347,11 @@ func (o *Operation) SetVerification() {
 	} else if Converation == "Частичные выплаты" && o.Channel_amount != o.Actual_amount {
 		o.Verification = VRF_PARTIAL_PAYMENTS
 	} else if o.IsDragonPay {
-		o.Verification = VRF_DRAGON_PAY
+		if o.Endpoint_id == "" {
+			o.Verification = VRF_ENDPOINT_DRAGONPAY
+		} else {
+			o.Verification = VRF_DRAGON_PAY
+		}
 	} else {
 		o.Verification = VRF_CHECK_BILLING
 	}
@@ -384,6 +390,7 @@ const (
 	VRF_NO_MAPPING_KGX_LIST   = "Нет совпадения на листе KGX"
 	VRF_NO_FILLED_KGX_LIST    = "Не заполнен поставщик 1С на листе KGX"
 	VRF_PARTIAL_PAYMENTS      = "Частичные выплаты"
+	VRF_ENDPOINT_DRAGONPAY    = "Endpoint_id пусто обратитесь к сверке/в саппорт"
 )
 
 func (o *Operation) SetRR() {

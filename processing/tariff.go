@@ -185,6 +185,10 @@ func FindTariffForOperation(op *Operation) *Tariff {
 					continue
 				}
 
+				if op.Channel_currency != t.CurrencyBP && t.Convertation == "Без конверта" {
+					continue
+				}
+
 				// проверяем наличие диапазона
 				if t.RangeMIN != 0 || t.RangeMAX != 0 {
 

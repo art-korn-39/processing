@@ -191,6 +191,11 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		op.Actual_amount = util.FR(strconv.ParseFloat(record[idx-1], 64)).(float64)
 	}
 
+	idx = map_fileds["endpoint_id"]
+	if idx > 0 {
+		op.Endpoint_id = record[idx-1]
+	}
+
 	return
 
 }

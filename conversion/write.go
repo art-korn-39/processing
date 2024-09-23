@@ -22,9 +22,9 @@ func WriteIntoDB(chan_operations chan provider.Operation, chan_readed_files chan
 	var wg sync.WaitGroup
 
 	//1М rows, чтобы читающие горутины на паузу не встали
-	chan_batches := make(chan Batch2, 1000)
+	chan_batches := make(chan Batch2, 10000) //1000
 
-	batch_len := 1500 // 20 fileds
+	batch_len := 100 //1500 20 fileds
 
 	statement := querrys.Stat_Insert_provider_registry()
 
@@ -40,38 +40,10 @@ func WriteIntoDB(chan_operations chan provider.Operation, chan_readed_files chan
 	//for i := 1; i <= 1; i++ {
 	go func() {
 		defer wg.Done()
+		var deadlock bool
 		for b := range chan_batches {
 
 			tx, _ := db.Beginx()
-
-			// sliceID := make([]int, 0, len(v))
-			// sliceRows := make([]processing.ProviderOperation, 0, len(v))
-			// count_rows = count_rows + len(v)
-			// for _, row := range v {
-			// 	sliceID = append(sliceID, row.Id)
-			// 	sliceRows = append(sliceRows, row)
-			// }
-
-			// _, err = tx.NamedQuery(`DELETE from provider_registry
-			// 	WHERE operation_id = :operation_id
-			// 		AND transaction_completed_at_day = :transaction_completed_at_day
-			// 		AND channel_amount = :channel_amount;`, v)
-
-			// if err != nil {
-			// 	logs.Add(logs.ERROR, fmt.Sprint("ошибка при удалении: ", err))
-			// 	tx.Rollback()
-			// 	continue
-			// }
-
-			// query, args, err := sqlx.In(`DELETE FROM provider_registry WHERE operation_id = :operation_id
-			// AND transaction_completed_at_day = :transaction_completed_at_day
-			// AND channel_amount = :channel_amount`, v)
-
-			// fmt.Println(query)
-			// fmt.Println(args...)
-			// fmt.Println(err)
-
-			// log.Fatal()
 
 			v := b.Get()
 
@@ -79,10 +51,17 @@ func WriteIntoDB(chan_operations chan provider.Operation, chan_readed_files chan
 
 			if err != nil {
 				logs.Add(logs.ERROR, fmt.Sprintf("не удалось записать в БД: %v, date: %s, provider: %s, merchant: %s", err, v[0].Transaction_completed_at_day.Format(time.DateOnly), v[0].Provider_name, v[0].Merchant_name))
+				deadlock = true
 				tx.Rollback()
 			} else {
 				atomic.AddInt64(&count_rows, int64(len(v)))
-				tx.Commit()
+				err = tx.Commit()
+				if err != nil {
+					logs.Add(logs.ERROR, "ошибка при commit:"+err.Error())
+				}
+				if deadlock {
+					logs.Add(logs.ERROR, "commit done")
+				}
 			}
 
 		}

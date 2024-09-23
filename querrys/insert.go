@@ -76,7 +76,15 @@ func Stat_Insert_decline() string {
 		:operation_id, :message_id, :date, :merchant_id, :merchant_account_id, :provider_id, :provider_name, 
 		:merchant_name, :merchant_account_name,	:operation_type, :incoming_amount, :coverted_amount, :created_at,
 		:incoming_currency, :coverted_currency, :comment, :date_day, :created_at_day, :bank_card
-		)`
+	)	
+
+	ON CONFLICT ON CONSTRAINT pk_decline_operation_id DO UPDATE
+
+	SET date = EXCLUDED.date, incoming_amount = EXCLUDED.incoming_amount, coverted_amount = EXCLUDED.coverted_amount,
+		incoming_currency = EXCLUDED.incoming_currency, coverted_currency = EXCLUDED.coverted_currency,
+		comment = EXCLUDED.comment, 
+		bank_card = EXCLUDED.bank_card;`
+
 }
 
 func Stat_Insert_crypto() string {

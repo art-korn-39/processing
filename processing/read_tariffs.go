@@ -88,7 +88,7 @@ func Read_XLSX_Tariffs() {
 				continue
 			}
 
-			if row.Cells[1].String() == "" {
+			if len(row.Cells) == 0 || row.Cells[1].String() == "" {
 				break
 			}
 

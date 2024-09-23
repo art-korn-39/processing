@@ -33,6 +33,7 @@ func Stat_Select_reports() string {
 	IFNULL(operation__payment_method_type, '') AS payment_type,
 	IFNULL(billing__payment_type_id, 0) AS payment_type_id,
 	IFNULL(billing__payment_method_id, 0) AS payment_method_id,
+	IFNULL(operation__endpoint_id, '') AS endpoint_id,
 
 	IFNULL(operation__issuer_country, '') AS country,
 	IFNULL(operation__issuer_region, '') AS region,
