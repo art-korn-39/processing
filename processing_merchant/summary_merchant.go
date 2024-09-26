@@ -1,4 +1,4 @@
-package processing
+package processing_merchant
 
 import (
 	"app/config"
@@ -132,7 +132,7 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 		if o.Tariff != nil {
 			k.Convertation = o.Tariff.Convertation
 			k.Tariff_date_start = o.Tariff.DateStart
-			k.Tariff_id = o.Tariff.id
+			k.Tariff_id = o.Tariff.Id
 			k.Formula = o.Tariff.Formula
 			k.Provider_1c = o.Tariff.Provider1C
 			k.Subdivision_1c = o.Tariff.Subdivision1C

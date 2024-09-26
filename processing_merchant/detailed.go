@@ -1,4 +1,4 @@
-package processing
+package processing_merchant
 
 import "time"
 
@@ -119,7 +119,7 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 		d.Provider1C = t.Provider1C
 		d.RatedAccount = t.RatedAccount
 		d.Subdivision1C = t.Subdivision1C
-		d.Tariff_condition_id = t.id
+		d.Tariff_condition_id = t.Id
 		d.Tariff_date_start = t.DateStart
 		d.Act_percent = t.Percent
 		d.Act_fix = t.Fix

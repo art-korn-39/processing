@@ -1,4 +1,4 @@
-package processing
+package processing_merchant
 
 import (
 	"app/config"
@@ -7,13 +7,14 @@ import (
 	"app/logs"
 	"app/provider"
 	"app/querrys"
+	"app/tariff_merchant"
 	"fmt"
 	"sync"
 	"time"
 )
 
 const (
-	Version = "1.3.3"
+	Version = "1.3.5"
 )
 
 var (
@@ -88,7 +89,7 @@ func ReadSources() {
 
 	go func() {
 		defer wg.Done()
-		Read_Tariffs()
+		tariff_merchant.Read_Sources()
 	}()
 
 	go func() {
@@ -110,7 +111,7 @@ func PrepareData() {
 		defer wg.Done()
 
 		// Сортировка
-		SortTariffs()
+		tariff_merchant.SortTariffs()
 		holds.Sort()
 
 		// Подбор тарифов к операциям

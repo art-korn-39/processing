@@ -1,16 +1,54 @@
-package processing
+package processing_merchant
 
 import (
 	"app/config"
+	"app/crypto"
 	"app/holds"
 	"app/logs"
 	"app/provider"
+	"app/tariff_merchant"
 	"app/util"
 	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
 )
+
+func SelectTariffsInRegistry() {
+
+	start_time := time.Now()
+
+	var wg sync.WaitGroup
+
+	channel_indexes := make(chan int, 10000)
+
+	var countWithoutTariff int64
+
+	wg.Add(config.NumCPU)
+	for i := 1; i <= config.NumCPU; i++ {
+		go func() {
+			defer wg.Done()
+			for index := range channel_indexes {
+				operation := storage.Registry[index]
+				operation.Crypto_network = crypto.Registry[operation.Operation_id].Network
+				operation.Tariff = tariff_merchant.FindTariffForOperation(operation)
+				if operation.Tariff == nil {
+					atomic.AddInt64(&countWithoutTariff, 1)
+				}
+			}
+		}()
+	}
+
+	for i := range storage.Registry {
+		channel_indexes <- i
+	}
+	close(channel_indexes)
+
+	wg.Wait()
+
+	logs.Add(logs.INFO, fmt.Sprintf("Подбор тарифов: %v [без тарифов: %s]", time.Since(start_time), util.FormatInt(countWithoutTariff)))
+
+}
 
 func CalculateCommission() {
 

@@ -1,8 +1,9 @@
-package processing
+package processing_merchant
 
 import (
 	"app/config"
 	"app/logs"
+	"app/tariff_merchant"
 	"app/util"
 	"fmt"
 	"slices"
@@ -150,7 +151,7 @@ func add_page_copy1(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		}
 
 		//if k.tariff.id > 0 {
-		row.AddCell().SetInt(k.tariff.id)
+		row.AddCell().SetInt(k.tariff.Id)
 		//} else {
 		//	row.AddCell().SetInt(k.tariff_condition_id)
 		//}
@@ -272,8 +273,8 @@ func add_page_copy2(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 			row.AddCell().SetDate(k.tariff.DateStart)
 		}
 
-		if k.tariff.id > 0 { //16
-			row.AddCell().SetInt(k.tariff.id)
+		if k.tariff.Id > 0 { //16
+			row.AddCell().SetInt(k.tariff.Id)
 		} else {
 			row.AddCell().SetInt(k.tariff_condition_id)
 		}
@@ -615,7 +616,7 @@ func add_page_2_checkBilling(f *xlsx.File) {
 			continue
 		}
 
-		var t, t_bof Tariff
+		var t, t_bof tariff_merchant.Tariff
 		if op.Tariff != nil {
 			t = *op.Tariff
 		}
@@ -648,10 +649,10 @@ func add_page_2_checkBilling(f *xlsx.File) {
 		row.AddCell().SetString("")        //10 dragonpay
 		row.AddCell().SetString(t.Formula) //11
 
-		if t.id > 0 { //12
-			row.AddCell().SetInt(t.id)
+		if t.Id > 0 { //12
+			row.AddCell().SetInt(t.Id)
 		} else {
-			row.AddCell().SetInt(t_bof.id)
+			row.AddCell().SetInt(t_bof.Id)
 		}
 
 		row.AddCell().SetString(t_bof.Formula)
@@ -764,8 +765,8 @@ func add_page_3_checkRate(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		row.AddCell().SetFloat(k.tariff.Min)
 		row.AddCell().SetFloat(k.tariff.Max)
 
-		if k.tariff.id > 0 { //7
-			row.AddCell().SetInt(k.tariff.id)
+		if k.tariff.Id > 0 { //7
+			row.AddCell().SetInt(k.tariff.Id)
 		} else {
 			row.AddCell().SetInt(k.tariff_condition_id)
 		}
@@ -991,7 +992,7 @@ func add_page_all_fails(f *xlsx.File) {
 			continue
 		}
 
-		var t, t_bof Tariff
+		var t, t_bof tariff_merchant.Tariff
 		if op.Tariff != nil {
 			t = *op.Tariff
 		}
@@ -1024,10 +1025,10 @@ func add_page_all_fails(f *xlsx.File) {
 		row.AddCell().SetString("")        //10 dragonpay
 		row.AddCell().SetString(t.Formula) //11
 
-		if t.id > 0 { //12
-			row.AddCell().SetInt(t.id)
+		if t.Id > 0 { //12
+			row.AddCell().SetInt(t.Id)
 		} else {
-			row.AddCell().SetInt(t_bof.id)
+			row.AddCell().SetInt(t_bof.Id)
 		}
 
 		row.AddCell().SetString(t_bof.Formula)

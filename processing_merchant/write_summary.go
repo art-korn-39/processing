@@ -1,4 +1,4 @@
-package processing
+package processing_merchant
 
 import (
 	"app/config"

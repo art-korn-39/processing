@@ -1,9 +1,10 @@
-package processing
+package processing_merchant
 
 import (
 	"app/config"
 	"app/currency"
 	"app/logs"
+	"app/tariff_merchant"
 	"fmt"
 	"time"
 )
@@ -59,7 +60,9 @@ func (sf *SumFileds) AddValuesFromSF(sf2 SumFileds) {
 
 func (sf *SumFileds) SetBalanceRefund(convertation string, percent float64) {
 	if convertation == "Частичные выплаты" {
-		sf.BalanceRefund_fee = percent
+		if sf.BalanceRefund_turnover != 0 {
+			sf.BalanceRefund_fee = sf.BalanceRefund_turnover * percent
+		}
 	} else {
 		sf.BalanceRefund_turnover = 0
 		sf.BalanceRefund_fee = 0
@@ -84,8 +87,8 @@ type KeyFields_SummaryInfo struct {
 	channel_currency currency.Currency
 	balance_currency currency.Currency
 
-	tariff     Tariff
-	tariff_bof Tariff
+	tariff     tariff_merchant.Tariff
+	tariff_bof tariff_merchant.Tariff
 
 	contract_id    int //???
 	RR_date        time.Time

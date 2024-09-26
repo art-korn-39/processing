@@ -1,4 +1,4 @@
-package processing
+package tariff_merchant
 
 import (
 	"app/config"
@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -18,9 +19,9 @@ import (
 	"github.com/tealeg/xlsx"
 )
 
-const RANGE_MAX = float64(1000000000000)
+var Data []Tariff
 
-func Read_Tariffs() {
+func Read_Sources() {
 
 	if config.Get().Tariffs.Storage == config.PSQL {
 		util.Unused()
@@ -36,7 +37,7 @@ func Read_XLSX_Tariffs() {
 		return
 	}
 
-	storage.Tariffs = make([]Tariff, 0, 1000)
+	Data = make([]Tariff, 0, 1000)
 
 	start_time := time.Now()
 
@@ -107,7 +108,7 @@ func Read_XLSX_Tariffs() {
 
 			tariff.Balance_id, _ = row.Cells[map_fileds["id баланса в бофе"]-1].Int()
 			tariff.Balance_type = row.Cells[map_fileds["тип баланса в бофе (in/ out/ in-out)"]-1].String()
-			tariff.id, _ = row.Cells[map_fileds["tarif_condition_id"]-1].Int()
+			tariff.Id, _ = row.Cells[map_fileds["tarif_condition_id"]-1].Int()
 
 			tariff.Subdivision1C = row.Cells[map_fileds["подразделение 1с"]-1].String()
 			tariff.Provider1C = row.Cells[map_fileds["поставщик в 1с"]-1].String()
@@ -151,7 +152,7 @@ func Read_XLSX_Tariffs() {
 
 			tariff.StartingFill()
 
-			storage.Tariffs = append(storage.Tariffs, tariff)
+			Data = append(Data, tariff)
 
 		}
 
@@ -159,4 +160,63 @@ func Read_XLSX_Tariffs() {
 
 	logs.Add(logs.INFO, fmt.Sprintf("Чтение тарифов: %v", time.Since(start_time)))
 
+}
+
+func SortTariffs() {
+	sort.Slice(
+		Data,
+		func(i int, j int) bool {
+			return Data[i].DateStart.After(Data[j].DateStart)
+		},
+	)
+}
+
+func FindTariffForOperation(op Operation) *Tariff {
+
+	var operation_date time.Time
+	if op.Get_IsPerevodix() {
+		operation_date = op.Get_Operation_created_at()
+	} else {
+		operation_date = op.Get_Transaction_completed_at()
+	}
+
+	for _, t := range Data {
+
+		if t.Merchant_account_id == op.Get_Merchant_account_id() {
+
+			if t.DateStart.Before(operation_date) &&
+				t.Operation_type == op.Get_Operation_type() {
+
+				// тип сети будет колонка в тарифе и проверять на неё
+				network := op.Get_Crypto_network()
+				if t.IsCrypto && !(network == t.Convertation || network == t.NetworkType) {
+					continue
+				}
+
+				channel_currency := op.Get_Channel_currency()
+				if channel_currency != t.CurrencyBP && t.Convertation == "Без конверта" {
+					if !(channel_currency.Name == "USD" && t.CurrencyBP.Name == "USDT") {
+						continue
+					}
+				}
+
+				// проверяем наличие диапазона
+				if t.RangeMIN != 0 || t.RangeMAX != 0 {
+
+					// определелям попадание в диапазон тарифа если он заполнен
+					channel_amount := op.Get_Channel_amount()
+					if channel_amount > t.RangeMIN &&
+						channel_amount <= t.RangeMAX {
+						return &t
+					}
+
+				} else {
+					return &t
+				}
+
+			}
+		}
+	}
+
+	return nil
 }

@@ -1,10 +1,11 @@
-package processing
+package processing_merchant
 
 import (
 	"app/currency"
 	"app/holds"
 	"app/kgx"
 	"app/provider"
+	"app/tariff_merchant"
 	"app/util"
 	"strings"
 	"sync"
@@ -94,8 +95,8 @@ type Operation struct {
 	hold_date   time.Time
 
 	ProviderOperation *provider.Operation
-	Tariff_bof        *Tariff
-	Tariff            *Tariff
+	Tariff_bof        *tariff_merchant.Tariff
+	Tariff            *tariff_merchant.Tariff
 	Hold              *holds.Hold
 
 	Tariff_rate_fix     float64 `db:"billing__tariff_rate_fix"`
@@ -155,7 +156,7 @@ func (o *Operation) StartingFill() {
 	o.Tariff_rate_min = util.TR(o.Channel_currency.Exponent, o.Tariff_rate_min, o.Tariff_rate_min/100).(float64)
 	o.Tariff_rate_max = util.TR(o.Channel_currency.Exponent, o.Tariff_rate_max, o.Tariff_rate_max/100).(float64)
 
-	o.Tariff_bof = &Tariff{
+	o.Tariff_bof = &tariff_merchant.Tariff{
 		Percent: o.Tariff_rate_percent,
 		Fix:     o.Tariff_rate_fix,
 		Min:     o.Tariff_rate_min,
@@ -285,7 +286,6 @@ func (o *Operation) SetProvider1c() {
 
 	if o.Tariff != nil && o.IsPerevodix && o.Tariff.Convertation == "KGX" {
 
-		//o.Provider1c = kgx.GetProvider1c(o.ProviderOperation.Balance, o.Operation_type, o.Payment_type, o.Balance_currency)
 		o.Provider1c = kgx.GetProvider1c(o.Provider_name, o.Operation_type, o.Payment_type, o.Balance_currency)
 
 	} else if o.Tariff != nil {
@@ -307,8 +307,6 @@ func (o *Operation) SetCheckFee() {
 }
 
 func (o *Operation) SetVerification() {
-
-	//schema = KGX заменить на Converation
 
 	var Converation string
 	var CurrencyBP currency.Currency
@@ -510,4 +508,36 @@ func (o *Operation) SetDK_old() {
 
 	o.CompensationRC = commissionRC - o.SR_channel_currency
 
+}
+
+func (op *Operation) Get_Operation_created_at() time.Time {
+	return op.Operation_created_at
+}
+
+func (op *Operation) Get_Transaction_completed_at() time.Time {
+	return op.Transaction_completed_at
+}
+
+func (op *Operation) Get_IsPerevodix() bool {
+	return op.IsPerevodix
+}
+
+func (op *Operation) Get_Merchant_account_id() int {
+	return op.Merchant_account_id
+}
+
+func (op *Operation) Get_Operation_type() string {
+	return op.Operation_type
+}
+
+func (op *Operation) Get_Crypto_network() string {
+	return op.Crypto_network
+}
+
+func (op *Operation) Get_Channel_currency() currency.Currency {
+	return op.Channel_currency
+}
+
+func (op *Operation) Get_Channel_amount() float64 {
+	return op.Channel_amount
 }

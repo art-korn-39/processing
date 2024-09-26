@@ -1,4 +1,4 @@
-package processing
+package processing_merchant
 
 import (
 	"app/config"
@@ -12,9 +12,8 @@ import (
 type Storage struct {
 	Postgres   *sqlx.DB
 	Clickhouse *sqlx.DB
-
-	Registry []*Operation
-	Tariffs  []Tariff
+	Registry   []*Operation
+	//Tariffs  []Tariff
 }
 
 func (s *Storage) Close() {

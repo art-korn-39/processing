@@ -3,7 +3,7 @@ package main
 import (
 	"app/config"
 	"app/logs"
-	"app/processing"
+	"app/processing_merchant"
 	"testing"
 )
 
@@ -13,27 +13,27 @@ func TestProceesing1(t *testing.T) {
 
 	logs.Testing = true
 
-	app := "processing"
+	app := "processing_merchant"
 	file_config := "test\\config1.conf"
 
 	config.New(app, file_config)
 
-	processing.Start()
+	processing_merchant.Start()
 
 	// Проверка результатов
-	fact := processing.GetCheckFeeCount()
+	fact := processing_merchant.GetCheckFeeCount()
 	expected := 19
 	if fact != expected {
 		t.Errorf("check fee: %d; expected: %d", fact, expected)
 	}
 
-	fact = processing.GetRegistryCount()
+	fact = processing_merchant.GetRegistryCount()
 	expected = 129463
 	if fact != expected {
 		t.Errorf("len registry: %d; expected: %d", fact, expected)
 	}
 
-	fact = processing.GetWithoutTariffCount()
+	fact = processing_merchant.GetWithoutTariffCount()
 	expected = 0
 	if fact != expected {
 		t.Errorf("without tariff: %d; expected: %d", fact, expected)
@@ -47,27 +47,27 @@ func TestProceesing2(t *testing.T) {
 
 	logs.Testing = true
 
-	app := "processing"
+	app := "processing_merchant"
 	file_config := "test\\config2.conf"
 
 	config.New(app, file_config)
 
-	processing.Start()
+	processing_merchant.Start()
 
 	// Проверка результатов
-	fact := processing.GetCheckFeeCount()
+	fact := processing_merchant.GetCheckFeeCount()
 	expected := 19
 	if fact != expected {
 		t.Errorf("check fee: %d; expected: %d", fact, expected)
 	}
 
-	fact = processing.GetRegistryCount()
+	fact = processing_merchant.GetRegistryCount()
 	expected = 129463
 	if fact != expected {
 		t.Errorf("len registry: %d; expected: %d", fact, expected)
 	}
 
-	fact = processing.GetWithoutTariffCount()
+	fact = processing_merchant.GetWithoutTariffCount()
 	expected = 0
 	if fact != expected {
 		t.Errorf("without tariff: %d; expected: %d", fact, expected)
@@ -81,11 +81,11 @@ func TestProceesing3(t *testing.T) {
 
 	logs.Testing = true
 
-	app := "processing"
+	app := "processing_merchant"
 	file_config := "test\\config3.conf"
 
 	config.New(app, file_config)
 
-	processing.Start()
+	processing_merchant.Start()
 
 }
