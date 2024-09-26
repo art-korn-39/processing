@@ -72,7 +72,11 @@ type Operation struct {
 	Balance_amount   float64           // сумма в валюте баланса
 	Balance_currency currency.Currency // валюта баланса
 
-	Actual_amount float64
+	Surcharge_amount       float64 `db:"surcharge_amount"`
+	Surcharge_currency_str string  `db:"surcharge_currency"`
+	Surcharge_currency     currency.Currency
+
+	Actual_amount float64 `db:"actual_amount"`
 
 	Rate                 float64
 	SR_channel_currency  float64
@@ -121,12 +125,14 @@ func (o *Operation) StartingFill() {
 	o.Msc_currency = currency.New(o.Msc_currency_str)
 	o.Channel_currency = currency.New(o.Channel_currency_str)
 	o.Fee_currency = currency.New(o.Fee_currency_str)
+	o.Surcharge_currency = currency.New(o.Surcharge_currency_str)
 
 	o.Provider_amount = util.TR(o.Provider_currency.Exponent, o.Provider_amount, o.Provider_amount/100).(float64)
 	o.Msc_amount = util.TR(o.Msc_currency.Exponent, o.Msc_amount, o.Msc_amount/100).(float64)
 	o.Channel_amount = util.TR(o.Channel_currency.Exponent, o.Channel_amount, o.Channel_amount/100).(float64)
 	o.Actual_amount = util.TR(o.Channel_currency.Exponent, o.Actual_amount, o.Actual_amount/100).(float64)
 	o.Fee_amount = util.TR(o.Fee_currency.Exponent, o.Fee_amount, o.Fee_amount/100).(float64)
+	o.Surcharge_amount = util.TR(o.Surcharge_currency.Exponent, o.Surcharge_amount, o.Surcharge_amount/100).(float64)
 
 	if o.Operation_type == "" {
 		if o.Operation_type_id == 3 {

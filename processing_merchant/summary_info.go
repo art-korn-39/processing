@@ -24,6 +24,7 @@ type SumFileds struct {
 	CompensationBC         float64
 	BalanceRefund_turnover float64
 	BalanceRefund_fee      float64
+	Surcharge_amount       float64
 }
 
 func (sf *SumFileds) AddValues(o *Operation) {
@@ -40,6 +41,7 @@ func (sf *SumFileds) AddValues(o *Operation) {
 	sf.CompensationBC = sf.CompensationBC + o.CompensationBC
 	sf.CompensationRC = sf.CompensationRC + o.CompensationRC
 	sf.BalanceRefund_turnover = sf.BalanceRefund_turnover + o.Channel_amount - o.Actual_amount
+	sf.Surcharge_amount = sf.Surcharge_amount + o.Surcharge_amount
 }
 
 func (sf *SumFileds) AddValuesFromSF(sf2 SumFileds) {
@@ -56,6 +58,7 @@ func (sf *SumFileds) AddValuesFromSF(sf2 SumFileds) {
 	sf.CompensationBC = sf.CompensationBC + sf2.CompensationBC
 	sf.CompensationRC = sf.CompensationRC + sf2.CompensationRC
 	sf.BalanceRefund_turnover = sf.BalanceRefund_turnover + sf2.BalanceRefund_turnover
+	sf.Surcharge_amount = sf.Surcharge_amount + sf2.Surcharge_amount
 }
 
 func (sf *SumFileds) SetBalanceRefund(convertation string, percent float64) {

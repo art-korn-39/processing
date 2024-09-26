@@ -77,7 +77,7 @@ func Read_XLSX_Tariffs() {
 		}
 
 		map_fileds := validation.GetMapOfColumnNamesCells(sheet.Rows[headerLine].Cells)
-		err = validation.CheckMapOfColumnNames(map_fileds, "tariffs")
+		err = validation.CheckMapOfColumnNames(map_fileds, "tariff_merchant")
 		if err != nil {
 			logs.Add(logs.FATAL, err)
 			return

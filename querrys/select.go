@@ -34,6 +34,7 @@ func Stat_Select_reports() string {
 	IFNULL(billing__payment_type_id, 0) AS payment_type_id,
 	IFNULL(billing__payment_method_id, 0) AS payment_method_id,
 	IFNULL(operation__endpoint_id, '') AS endpoint_id,
+	IFNULL(billing__legal_entity_id, 0) AS legal_entity_id,
 
 	IFNULL(operation__issuer_country, '') AS country,
 	IFNULL(operation__issuer_region, '') AS region,
@@ -47,6 +48,9 @@ func Stat_Select_reports() string {
 	IFNULL(operation__channel_currency, '') AS channel_currency,
 	IFNULL(operation__fee_amount, 0) AS fee_amount,
 	IFNULL(operation__fee_currency, '') AS fee_currency,
+	IFNULL(operation__surcharge_amount, 0) as surcharge_amount,
+	IFNULL(operation__surcharge_currency, '') AS surcharge_currency,
+	IFNULL(operation__actual_amount, 0) as actual_amount,
 
 	IFNULL(billing__tariff_rate_fix, 0) AS billing__tariff_rate_fix,
 	IFNULL(billing__tariff_rate_percent, 0) AS billing__tariff_rate_percent,

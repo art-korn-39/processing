@@ -99,7 +99,7 @@ func Read_CSV_Registry() {
 	headers, _ := reader.Read()
 
 	map_fileds := validation.GetMapOfColumnNamesStrings(headers)
-	err = validation.CheckMapOfColumnNames(map_fileds, "bof_registry")
+	err = validation.CheckMapOfColumnNames(map_fileds, "bof_registry_merchant")
 	if err != nil {
 		logs.Add(logs.FATAL, err)
 		return
@@ -194,6 +194,16 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 	idx = map_fileds["endpoint_id"]
 	if idx > 0 {
 		op.Endpoint_id = record[idx-1]
+	}
+
+	idx = map_fileds["surcharge_amount"]
+	if idx > 0 {
+		op.Surcharge_amount = util.FR(strconv.ParseFloat(record[idx-1], 64)).(float64)
+	}
+
+	idx = map_fileds["surcharge_currency"]
+	if idx > 0 {
+		op.Surcharge_currency_str = record[idx-1]
 	}
 
 	return

@@ -1,11 +1,8 @@
-package processing_merchant
+package processing_provider
 
 import (
 	"app/config"
-	"app/crypto"
-	"app/holds"
 	"app/logs"
-	"app/provider"
 	"app/querrys"
 	"app/tariff_merchant"
 	"fmt"
@@ -14,7 +11,7 @@ import (
 )
 
 const (
-	Version = "1.3.6"
+	Version = "1.0.0"
 )
 
 var (
@@ -74,7 +71,7 @@ func ReadSources() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(4)
+	wg.Add(2)
 
 	registry_done := make(chan querrys.Args, 1)
 	go func() {
@@ -84,17 +81,7 @@ func ReadSources() {
 
 	go func() {
 		defer wg.Done()
-		provider.Read_Registry(storage.Postgres, registry_done)
-	}()
-
-	go func() {
-		defer wg.Done()
 		tariff_merchant.Read_Sources()
-	}()
-
-	go func() {
-		defer wg.Done()
-		crypto.Read_Registry(storage.Postgres)
 	}()
 
 	wg.Wait()
@@ -102,68 +89,51 @@ func ReadSources() {
 
 func PrepareData() {
 
-	var wg sync.WaitGroup
+	// var wg sync.WaitGroup
 
-	wg.Add(2)
+	// wg.Add(2)
 
-	// 2. Тарифы
-	go func() {
-		defer wg.Done()
+	// // 2. Тарифы
+	// go func() {
+	// 	defer wg.Done()
 
-		// Сортировка
-		tariff_merchant.SortTariffs()
-		holds.Sort()
+	// Сортировка
+	tariff_merchant.SortTariffs()
 
-		// Подбор тарифов к операциям
-		SelectTariffsInRegistry()
-	}()
+	// Подбор тарифов к операциям
+	SelectTariffsInRegistry()
+	//}()
 
-	// 2. Курсы валют
-	go func() {
-		defer wg.Done()
+	// // 2. Курсы валют
+	// go func() {
+	// 	defer wg.Done()
 
-		// Группировка курсов валют
-		provider.Rates = provider.Rates.Group()
+	// 	// Группировка курсов валют
+	// 	provider.Rates = provider.Rates.Group()
 
-		// Сортировка курсов валют
-		provider.Rates.Sort()
-	}()
+	// 	// Сортировка курсов валют
+	// 	provider.Rates.Sort()
+	// }()
 
-	wg.Wait()
+	// wg.Wait()
 
 }
 
 func HandleDataInOperations() {
 
 	CalculateCommission()
-	HandleHolds()
 
 }
 
 func SaveResult() {
 
-	var wg sync.WaitGroup
-
-	wg.Add(2)
-
 	// Итоговые данные
 	// Делаем сначала, т.к. они id документа проставляют
-	summary := GroupRegistryToSummaryMerchant()
-	Write_Summary(summary)
-
-	// Детализированные записи
-	go func() {
-		defer wg.Done()
-		Write_Detailed()
-	}()
+	// summary := GroupRegistryToSummaryProvider()
+	// Write_Summary(summary)
 
 	// Выгрузка в эксель
-	go func() {
-		defer wg.Done()
-		summaryInfo := GroupRegistryToSummaryInfo()
-		Write_SummaryInfo(summaryInfo)
-	}()
-
-	wg.Wait()
+	summaryInfo := GroupRegistryToSummaryInfo()
+	Write_SummaryInfo(summaryInfo)
 
 }

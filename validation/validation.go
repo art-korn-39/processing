@@ -36,10 +36,14 @@ func CheckMapOfColumnNames(map_fileds map[string]int, table string) error {
 	var s []string
 
 	switch table {
-	case "bof_registry":
-		s = fields_bof_registry()
-	case "tariffs":
-		s = fields_tariffs()
+	case "bof_registry_merchant":
+		s = fields_bof_registry_merchant()
+	case "bof_registry_provider":
+		s = fields_bof_registry_provider()
+	case "tariff_merchant":
+		s = fields_tariff_merchant()
+	case "tariff_provider":
+		s = fields_tariff_provider()
 	case "holds":
 		s = fields_holds()
 	case "kgx":
@@ -67,7 +71,7 @@ func CheckMapOfColumnNames(map_fileds map[string]int, table string) error {
 
 }
 
-func fields_bof_registry() []string {
+func fields_bof_registry_merchant() []string {
 	return []string{
 		"id / operation_id", "transaction_id", "transaction_completed_at",
 		"merchant_id", "merchant_account_id", "project_id", "project_name",
@@ -82,7 +86,23 @@ func fields_bof_registry() []string {
 	}
 }
 
-func fields_tariffs() []string {
+func fields_bof_registry_provider() []string {
+	return []string{
+		"id / operation_id", "transaction_id", "transaction_completed_at",
+		"merchant_id", "merchant_account_id", "project_id", "project_name",
+		"provider_name", "merchant_name", "merchant_account_name",
+		"acquirer_id / provider_payment_id", "issuer_country",
+		"operation_type", "balance_id", "payment_type_id / payment_method_type",
+		"contract_id", "tariff_condition_id",
+		"real_currency / channel_currency", "real_amount / channel_amount",
+		"fee_currency", "fee_amount",
+		"provider_currency", "provider_amount",
+		"tariff_rate_percent", "tariff_rate_fix", "tariff_rate_min", "tariff_rate_max",
+		"legal_entity_id", "business_type",
+	}
+}
+
+func fields_tariff_merchant() []string {
 	return []string{
 		"баланс", "мерчант", "merchant account id", "provider", "валюта баланса мерчанта в боф",
 		"валюта учетная", "дата старта", "конверт", "operation_type", "man",
@@ -90,6 +110,15 @@ func fields_tariffs() []string {
 		"id баланса в бофе", "тип баланса в бофе (in/ out/ in-out)", "подразделение 1с", "поставщик в 1с", "расчетный счет",
 		"рр, процент (пс)", "дата нач.раб пс", "схема", "рр, дней (пс)", "код баланса по справочнику",
 		"%дк", "fixдк", "minдк", "maxдк",
+	}
+}
+
+func fields_tariff_provider() []string {
+	return []string{
+		"provider name", "date of start", "merchant_name", "merchant account", "merchant legal entity",
+		"payment method", "payment method type", "region", "channel currency", "project", "business type",
+		"operation type (группа)", "tariff range turnover min", "tariff range turnover max",
+		"tariff range amount min", "tariff range amount max", "percent", "fix", "min commission", "max commission",
 	}
 }
 
