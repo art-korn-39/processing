@@ -115,9 +115,9 @@ func fields_tariff_merchant() []string {
 
 func fields_tariff_provider() []string {
 	return []string{
-		"provider name", "date of start", "merchant_name", "merchant account", "merchant legal entity",
+		"provider", "юл", "provider name", "date of start", "merchant_name", "merchant account", "merchant legal entity",
 		"payment method", "payment method type", "region", "channel currency", "project", "business type",
-		"operation type (группа)", "tariff range turnover min", "tariff range turnover max",
+		"operation type (группа)", "tariff range turnouver min", "tariff range turnouver max",
 		"tariff range amount min", "tariff range amount max", "percent", "fix", "min commission", "max commission",
 	}
 }

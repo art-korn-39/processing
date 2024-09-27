@@ -43,19 +43,21 @@ func (sf *SumFileds) AddValues(o *Operation) {
 // }
 
 type KeyFields_SummaryInfo struct {
-	document_date    time.Time
-	balance_id       int
-	balance_name     string
-	provider         string
-	JL               string
-	provider_name    string
-	verification     string
-	operation_type   string
-	country          string
-	payment_type     string
-	merchant_name    string
-	channel_currency currency.Currency
-	balance_currency currency.Currency
+	document_date         time.Time
+	balance_id            int
+	balance_name          string
+	provider              string
+	JL                    string
+	provider_name         string
+	verification          string
+	operation_type        string
+	country               string
+	payment_type          string
+	merchant_account_name string
+	merchant_name         string
+	region                string
+	channel_currency      currency.Currency
+	balance_currency      currency.Currency
 }
 
 func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
@@ -63,15 +65,22 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		document_date: o.Document_date,
 		balance_id:    o.Balance_id,
 		//balance_name:          o.balance_name,
-		provider:         o.Provider_base_name,
-		provider_name:    o.Provider_name,
-		verification:     o.Verification,
-		operation_type:   o.Operation_type,
-		country:          o.Country,
-		payment_type:     o.Payment_type,
-		merchant_name:    o.Merchant_name,
-		channel_currency: o.Channel_currency,
-		balance_currency: o.Balance_currency,
+		provider:              o.Provider_base_name,
+		provider_name:         o.Provider_name,
+		verification:          o.Verification,
+		operation_type:        o.Operation_type,
+		country:               o.Country,
+		payment_type:          o.Payment_type,
+		merchant_name:         o.Merchant_name,
+		merchant_account_name: o.Merchant_account_name,
+		region:                o.Region,
+		channel_currency:      o.Channel_currency,
+		balance_currency:      o.Balance_currency,
+	}
+
+	if o.Tariff != nil {
+		KF.provider = o.Tariff.Provider
+		KF.JL = o.Tariff.JL
 	}
 
 	return

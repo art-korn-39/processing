@@ -52,8 +52,9 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 	sheet, _ := f.AddSheet("Обороты")
 
-	headers := []string{"Баланс", "Проверка", "Дата", "Provider", "ЮЛ", "provider_name", "operation_type", "issuer_country",
-		"payment_type_id / payment_method_type", "merchant_name", "real_currency / channel_currency", "Кол-во операций",
+	headers := []string{"Баланс", "", "Дата", "Provider", "ЮЛ", "provider_name", "operation_type", "issuer_country",
+		"payment_type_id / payment_method_type", "merchant account", "merchant_name", "region",
+		"real_currency / channel_currency", "Кол-во операций",
 		"Сумма в валюте баланса", "BR Balance Currency", "Компенсация BR",
 	}
 
@@ -77,24 +78,23 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 	}
 
 	sheet.SetColWidth(0, 0, 30)   // баланс
-	sheet.SetColWidth(1, 1, 15)   // проверка
+	sheet.SetColWidth(1, 1, 1)    // проверка
 	sheet.SetColWidth(2, 2, 12)   // дата
-	sheet.SetColWidth(3, 7, 15)   // provider, ЮЛ, provider_name, operation_type
-	sheet.SetColWidth(8, 8, 12)   // country
-	sheet.SetColWidth(9, 9, 18)   // payment_method_type
-	sheet.SetColWidth(10, 15, 15) // merchant_name, real_currency / channel_currency...
+	sheet.SetColWidth(3, 3, 12)   // provider
+	sheet.SetColWidth(4, 4, 24)   // ЮЛ
+	sheet.SetColWidth(5, 5, 24)   // provider_name
+	sheet.SetColWidth(6, 7, 12)   // operation_type, country
+	sheet.SetColWidth(8, 8, 18)   // payment_method_type
+	sheet.SetColWidth(9, 9, 30)   // MA
+	sheet.SetColWidth(10, 16, 15) // merchant_name, real_currency / channel_currency...
 
 	var cell *xlsx.Cell
 
 	for k, v := range M {
 
-		if k.verification == VRF_CHECK_RATE {
-			continue
-		}
-
 		row := sheet.AddRow()
 		row.AddCell().SetString(k.balance_name)
-		row.AddCell().SetString(k.verification)
+		row.AddCell().SetString("") //k.verification
 		row.AddCell().SetDate(k.document_date)
 		row.AddCell().SetString(k.provider)
 		row.AddCell().SetString(k.JL)
@@ -102,7 +102,9 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		row.AddCell().SetString(k.operation_type)
 		row.AddCell().SetString(k.country)
 		row.AddCell().SetString(k.payment_type)
+		row.AddCell().SetString(k.merchant_account_name)
 		row.AddCell().SetString(k.merchant_name)
+		row.AddCell().SetString(k.region)
 		row.AddCell().SetString(k.channel_currency.Name)
 		row.AddCell().SetInt(v.count_operations)
 

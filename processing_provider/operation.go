@@ -365,7 +365,7 @@ func (op *Operation) Get_Payment_method() string {
 }
 
 func (op *Operation) Get_Payment_method_type() string {
-	return ""
+	return op.Payment_type
 }
 
 func (op *Operation) Get_Region() string {

@@ -8,6 +8,7 @@ import (
 	"app/decline"
 	"app/logs"
 	"app/processing_merchant"
+	"app/processing_provider"
 	"flag"
 	"fmt"
 	"time"
@@ -22,7 +23,8 @@ func main() {
 	var app string
 	var file_config string
 
-	flag.StringVar(&app, "app", "processing_merchant", "") // processing_merchant | conversion | decline | crypto | aws
+	// processing_merchant | processing_provider | conversion | decline | crypto | aws
+	flag.StringVar(&app, "app", "processing_provider", "")
 	flag.StringVar(&file_config, "file_config", "", "")
 	flag.Parse()
 
@@ -36,6 +38,8 @@ func main() {
 	switch app {
 	case "processing_merchant":
 		processing_merchant.Start()
+	case "processing_provider":
+		processing_provider.Start()
 	case "conversion":
 		conversion.Start()
 	case "decline":

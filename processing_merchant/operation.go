@@ -33,6 +33,7 @@ type Operation struct {
 	Tariff_condition_id int    `db:"tariff_id"`
 	Provider_payment_id string `db:"provider_payment_id"`
 	Endpoint_id         string `db:"endpoint_id"`
+	Legal_entity_id     int    `db:"legal_entity_id"`
 
 	Provider_name         string `db:"provider_name"`
 	Merchant_name         string `db:"merchant_name"`

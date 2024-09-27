@@ -57,14 +57,14 @@ func Read_XLSX_Tariffs() {
 			if len(row.Cells) < 2 {
 				continue
 			}
-			if row.Cells[1].Value == "Provider name" {
+			if row.Cells[0].Value == "Provider" {
 				headerLine = slices.Index(sheet.Rows, row)
 				break
 			}
 		}
 
 		if headerLine == 0 {
-			logs.Add(logs.FATAL, errors.New("[тарифы] не обнаружена строка с названиями колонок (\"Provider name\" в колонке \"A\")"))
+			logs.Add(logs.FATAL, errors.New("[тарифы] не обнаружена строка с названиями колонок (\"Provider\" в колонке \"A\")"))
 			return
 		}
 
@@ -87,6 +87,8 @@ func Read_XLSX_Tariffs() {
 
 			tariff := Tariff{}
 
+			tariff.Provider = row.Cells[map_fileds["provider"]-1].String()
+			tariff.JL = row.Cells[map_fileds["юл"]-1].String()
 			tariff.Provider_name = row.Cells[map_fileds["provider name"]-1].String()
 			tariff.DateStart, _ = row.Cells[map_fileds["date of start"]-1].GetTime(false)
 			tariff.Merchant_name = row.Cells[map_fileds["merchant_name"]-1].String()
@@ -100,8 +102,8 @@ func Read_XLSX_Tariffs() {
 			tariff.Business_type = row.Cells[map_fileds["business type"]-1].String()
 			tariff.Operation_group = row.Cells[map_fileds["operation type (группа)"]-1].String()
 
-			tariff.Range_turnover_min = util.FloatFromCell(row.Cells[map_fileds["tariff range turnover min"]-1])
-			tariff.Range_turnover_max = util.FloatFromCell(row.Cells[map_fileds["tariff range turnover max"]-1])
+			tariff.Range_turnouver_min = util.FloatFromCell(row.Cells[map_fileds["tariff range turnouver min"]-1])
+			tariff.Range_turnouver_max = util.FloatFromCell(row.Cells[map_fileds["tariff range turnouver max"]-1])
 			tariff.Range_amount_min = util.FloatFromCell(row.Cells[map_fileds["tariff range amount min"]-1])
 			tariff.Range_amount_max = util.FloatFromCell(row.Cells[map_fileds["tariff range amount max"]-1])
 
@@ -134,9 +136,21 @@ func SortTariffs() {
 	)
 }
 
-func FindTariffForOperation(op Operation) *Tariff {
+func FindTariffForOperation(id int, op Operation) *Tariff {
 
 	if len(Data) == 0 {
+		return nil
+	}
+
+	get_result := func(s []*Tariff) *Tariff {
+		if len(s) > 0 {
+			// сортируем по убыванию используемых полей
+			sort.Slice(s,
+				func(i int, j int) bool {
+					return s[i].CountUsefulFields > s[j].CountUsefulFields
+				})
+			return s[0]
+		}
 		return nil
 	}
 
@@ -148,18 +162,16 @@ func FindTariffForOperation(op Operation) *Tariff {
 	for _, t := range Data {
 
 		if !t.DateStart.Equal(current_date_range) {
-			if len(selected_tariffs) > 0 {
-				// сортируем по убыванию используемых полей
-				sort.Slice(selected_tariffs,
-					func(i int, j int) bool {
-						return selected_tariffs[i].CountUsefulFields > selected_tariffs[j].CountUsefulFields
-					})
-				return selected_tariffs[0]
+
+			tariff := get_result(selected_tariffs)
+			if tariff != nil {
+				return tariff
 			} else {
 				// переходим на новый диапазон
 				current_date_range = t.DateStart
 				selected_tariffs = []*Tariff{}
 			}
+
 		}
 
 		if t.DateStart.Before(operation_date) &&
@@ -186,8 +198,30 @@ func FindTariffForOperation(op Operation) *Tariff {
 		}
 	}
 
-	return nil
+	return get_result(selected_tariffs)
 }
+
+// if len(selected_tariffs) > 0 {
+// 	// сортируем по убыванию используемых полей
+// 	sort.Slice(selected_tariffs,
+// 		func(i int, j int) bool {
+// 			return selected_tariffs[i].CountUsefulFields > selected_tariffs[j].CountUsefulFields
+// 		})
+// 	return selected_tariffs[0]
+// } else {
+// 	// переходим на новый диапазон
+// 	current_date_range = t.DateStart
+// 	selected_tariffs = []*Tariff{}
+// }
+
+// if len(selected_tariffs) > 0 {
+// 	// сортируем по убыванию используемых полей
+// 	sort.Slice(selected_tariffs,
+// 		func(i int, j int) bool {
+// 			return selected_tariffs[i].CountUsefulFields > selected_tariffs[j].CountUsefulFields
+// 		})
+// 	return selected_tariffs[0]
+// }
 
 func (t *Tariff) IsValidForOperation(op Operation) bool {
 

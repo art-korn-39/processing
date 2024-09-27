@@ -76,7 +76,7 @@ func TestProceesing2(t *testing.T) {
 }
 
 // проверка строк без тарифов и конверта
-// reg - F; tariff - F; rate - F; crypto - PQ
+// reg - CH; tariff - F; rate - F; crypto - PQ
 func TestProceesing3(t *testing.T) {
 
 	logs.Testing = true

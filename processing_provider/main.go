@@ -5,13 +5,14 @@ import (
 	"app/logs"
 	"app/querrys"
 	"app/tariff_merchant"
+	"app/tariff_provider"
 	"fmt"
 	"sync"
 	"time"
 )
 
 const (
-	Version = "1.0.0"
+	Version = "1.0.2"
 )
 
 var (
@@ -81,7 +82,7 @@ func ReadSources() {
 
 	go func() {
 		defer wg.Done()
-		tariff_merchant.Read_Sources()
+		tariff_provider.Read_Sources()
 	}()
 
 	wg.Wait()

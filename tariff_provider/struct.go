@@ -27,6 +27,8 @@ type Operation interface {
 }
 
 type Tariff struct {
+	Provider              string
+	JL                    string
 	Provider_name         string
 	DateStart             time.Time
 	Merchant_name         string
@@ -40,14 +42,14 @@ type Tariff struct {
 	Business_type         string
 	Operation_group       string
 
-	Range_turnover_min float64
-	Range_turnover_max float64
-	Range_amount_min   float64
-	Range_amount_max   float64
-	Percent            float64
-	Fix                float64
-	Min                float64
-	Max                float64
+	Range_turnouver_min float64
+	Range_turnouver_max float64
+	Range_amount_min    float64
+	Range_amount_max    float64
+	Percent             float64
+	Fix                 float64
+	Min                 float64
+	Max                 float64
 
 	CountUsefulFields int
 	Formula           string
@@ -55,6 +57,10 @@ type Tariff struct {
 }
 
 func (t *Tariff) StartingFill() {
+
+	if t.Merchant_legal_entity == -1 {
+		t.Merchant_legal_entity = 0
+	}
 
 	t.Range_amount_max = util.TR(t.Range_amount_max == 0, RANGE_MAX, t.Range_amount_max).(float64) // ставим в конце, чтобы формуле не мешал
 

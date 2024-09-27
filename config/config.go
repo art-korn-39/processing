@@ -31,12 +31,13 @@ type Storage string
 type Application string
 
 const (
-	PSQL       Storage     = "PSQL"
-	Clickhouse Storage     = "CH"
-	File       Storage     = "FILE"
-	AWS        Storage     = "AWS"
-	PROCESSING Application = "processing"
-	TRANSFER   Application = "transfer"
+	PSQL                Storage     = "PSQL"
+	Clickhouse          Storage     = "CH"
+	File                Storage     = "FILE"
+	AWS                 Storage     = "AWS"
+	PROCESSING_MERCHANT Application = "processing_merchant"
+	PROCESSING_PROVIDER Application = "processing_provider"
+	TRANSFER            Application = "transfer"
 )
 
 type (

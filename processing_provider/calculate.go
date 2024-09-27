@@ -28,7 +28,7 @@ func SelectTariffsInRegistry() {
 			for index := range channel_indexes {
 				operation := storage.Registry[index]
 				//operation.Crypto_network = crypto.Registry[operation.Operation_id].Network
-				operation.Tariff = tariff_provider.FindTariffForOperation(operation)
+				operation.Tariff = tariff_provider.FindTariffForOperation(operation.Operation_id, operation)
 				if operation.Tariff == nil {
 					atomic.AddInt64(&countWithoutTariff, 1)
 				}
