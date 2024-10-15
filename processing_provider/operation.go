@@ -4,7 +4,6 @@ import (
 	"app/currency"
 	"app/holds"
 	"app/provider"
-	"app/tariff_merchant"
 	"app/tariff_provider"
 	"app/util"
 	"strings"
@@ -24,9 +23,9 @@ type Operation struct {
 	Transaction_completed_at time.Time
 	Operation_created_at     time.Time `db:"operation_created_at"`
 
-	Merchant_id         int    `db:"merchant_id"`
-	Merchant_account_id int    `db:"merchant_account_id"`
-	Balance_id          int    `db:"balance_id"`
+	Merchant_id         int `db:"merchant_id"`
+	Merchant_account_id int `db:"merchant_account_id"`
+	//Balance_id          int    `db:"balance_id"`
 	Company_id          int    `db:"company_id"`
 	Contract_id         int    `db:"contract_id"`
 	Provider_id         int    `db:"provider_id"`
@@ -96,14 +95,14 @@ type Operation struct {
 	CompensationBR float64
 
 	ProviderOperation *provider.Operation
-	Tariff_bof        *tariff_merchant.Tariff
-	Tariff            *tariff_provider.Tariff
-	Hold              *holds.Hold
+	//Tariff_bof        *tariff_merchant.Tariff
+	Tariff *tariff_provider.Tariff
+	Hold   *holds.Hold
 
-	Tariff_rate_fix     float64 `db:"billing__tariff_rate_fix"`
-	Tariff_rate_percent float64 `db:"billing__tariff_rate_percent"`
-	Tariff_rate_min     float64 `db:"billing__tariff_rate_min"`
-	Tariff_rate_max     float64 `db:"billing__tariff_rate_max"`
+	// Tariff_rate_fix     float64 `db:"billing__tariff_rate_fix"`
+	// Tariff_rate_percent float64 `db:"billing__tariff_rate_percent"`
+	// Tariff_rate_min     float64 `db:"billing__tariff_rate_min"`
+	// Tariff_rate_max     float64 `db:"billing__tariff_rate_max"`
 
 	//provider fields
 	//Account_number  string
@@ -124,13 +123,13 @@ func (o *Operation) StartingFill() {
 	o.Provider_currency = currency.New(o.Provider_currency_str)
 	o.Msc_currency = currency.New(o.Msc_currency_str)
 	o.Channel_currency = currency.New(o.Channel_currency_str)
-	o.Fee_currency = currency.New(o.Fee_currency_str)
+	//o.Fee_currency = currency.New(o.Fee_currency_str)
 
 	o.Provider_amount = util.TR(o.Provider_currency.Exponent, o.Provider_amount, o.Provider_amount/100).(float64)
 	o.Msc_amount = util.TR(o.Msc_currency.Exponent, o.Msc_amount, o.Msc_amount/100).(float64)
 	o.Channel_amount = util.TR(o.Channel_currency.Exponent, o.Channel_amount, o.Channel_amount/100).(float64)
 	o.Actual_amount = util.TR(o.Channel_currency.Exponent, o.Actual_amount, o.Actual_amount/100).(float64)
-	o.Fee_amount = util.TR(o.Fee_currency.Exponent, o.Fee_amount, o.Fee_amount/100).(float64)
+	//o.Fee_amount = util.TR(o.Fee_currency.Exponent, o.Fee_amount, o.Fee_amount/100).(float64)
 
 	if o.Operation_type == "" {
 		if o.Operation_type_id == 3 {
@@ -156,17 +155,17 @@ func (o *Operation) StartingFill() {
 		}
 	}
 
-	o.Tariff_rate_fix = util.TR(o.Channel_currency.Exponent, o.Tariff_rate_fix, o.Tariff_rate_fix/100).(float64)
-	o.Tariff_rate_min = util.TR(o.Channel_currency.Exponent, o.Tariff_rate_min, o.Tariff_rate_min/100).(float64)
-	o.Tariff_rate_max = util.TR(o.Channel_currency.Exponent, o.Tariff_rate_max, o.Tariff_rate_max/100).(float64)
+	// o.Tariff_rate_fix = util.TR(o.Channel_currency.Exponent, o.Tariff_rate_fix, o.Tariff_rate_fix/100).(float64)
+	// o.Tariff_rate_min = util.TR(o.Channel_currency.Exponent, o.Tariff_rate_min, o.Tariff_rate_min/100).(float64)
+	// o.Tariff_rate_max = util.TR(o.Channel_currency.Exponent, o.Tariff_rate_max, o.Tariff_rate_max/100).(float64)
 
-	o.Tariff_bof = &tariff_merchant.Tariff{
-		Percent: o.Tariff_rate_percent,
-		Fix:     o.Tariff_rate_fix,
-		Min:     o.Tariff_rate_min,
-		Max:     o.Tariff_rate_max,
-	}
-	o.Tariff_bof.StartingFill()
+	// o.Tariff_bof = &tariff_merchant.Tariff{
+	// 	Percent: o.Tariff_rate_percent,
+	// 	Fix:     o.Tariff_rate_fix,
+	// 	Min:     o.Tariff_rate_min,
+	// 	Max:     o.Tariff_rate_max,
+	// }
+	// o.Tariff_bof.StartingFill()
 
 }
 
@@ -260,15 +259,15 @@ func (o *Operation) SetVerification() {
 	var Converation string
 	var CurrencyBP currency.Currency
 
-	if o.Tariff != nil {
-		//Converation = o.Tariff.Convertation
-		//CurrencyBP = o.Tariff.CurrencyBP
-		if o.Tariff_bof != nil {
-			s1 := (o.Tariff.Percent + o.Tariff.Fix + o.Tariff.Min + o.Tariff.Max) //* 100
-			s2 := o.Tariff_bof.Percent + o.Tariff_bof.Fix + o.Tariff_bof.Min + o.Tariff_bof.Max
-			o.CheckRates = util.BaseRound(s1 - s2)
-		}
-	}
+	// if o.Tariff != nil {
+	// 	//Converation = o.Tariff.Convertation
+	// 	//CurrencyBP = o.Tariff.CurrencyBP
+	// 	if o.Tariff_bof != nil {
+	// 		s1 := (o.Tariff.Percent + o.Tariff.Fix + o.Tariff.Min + o.Tariff.Max) //* 100
+	// 		s2 := o.Tariff_bof.Percent + o.Tariff_bof.Fix + o.Tariff_bof.Min + o.Tariff_bof.Max
+	// 		o.CheckRates = util.BaseRound(s1 - s2)
+	// 	}
+	// }
 
 	// если реестр и валюты одинаковые, то вылетает "требует уточ. курса"
 	if o.Tariff == nil {
@@ -289,8 +288,8 @@ func (o *Operation) SetVerification() {
 		o.Verification = VRF_OK
 	} else if o.Channel_currency != CurrencyBP && Converation != "Колбек" {
 		o.Verification = VRF_CHECK_CURRENCY
-	} else if o.CheckRates != 0 {
-		o.Verification = VRF_CHECK_TARIFF
+		// } else if o.CheckRates != 0 {
+		// 	o.Verification = VRF_CHECK_TARIFF
 		//} else if Converation == "Частичные выплаты" && o.Channel_amount != o.Actual_amount {
 		//	o.Verification = VRF_PARTIAL_PAYMENTS
 	} else if o.IsDragonPay {

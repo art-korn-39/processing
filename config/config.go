@@ -60,6 +60,7 @@ type (
 		Crypto      ImportData `json:"crypto"`
 		Rates       ImportData `json:"rates"`
 		Decline     ImportData `json:"decline"`
+		Dragonpay   ImportData `json:"dragonpay"`
 		Detailed    ExportData `json:"detailed"`
 		SummaryInfo ExportData `json:"summary_info"`
 		Summary     ExportData `json:"summary"`
@@ -216,6 +217,7 @@ func (c *Config) SetDBUsage() {
 		c.Decline.Storage == PSQL ||
 		c.Crypto.Storage == PSQL ||
 		c.Rates.Storage == PSQL ||
+		c.Dragonpay.Storage == PSQL ||
 		c.Summary.Storage == PSQL ||
 		c.SummaryInfo.Storage == PSQL ||
 		c.Detailed.Storage == PSQL

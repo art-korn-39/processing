@@ -10,6 +10,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -89,24 +90,32 @@ func ReadRates(filename string) (ops []Operation, err error) {
 		return nil, err
 	}
 
+	sheet_names := []string{"конверт", "реестр", "sale", "payout", "rub"}
+
 	for _, sheet := range xlFile.Sheets {
 
 		var operations []Operation
 
 		sheet_name := util.SubString(strings.ToLower(sheet.Name), 0, 7)
-		if sheet_name == "конверт" || sheet_name == "реестр" || sheet_name == "sale" || sheet_name == "payout" {
+		if slices.Contains(sheet_names, sheet_name) {
+
+			// if sheet_name == "конверт" ||
+			// 	sheet_name == "реестр" ||
+			// 	sheet_name == "sale" ||
+			// 	sheet_name == "payout" ||
+			// 	sheet_name == "rub" {
 
 			operations, err = Read_convert_sheet(sheet, filename)
 			if err != nil {
 				return nil, err
 			}
 
-		} else if sheet_name == "rub" {
+			// } else if sheet_name == "rub" {
 
-			operations, err = Read_rub_sheet(sheet, filename)
-			if err != nil {
-				return nil, err
-			}
+			// 	operations, err = Read_rub_sheet(sheet, filename)
+			// 	if err != nil {
+			// 		return nil, err
+			// 	}
 
 		}
 
@@ -143,6 +152,7 @@ func Read_convert_sheet(sheet *xlsx.Sheet, filename string) (ops []Operation, er
 	idx_operation_id := map_fileds["id / operation_id"] - 1
 	idx_provider_amount := map_fileds["provider_amount"] - 1
 	idx_balance := map_fileds["баланс"] - 1
+	idx_provider1c := map_fileds["поставщик"] - 1
 
 	ops = make([]Operation, 0, len(sheet.Rows))
 
@@ -200,6 +210,10 @@ func Read_convert_sheet(sheet *xlsx.Sheet, filename string) (ops []Operation, er
 			operation.Balance = row.Cells[map_fileds["баланс"]-1].String()
 		}
 
+		if len(row.Cells) > idx_provider1c && idx_provider1c >= 0 {
+			operation.Provider1c = row.Cells[map_fileds["поставщик"]-1].String()
+		}
+
 		operation.StartingFill(true)
 
 		ops = append(ops, operation)
@@ -235,6 +249,7 @@ func Read_rub_sheet(sheet *xlsx.Sheet, filename string) (ops []Operation, err er
 	idx_account := map_fileds["customer_purse / account_number"] - 1
 	idx_operation_id := map_fileds["id / operation_id"] - 1
 	idx_balance := map_fileds["баланс"] - 1
+	idx_provider1c := map_fileds["поставщик"] - 1
 
 	ops = make([]Operation, 0, len(sheet.Rows))
 
@@ -288,6 +303,10 @@ func Read_rub_sheet(sheet *xlsx.Sheet, filename string) (ops []Operation, err er
 
 		if len(row.Cells) > idx_balance && idx_balance >= 0 {
 			operation.Balance = row.Cells[map_fileds["баланс"]-1].String()
+		}
+
+		if len(row.Cells) > idx_provider1c && idx_provider1c >= 0 {
+			operation.Provider1c = row.Cells[map_fileds["поставщик"]-1].String()
 		}
 
 		operation.StartingFill(true)

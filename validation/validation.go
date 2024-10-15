@@ -50,6 +50,10 @@ func CheckMapOfColumnNames(map_fileds map[string]int, table string) error {
 		s = fields_kgx()
 	case "crypto":
 		s = fields_crypto()
+	case "dragonpay_csv":
+		s = fields_dragonpay_csv()
+	case "dragonpay_xlsx":
+		s = fields_dragonpay_xlsx()
 	case "provider_registry":
 		s = fields_provider_registry()
 	case "provider_registry_rub":
@@ -92,12 +96,10 @@ func fields_bof_registry_provider() []string {
 		"merchant_id", "merchant_account_id", "project_id", "project_name",
 		"provider_name", "merchant_name", "merchant_account_name",
 		"acquirer_id / provider_payment_id", "issuer_country",
-		"operation_type", "balance_id", "payment_type_id / payment_method_type",
-		"contract_id", "tariff_condition_id",
+		"operation_type", "payment_type_id / payment_method_type",
+		"contract_id",
 		"real_currency / channel_currency", "real_amount / channel_amount",
-		"fee_currency", "fee_amount",
 		"provider_currency", "provider_amount",
-		"tariff_rate_percent", "tariff_rate_fix", "tariff_rate_min", "tariff_rate_max",
 		"legal_entity_id", "business_type",
 	}
 }
@@ -137,6 +139,15 @@ func fields_kgx() []string {
 func fields_crypto() []string {
 	return []string{"operation id", "crypto network", "created at", "operation type",
 		"payment amount", "payment currency", "crypto amount", "crypto currency"}
+}
+
+func fields_dragonpay_csv() []string {
+	return []string{"merchant txn id", "create date", "settle date", "refno",
+		"ccy", "amount", "proc", "fee"}
+}
+
+func fields_dragonpay_xlsx() []string {
+	return []string{"endpoint_id", "поставщик dragonpay"}
 }
 
 func fields_provider_registry() []string {

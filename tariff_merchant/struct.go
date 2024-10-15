@@ -20,6 +20,9 @@ type Operation interface {
 	Get_Crypto_network() string
 	Get_Channel_currency() currency.Currency
 	Get_Channel_amount() float64
+	Get_IsDragonPay() bool
+	Get_DragonPayProvider1c() string
+	Get_Payment_type() string
 }
 
 type Tariff struct {
@@ -35,6 +38,7 @@ type Tariff struct {
 	Convertation   string //`xlsx:"19"`
 	Operation_type string //`xlsx:"22"`
 	NetworkType    string
+	Payment_type   string
 
 	RR_days    int     //`xlsx:"32"`
 	RR_percent float64 //`xlsx:"33"`

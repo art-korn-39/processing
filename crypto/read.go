@@ -48,10 +48,6 @@ func read_files(filenames []string) {
 			defer wg.Done()
 			for filename := range channel_files {
 
-				// if filepath.Base(filename) != "pay-in-out.csv" {
-				// 	continue
-				// }
-
 				operations, err := ReadFile(filename)
 				if err != nil {
 					//logs.Add(logs.ERROR, err)

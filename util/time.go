@@ -23,6 +23,25 @@ func GetDateFromString(s string) time.Time {
 
 }
 
+// Input formats
+// "10/1/2024 00:05"
+// "9/26/24 9:53 pm"
+func GetDateFromString2(s string) time.Time {
+
+	var layout string
+	if strings.Contains(s, "m") {
+		s = strings.ToUpper(s)
+		layout = "1/2/06 3:04 PM"
+	} else {
+		layout = "1/2/2006 15:04"
+	}
+
+	v, _ := time.Parse(layout, s)
+
+	return v
+
+}
+
 func TruncateToDay(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
 }

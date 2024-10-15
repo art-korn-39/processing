@@ -1,4 +1,4 @@
-package crypto
+package dragonpay
 
 import (
 	"app/config"
@@ -10,10 +10,12 @@ import (
 
 var (
 	Registry map[int]Operation
+	Handbook map[string]string
 )
 
 func init() {
-	Registry = make(map[int]Operation, 300000)
+	Registry = make(map[int]Operation, 1000)
+	Handbook = make(map[string]string, 200)
 }
 
 func Start() {
@@ -30,17 +32,25 @@ func Start() {
 	}
 	defer db.Close()
 
-	Read_CSV_files(config.Get().Crypto.Filename)
+	read_files(config.Get().Dragonpay.Filename)
 	insert_into_db(db)
 
 }
 
 func Read_Registry(db *sqlx.DB) {
 
-	if config.Get().Crypto.Storage == config.PSQL {
-		PSQL_read_registry(db)
-	} else {
-		Read_CSV_files(config.Get().Crypto.Filename)
-	}
+	PSQL_read_registry(db)
 
+}
+
+func GetOperation(id int, endpoint_id string) (*Operation, string) {
+	if id != 0 {
+		op, ok := Registry[id]
+		if ok {
+			return &op, op.Provider1c
+		} else {
+			return nil, Handbook[endpoint_id]
+		}
+	}
+	return nil, ""
 }

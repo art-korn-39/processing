@@ -4,7 +4,6 @@ import (
 	"app/config"
 	"app/currency"
 	"app/holds"
-	"app/kgx"
 	"app/logs"
 	"app/util"
 	"app/validation"
@@ -52,9 +51,9 @@ func Read_XLSX_Tariffs() {
 		if sheet.Name == "Условия холдов" {
 			holds.ReadSheet(sheet)
 			continue
-		} else if sheet.Name == "KGX" {
-			kgx.ReadSheet(sheet)
-			continue
+			// } else if sheet.Name == "KGX" {
+			// 	kgx.ReadSheet(sheet)
+			//continue
 		} else if sheet.Name != "Тарифы" {
 			continue
 		}
@@ -150,6 +149,11 @@ func Read_XLSX_Tariffs() {
 				tariff.NetworkType = row.Cells[idx-1].String()
 			}
 
+			idx = map_fileds["payment_method_type"]
+			if idx > 0 {
+				tariff.Payment_type = row.Cells[idx-1].String()
+			}
+
 			tariff.StartingFill()
 
 			Data = append(Data, tariff)
@@ -171,6 +175,7 @@ func SortTariffs() {
 	)
 }
 
+// у dragonpay должно быть соответствие provider1c и
 func FindTariffForOperation(op Operation) *Tariff {
 
 	var operation_date time.Time
@@ -182,7 +187,13 @@ func FindTariffForOperation(op Operation) *Tariff {
 
 	for _, t := range Data {
 
-		if t.Merchant_account_id == op.Get_Merchant_account_id() {
+		isDragonPay := op.Get_IsDragonPay()
+		if (!isDragonPay && t.Merchant_account_id == op.Get_Merchant_account_id()) ||
+			(isDragonPay && t.Schema == "Dragonpay") {
+
+			if isDragonPay && op.Get_DragonPayProvider1c() != t.Provider1C {
+				continue
+			}
 
 			if t.DateStart.Before(operation_date) &&
 				t.Operation_type == op.Get_Operation_type() {
@@ -198,6 +209,10 @@ func FindTariffForOperation(op Operation) *Tariff {
 					if !(channel_currency.Name == "USD" && t.CurrencyBP.Name == "USDT") {
 						continue
 					}
+				}
+
+				if t.Payment_type != "" && t.Payment_type != op.Get_Payment_type() {
+					continue
 				}
 
 				// проверяем наличие диапазона

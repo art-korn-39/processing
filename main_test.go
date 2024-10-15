@@ -4,6 +4,7 @@ import (
 	"app/config"
 	"app/logs"
 	"app/processing_merchant"
+	"app/processing_provider"
 	"testing"
 )
 
@@ -87,5 +88,20 @@ func TestProceesing3(t *testing.T) {
 	config.New(app, file_config)
 
 	processing_merchant.Start()
+
+}
+
+// проверка выполнения
+// reg - F; tariff - F
+func TestProceesing4(t *testing.T) {
+
+	logs.Testing = true
+
+	app := "processing_provider"
+	file_config := "test\\config4.conf"
+
+	config.New(app, file_config)
+
+	processing_provider.Start()
 
 }

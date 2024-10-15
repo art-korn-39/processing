@@ -25,13 +25,13 @@ func Stat_Insert_provider_registry() string {
 		operation_id, transaction_completed_at, provider_name, merchant_name, merchant_account_name,
 		project_url, payment_method_type, country, rate, operation_type, amount,
 		provider_payment_id, operation_status, account_number, channel_currency, provider_currency, br_amount,
-		transaction_completed_at_day, channel_amount, balance
+		transaction_completed_at_day, channel_amount, balance, provider1c
 	)
 	VALUES (
 		:operation_id, :transaction_completed_at, :provider_name, :merchant_name, :merchant_account_name,
 		:project_url, :payment_method_type, :country, :rate, :operation_type, :amount,
 		:provider_payment_id, :operation_status, :account_number, :channel_currency, :provider_currency, :br_amount,
-		:transaction_completed_at_day, :channel_amount, :balance
+		:transaction_completed_at_day, :channel_amount, :balance, :provider1c
 	)
 	
 	ON CONFLICT ON CONSTRAINT pk_id DO UPDATE
@@ -40,7 +40,8 @@ func Stat_Insert_provider_registry() string {
 		channel_amount = EXCLUDED.channel_amount, provider_currency = EXCLUDED.provider_currency,
 		transaction_completed_at = EXCLUDED.transaction_completed_at, 
 		transaction_completed_at_day = EXCLUDED.transaction_completed_at_day, 
-		operation_status = EXCLUDED.operation_status, balance = EXCLUDED.balance;`
+		operation_status = EXCLUDED.operation_status, balance = EXCLUDED.balance, 
+		provider1c = EXCLUDED.provider1c;`
 }
 
 func Stat_Insert_detailed() string {
@@ -103,15 +104,33 @@ func Stat_Insert_crypto() string {
 		payment_amount = EXCLUDED.payment_amount, crypto_amount = EXCLUDED.crypto_amount`
 }
 
-func Stat_Insert_crypto_arch() string {
-	return `INSERT INTO crypto (
-		operation_id, created_at, created_at_day, network, operation_type, 
-		payment_amount, payment_currency, crypto_amount, crypto_currency
+func Stat_Insert_dragonpay() string {
+	return `INSERT INTO dragonpay (
+		operation_id, provider, create_date, settle_date, refno, endpoint_id,
+		currency, amount, fee_amount, description, message
 	)
 	VALUES (
-		:operation_id, :created_at, :created_at_day, :network, :operation_type, 
-		:payment_amount, :payment_currency, :crypto_amount, :crypto_currency
-		)`
+		:operation_id, :provider, :create_date, :settle_date, :refno, :endpoint_id,
+		:currency, :amount, :fee_amount, :description, :message
+	)
+
+	ON CONFLICT ON CONSTRAINT pk_dragonpay_operation_id DO UPDATE
+
+	SET provider = EXCLUDED.provider, create_date = EXCLUDED.create_date,
+		settle_date = EXCLUDED.settle_date, amount = EXCLUDED.amount, fee_amount = EXCLUDED.fee_amount`
+}
+
+func Stat_Insert_dragonpay_handbook() string {
+	return `INSERT INTO dragonpay_handbook (
+		endpoint_id, provider1c
+	)
+	VALUES (
+		$1, $2
+	)
+
+	ON CONFLICT ON CONSTRAINT pk_dragonpay_handbook_endpoint_id DO UPDATE
+
+	SET provider1c = EXCLUDED.provider1c`
 }
 
 func Stat_Insert_summary_merchant() string {

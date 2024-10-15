@@ -2,8 +2,8 @@ package processing_merchant
 
 import (
 	"app/currency"
+	"app/dragonpay"
 	"app/holds"
-	"app/kgx"
 	"app/provider"
 	"app/tariff_merchant"
 	"app/util"
@@ -99,10 +99,11 @@ type Operation struct {
 	hold_amount float64
 	hold_date   time.Time
 
-	ProviderOperation *provider.Operation
-	Tariff_bof        *tariff_merchant.Tariff
-	Tariff            *tariff_merchant.Tariff
-	Hold              *holds.Hold
+	ProviderOperation  *provider.Operation
+	Tariff_bof         *tariff_merchant.Tariff
+	Tariff             *tariff_merchant.Tariff
+	Hold               *holds.Hold
+	DragonpayOperation *dragonpay.Operation
 
 	Tariff_rate_fix     float64 `db:"billing__tariff_rate_fix"`
 	Tariff_rate_percent float64 `db:"billing__tariff_rate_percent"`
@@ -291,9 +292,10 @@ func (o *Operation) SetSRAmount() {
 
 func (o *Operation) SetProvider1c() {
 
-	if o.Tariff != nil && o.IsPerevodix && o.Tariff.Convertation == "KGX" {
+	if o.Tariff != nil && o.IsPerevodix && o.Tariff.Convertation == "KGX" && o.ProviderOperation != nil {
 
-		o.Provider1c = kgx.GetProvider1c(o.Provider_name, o.Operation_type, o.Payment_type, o.Balance_currency)
+		//o.Provider1c = kgx.GetProvider1c(o.Provider_name, o.Operation_type, o.Payment_type, o.Balance_currency)
+		o.Provider1c = o.ProviderOperation.Provider1c
 
 	} else if o.Tariff != nil {
 
@@ -309,6 +311,10 @@ func (o *Operation) SetCheckFee() {
 		o.CheckFee = util.BaseRound(o.Fee_amount - o.SR_balance_currency)
 	} else {
 		o.CheckFee = util.BaseRound(o.Fee_amount - o.SR_channel_currency)
+	}
+
+	if o.CheckFee != 0 {
+		util.Unused()
 	}
 
 }
@@ -363,12 +369,14 @@ func (o *Operation) SetVerification() {
 
 	if o.Tariff != nil && o.IsPerevodix && o.Tariff.Convertation == "KGX" {
 
-		if kgx.GetDataLen() == 0 {
-			o.Verification_KGX = VRF_NO_DATA_PEREVODIX_KGX
-		} else if !kgx.LineContains(o.Provider_name, o.Operation_type, o.Payment_type, o.Balance_currency) {
-			o.Verification_KGX = VRF_NO_MAPPING_KGX_LIST
-		} else if o.Provider1c == "" {
-			o.Verification_KGX = VRF_NO_FILLED_KGX_LIST
+		// if kgx.GetDataLen() == 0 {
+		// 	o.Verification_KGX = VRF_NO_DATA_PEREVODIX_KGX
+		// } else if !kgx.LineContains(o.Provider_name, o.Operation_type, o.Payment_type, o.Balance_currency) {
+		// 	o.Verification_KGX = VRF_NO_MAPPING_KGX_LIST
+		// } else
+
+		if o.Provider1c == "" {
+			o.Verification_KGX = VRF_NO_FILLED_PROVIDER_1C
 		} else {
 			o.Verification_KGX = VRF_OK
 		}
@@ -392,8 +400,8 @@ const (
 	VRF_DRAGON_PAY            = "Исключение ДрагонПей"
 	VRF_CHECK_BILLING         = "Провень начисления биллинга"
 	VRF_NO_DATA_PEREVODIX_KGX = "В тарифах нет данных на странице KGX"
-	VRF_NO_MAPPING_KGX_LIST   = "Нет совпадения на листе KGX"
-	VRF_NO_FILLED_KGX_LIST    = "Не заполнен поставщик 1С на листе KGX"
+	//VRF_NO_MAPPING_KGX_LIST   = "Нет совпадения на листе KGX"
+	VRF_NO_FILLED_PROVIDER_1C = "Не заполнен поставщик 1С в реестре провайдера"
 	VRF_PARTIAL_PAYMENTS      = "Частичные выплаты"
 	VRF_ENDPOINT_DRAGONPAY    = "Endpoint_id пусто обратитесь к сверке/в саппорт"
 )
@@ -472,51 +480,6 @@ func (o *Operation) SetDK() {
 
 }
 
-func (o *Operation) SetDK_old() {
-
-	t := o.Tariff
-
-	if t.DK_is_zero {
-		return
-	}
-
-	// BALANCE CURRENCY
-	commissionBC := o.Balance_amount*o.Tariff.DK_percent + t.DK_fix
-
-	if t.DK_min != 0 && commissionBC < t.DK_min {
-		commissionBC = t.DK_min
-	} else if t.DK_max != 0 && commissionBC > t.DK_max {
-		commissionBC = t.DK_max
-	}
-
-	if o.Balance_currency.Exponent {
-		commissionBC = util.Round(commissionBC, 0)
-	} else {
-		commissionBC = util.Round(commissionBC, 2)
-	}
-
-	o.CompensationBC = commissionBC - o.SR_balance_currency
-
-	// CHANNEL CURRENCY
-	commissionRC := o.Channel_amount*o.Tariff.DK_percent + t.DK_fix
-	commission_with_rate := commissionRC / o.Rate
-
-	if t.DK_min != 0 && commission_with_rate < t.DK_min {
-		commissionRC = t.DK_min * o.Rate
-	} else if t.DK_max != 0 && commission_with_rate > t.DK_max {
-		commissionRC = t.DK_max * o.Rate
-	}
-
-	if o.Channel_currency.Exponent {
-		commissionRC = util.Round(commissionRC, 0)
-	} else {
-		commissionRC = util.Round(commissionRC, 2)
-	}
-
-	o.CompensationRC = commissionRC - o.SR_channel_currency
-
-}
-
 func (op *Operation) Get_Operation_created_at() time.Time {
 	return op.Operation_created_at
 }
@@ -547,4 +510,19 @@ func (op *Operation) Get_Channel_currency() currency.Currency {
 
 func (op *Operation) Get_Channel_amount() float64 {
 	return op.Channel_amount
+}
+
+func (op *Operation) Get_IsDragonPay() bool {
+	return op.IsDragonPay
+}
+
+func (op *Operation) Get_DragonPayProvider1c() string {
+	// if op.DragonpayOperation != nil {
+	// 	return op.DragonpayOperation.Provider
+	// }
+	return op.Provider1c
+}
+
+func (op *Operation) Get_Payment_type() string {
+	return op.Payment_type
 }

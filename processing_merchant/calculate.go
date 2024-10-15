@@ -3,6 +3,7 @@ package processing_merchant
 import (
 	"app/config"
 	"app/crypto"
+	"app/dragonpay"
 	"app/holds"
 	"app/logs"
 	"app/provider"
@@ -30,7 +31,13 @@ func SelectTariffsInRegistry() {
 			defer wg.Done()
 			for index := range channel_indexes {
 				operation := storage.Registry[index]
+
+				if operation.IsDragonPay {
+					operation.DragonpayOperation, operation.Provider1c = dragonpay.GetOperation(operation.Operation_id, operation.Endpoint_id)
+				}
+
 				operation.Crypto_network = crypto.Registry[operation.Operation_id].Network
+
 				operation.Tariff = tariff_merchant.FindTariffForOperation(operation)
 				if operation.Tariff == nil {
 					atomic.AddInt64(&countWithoutTariff, 1)

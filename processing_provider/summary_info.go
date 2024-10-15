@@ -14,7 +14,7 @@ type SumFileds struct {
 	BR_balance_currency float64
 	CompensationBR      float64
 	checkFee            float64
-	checkRates          float64
+	//checkRates          float64
 }
 
 func (sf *SumFileds) AddValues(o *Operation) {
@@ -23,7 +23,7 @@ func (sf *SumFileds) AddValues(o *Operation) {
 	sf.BR_balance_currency = sf.BR_balance_currency + o.BR_balance_currency
 	sf.CompensationBR = sf.CompensationBR + o.CompensationBR
 	sf.checkFee = sf.checkFee + o.CheckFee
-	sf.checkRates = sf.checkRates + o.CheckRates
+	//sf.checkRates = sf.checkRates + o.CheckRates
 }
 
 // func (sf *SumFileds) AddValuesFromSF(sf2 SumFileds) {
@@ -43,8 +43,8 @@ func (sf *SumFileds) AddValues(o *Operation) {
 // }
 
 type KeyFields_SummaryInfo struct {
-	document_date         time.Time
-	balance_id            int
+	document_date time.Time
+	//balance_id            int
 	balance_name          string
 	provider              string
 	JL                    string
@@ -63,7 +63,7 @@ type KeyFields_SummaryInfo struct {
 func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 	KF = KeyFields_SummaryInfo{
 		document_date: o.Document_date,
-		balance_id:    o.Balance_id,
+		//balance_id:    o.Balance_id,
 		//balance_name:          o.balance_name,
 		provider:              o.Provider_base_name,
 		provider_name:         o.Provider_name,
@@ -104,7 +104,7 @@ func GroupRegistryToSummaryInfo() (group_data map[KeyFields_SummaryInfo]SumFiled
 	}
 
 	for k, v := range group_data {
-		v.checkRates = v.checkRates / float64(v.count_operations)
+		//v.checkRates = v.checkRates / float64(v.count_operations)
 		//v.SetBalanceRefund(k.tariff.Convertation, k.tariff.Percent)
 		group_data[k] = v
 	}

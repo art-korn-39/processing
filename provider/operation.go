@@ -25,6 +25,7 @@ type Operation struct {
 	Account_number        string  `db:"account_number"`
 	BR_amount             float64 `db:"br_amount"`
 	Balance               string  `db:"balance"`
+	Provider1c            string  `db:"provider1c"`
 
 	Channel_currency_str  string `db:"channel_currency"`
 	Provider_currency_str string `db:"provider_currency"`

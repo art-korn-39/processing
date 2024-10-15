@@ -3,6 +3,7 @@ package processing_merchant
 import (
 	"app/config"
 	"app/crypto"
+	"app/dragonpay"
 	"app/holds"
 	"app/logs"
 	"app/provider"
@@ -14,7 +15,7 @@ import (
 )
 
 const (
-	Version = "1.3.6"
+	Version = "1.3.7"
 )
 
 var (
@@ -74,7 +75,7 @@ func ReadSources() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(4)
+	wg.Add(5)
 
 	registry_done := make(chan querrys.Args, 1)
 	go func() {
@@ -95,6 +96,11 @@ func ReadSources() {
 	go func() {
 		defer wg.Done()
 		crypto.Read_Registry(storage.Postgres)
+	}()
+
+	go func() {
+		defer wg.Done()
+		dragonpay.Read_Registry(storage.Postgres)
 	}()
 
 	wg.Wait()
