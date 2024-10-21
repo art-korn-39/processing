@@ -89,6 +89,5 @@ func InsertIntoDB(db *sqlx.DB, decline_operations map[int]Operation, files []*fi
 		f.InsertIntoDB(db, 0)
 	}
 
-	//logs.Add(logs.INFO, fmt.Sprintf("Загрузка decline в Postgres: %v", time.Since(start_time)))
 	logs.Add(logs.MAIN, fmt.Sprintf("Загрузка decline в Postgres: %v (%d строк)", time.Since(start_time), len(decline_operations)))
 }

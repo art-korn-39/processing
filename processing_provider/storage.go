@@ -68,10 +68,10 @@ func GetWithoutTariffCount() int {
 
 func GetCheckFeeCount() int {
 	count := 0
-	for _, o := range storage.Registry {
-		if o.CheckFee != 0 {
-			count++
-		}
-	}
+	// for _, o := range storage.Registry {
+	// 	if o.CheckFee != 0 {
+	// 		count++
+	// 	}
+	// }
 	return count
 }

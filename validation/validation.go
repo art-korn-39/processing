@@ -46,8 +46,6 @@ func CheckMapOfColumnNames(map_fileds map[string]int, table string) error {
 		s = fields_tariff_provider()
 	case "holds":
 		s = fields_holds()
-	case "kgx":
-		s = fields_kgx()
 	case "crypto":
 		s = fields_crypto()
 	case "dragonpay_csv":
@@ -56,8 +54,8 @@ func CheckMapOfColumnNames(map_fileds map[string]int, table string) error {
 		s = fields_dragonpay_xlsx()
 	case "provider_registry":
 		s = fields_provider_registry()
-	case "provider_registry_rub":
-		s = fields_provider_registry_rub()
+	// case "provider_registry_rub":
+	// 	s = fields_provider_registry_rub()
 	default:
 		return fmt.Errorf("table %s is not supported", table)
 	}
@@ -97,10 +95,9 @@ func fields_bof_registry_provider() []string {
 		"provider_name", "merchant_name", "merchant_account_name",
 		"acquirer_id / provider_payment_id", "issuer_country",
 		"operation_type", "payment_type_id / payment_method_type",
-		"contract_id",
 		"real_currency / channel_currency", "real_amount / channel_amount",
 		"provider_currency", "provider_amount",
-		"legal_entity_id", "business_type",
+		"legal_entity_id", "business_type", "account_bank_name", "payment_method_name",
 	}
 }
 
@@ -117,22 +114,18 @@ func fields_tariff_merchant() []string {
 
 func fields_tariff_provider() []string {
 	return []string{
-		"provider", "юл", "provider name", "date of start", "merchant_name", "merchant account", "merchant legal entity",
-		"payment method", "payment method type", "region", "channel currency", "project", "business type",
-		"operation type (группа)", "tariff range turnouver min", "tariff range turnouver max",
+		"идентификатор сверки", "организация",
+		"провайдер", "provider_name", "date_of_start", "merchant_name", "merchant_account_name", "merchant_legal_entity",
+		"payment_method", "payment_method_type", "region", "channel_currency", "project_name", "business_type",
+		"operation_group", "tariff range turnouver min", "tariff range turnouver max",
 		"tariff range amount min", "tariff range amount max", "percent", "fix", "min commission", "max commission",
+		"traffic_type", "account_bank_name",
 	}
 }
 
 func fields_holds() []string {
 	return []string{
 		"схема", "валюта", "ma_id", "ma_name", "дата старта", "процент холда", "кол-во дней",
-	}
-}
-
-func fields_kgx() []string {
-	return []string{
-		"баланс", "operation_type", "валюта баланса", "payment_type_id / payment_method_type", "поставщик 1с",
 	}
 }
 
@@ -162,13 +155,13 @@ func fields_provider_registry() []string {
 	}
 }
 
-func fields_provider_registry_rub() []string {
-	return []string{
-		"id / operation_id", "transaction_completed_at",
-		"operation_type", "issuer_country",
-		"payment_type_id / payment_method_type",
-		"merchant_name", "real_currency / channel_currency", "real_amount / channel_amount",
-		"provider_name", "merchant_account_name", "acquirer_id / provider_payment_id",
-		"project_url", "operation_status",
-	}
-}
+// func fields_provider_registry_rub() []string {
+// 	return []string{
+// 		"id / operation_id", "transaction_completed_at",
+// 		"operation_type", "issuer_country",
+// 		"payment_type_id / payment_method_type",
+// 		"merchant_name", "real_currency / channel_currency", "real_amount / channel_amount",
+// 		"provider_name", "merchant_account_name", "acquirer_id / provider_payment_id",
+// 		"project_url", "operation_status",
+// 	}
+// }

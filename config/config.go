@@ -24,6 +24,9 @@ var (
 	//go:embed cloud.conf
 	cloud embed.FS
 
+	//go:embed crm.conf
+	crm embed.FS
+
 	NumCPU int
 )
 
@@ -31,13 +34,11 @@ type Storage string
 type Application string
 
 const (
-	PSQL                Storage     = "PSQL"
-	Clickhouse          Storage     = "CH"
-	File                Storage     = "FILE"
-	AWS                 Storage     = "AWS"
-	PROCESSING_MERCHANT Application = "processing_merchant"
-	PROCESSING_PROVIDER Application = "processing_provider"
-	TRANSFER            Application = "transfer"
+	PSQL       Storage = "PSQL"
+	Clickhouse Storage = "CH"
+	File       Storage = "FILE"
+	AWS        Storage = "AWS"
+	CRM        Storage = "CRM"
 )
 
 type (
@@ -49,11 +50,13 @@ type (
 		File_errors string `json:"file_errors"`
 
 		Routine_task bool `json:"routine_task"`
+		Full_loading bool `json:"full_loading"`
 
 		// подключения к базам
 		Clickhouse DatabaseConnection `json:"clickhouse"`
 		PSQL       DatabaseConnection `json:"psql"`
 		AWS        CloudConnection    `json:"aws"`
+		CRM        ODataConnection    `json:"crm"`
 
 		Registry    Registry   `json:"registry"`
 		Tariffs     ImportData `json:"tariffs"`
@@ -83,6 +86,13 @@ type (
 		Secret string `json:"secret"`
 		Bucket string `json:"bucket"`
 		Region string `json:"region"`
+	}
+
+	ODataConnection struct {
+		Usage    bool
+		URL      string `json:"url"`
+		Login    string `json:"login"`
+		Password string `json:"password"`
 	}
 
 	Registry struct {
@@ -132,6 +142,11 @@ func Load() (err error) {
 	}
 
 	err = cfg.ReadEmbedFile(cloud, "cloud.conf")
+	if err != nil {
+		return err
+	}
+
+	err = cfg.ReadEmbedFile(crm, "crm.conf")
 	if err != nil {
 		return err
 	}
@@ -225,6 +240,12 @@ func (c *Config) SetDBUsage() {
 	c.AWS.Usage = c.Registry.Storage == AWS
 	if c.AWS.Usage {
 		c.Clickhouse.Usage = true
+		c.PSQL.Usage = true
+	}
+
+	c.CRM.Usage = c.Registry.Storage == CRM
+	if c.CRM.Usage {
+		c.Clickhouse.Usage = false
 		c.PSQL.Usage = true
 	}
 

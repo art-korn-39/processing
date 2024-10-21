@@ -73,8 +73,9 @@ func (sf *SumFileds) SetBalanceRefund(convertation string, percent float64) {
 }
 
 type KeyFields_SummaryInfo struct {
-	document_date time.Time
-	balance_id    int
+	document_date  time.Time
+	balance_id     int
+	balance_id_str string
 
 	verification          string
 	operation_type        string
@@ -104,6 +105,7 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 	KF = KeyFields_SummaryInfo{
 		document_date:         o.Document_date,
 		balance_id:            o.Balance_id,
+		balance_id_str:        fmt.Sprint(o.Balance_id),
 		verification:          o.Verification,
 		operation_type:        o.Operation_type,
 		country:               o.Country,
@@ -123,6 +125,7 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 
 	if o.Tariff != nil {
 		KF.tariff = *o.Tariff
+		KF.balance_id_str = fmt.Sprint(o.Balance_id, "_", o.Tariff.Balance_type)
 
 		if o.Tariff.Convertation == "KGX" {
 			if o.ProviderOperation != nil {

@@ -55,8 +55,6 @@ func CalculateCommission() {
 
 	var wg sync.WaitGroup
 
-	var check_fee_counter int64
-
 	wg.Add(config.NumCPU)
 	for i := 1; i <= config.NumCPU; i++ {
 		go func() {
@@ -78,9 +76,6 @@ func CalculateCommission() {
 
 				operation.mu.Unlock()
 
-				if operation.CheckFee != 0 {
-					atomic.AddInt64(&check_fee_counter, 1)
-				}
 			}
 		}()
 	}
@@ -92,6 +87,6 @@ func CalculateCommission() {
 
 	wg.Wait()
 
-	logs.Add(logs.INFO, fmt.Sprintf("Расчёт комиссии: %v [check fee: %s]", time.Since(start_time), util.FormatInt(check_fee_counter)))
+	logs.Add(logs.INFO, fmt.Sprintf("Расчёт комиссии: %v", time.Since(start_time)))
 
 }

@@ -145,11 +145,8 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		Transaction_id:      util.FR(strconv.Atoi(record[map_fileds["transaction_id"]-1])).(int),
 		Merchant_id:         util.FR(strconv.Atoi(record[map_fileds["merchant_id"]-1])).(int),
 		Merchant_account_id: util.FR(strconv.Atoi(record[map_fileds["merchant_account_id"]-1])).(int),
-		Contract_id:         util.FR(strconv.Atoi(record[map_fileds["contract_id"]-1])).(int),
 		Project_id:          util.FR(strconv.Atoi(record[map_fileds["project_id"]-1])).(int),
 		Legal_entity_id:     util.FR(strconv.Atoi(record[map_fileds["legal_entity_id"]-1])).(int),
-		//Balance_id:          util.FR(strconv.Atoi(record[map_fileds["balance_id"]-1])).(int),
-		//Tariff_condition_id: util.FR(strconv.Atoi(record[map_fileds["tariff_condition_id"]-1])).(int),
 
 		Provider_payment_id:   record[map_fileds["acquirer_id / provider_payment_id"]-1],
 		Payment_type:          record[map_fileds["payment_type_id / payment_method_type"]-1],
@@ -160,18 +157,14 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		Merchant_name:         record[map_fileds["merchant_name"]-1],
 		Merchant_account_name: record[map_fileds["merchant_account_name"]-1],
 		Business_type:         record[map_fileds["business_type"]-1],
+		Account_bank_name:     record[map_fileds["account_bank_name"]-1],
+		Payment_method:        record[map_fileds["payment_method_name"]-1],
 
 		Count_operations:      1,
 		Channel_currency_str:  record[map_fileds["real_currency / channel_currency"]-1],
 		Channel_amount:        util.FR(strconv.ParseFloat(record[map_fileds["real_amount / channel_amount"]-1], 64)).(float64),
 		Provider_currency_str: record[map_fileds["provider_currency"]-1],
 		Provider_amount:       util.FR(strconv.ParseFloat(record[map_fileds["provider_amount"]-1], 64)).(float64),
-		// Fee_currency_str:      record[map_fileds["fee_currency"]-1],
-		// Fee_amount:            util.FR(strconv.ParseFloat(record[map_fileds["fee_amount"]-1], 64)).(float64),
-		// Tariff_rate_percent: util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_percent"]-1], 64)).(float64) / 100,
-		// Tariff_rate_fix:     util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_fix"]-1], 64)).(float64),
-		// Tariff_rate_min:     util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_min"]-1], 64)).(float64),
-		// Tariff_rate_max:     util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_max"]-1], 64)).(float64),
 	}
 
 	idx := map_fileds["created_at / operation_created_at"]
@@ -179,11 +172,6 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		op.Operation_created_at = util.GetDateFromString(record[idx-1])
 	} else {
 		op.Operation_created_at = op.Transaction_completed_at
-	}
-
-	idx = map_fileds["operation_actual_amount"]
-	if idx > 0 {
-		op.Actual_amount = util.FR(strconv.ParseFloat(record[idx-1], 64)).(float64)
 	}
 
 	idx = map_fileds["endpoint_id"]

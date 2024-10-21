@@ -133,6 +133,46 @@ func Stat_Insert_dragonpay_handbook() string {
 	SET provider1c = EXCLUDED.provider1c`
 }
 
+func Stat_Insert_chargeback() string {
+	return `INSERT INTO chargebacks (
+		id, name, case_id, created_on, total_amount, account_number, deadline, receipt_date,
+		status, brand, code_reason, merchant_id, merchant_name, provider_id, provider_name
+	)
+	VALUES (
+		:id, :name, :case_id, :created_on, :total_amount, :account_number, :deadline, :receipt_date,
+		:status, :brand, :code_reason, :merchant_id, :merchant_name, :provider_id, :provider_name
+	)
+
+	ON CONFLICT ON CONSTRAINT pk_chargebacks_id DO UPDATE
+
+	SET total_amount = EXCLUDED.total_amount`
+}
+
+func Stat_Insert_chargeback_operations() string {
+	return `INSERT INTO chargeback_operations (
+		guid, id, created_on, modified_on, rrn, receipt_date, provider_payment_id, account_number,
+		project_id, project_name, merchant_id, merchant_name, provider_id, provider_name, 
+		merchant_account_id, merchant_account_name, payment_type_id, payment_type_name, amount,
+		channel_amount, amount_usd, channel_amount_usd, amount_rub, channel_amount_rub,
+		chargeback_id, chargeback_case_id
+	)
+	VALUES (
+		:guid, :id, :created_on, :modified_on, :rrn, :receipt_date, :provider_payment_id, :account_number,
+		:project_id, :project_name, :merchant_id, :merchant_name, :provider_id, :provider_name, 
+		:merchant_account_id, :merchant_account_name, :payment_type_id, :payment_type_name, :amount,
+		:channel_amount, :amount_usd, :channel_amount_usd, :amount_rub, :channel_amount_rub,
+		:chargeback_id, :chargeback_case_id
+	)
+
+	ON CONFLICT ON CONSTRAINT pk_chargeback_operations_guid DO UPDATE
+
+	SET modified_on = EXCLUDED.modified_on, amount = EXCLUDED.amount, 
+		channel_amount = EXCLUDED.channel_amount, amount_usd = EXCLUDED.amount_usd, 
+		channel_amount_usd = EXCLUDED.channel_amount_usd, amount_rub = EXCLUDED.amount_rub,
+		channel_amount_rub = EXCLUDED.channel_amount_rub, chargeback_id = EXCLUDED.chargeback_id,
+		chargeback_case_id = EXCLUDED.chargeback_case_id`
+}
+
 func Stat_Insert_summary_merchant() string {
 	return `INSERT INTO summary_merchant (
 		document_id, document_date, operation_type, operation_group, 

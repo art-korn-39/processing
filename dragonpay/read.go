@@ -69,16 +69,8 @@ func read_csv_file(filename string) (ops []Operation, err error) {
 	}
 	defer file.Close()
 
-	// wr := bytes.Buffer{}
-	// sc := bufio.NewScanner(file)
-	// for sc.Scan() {
-	// 	wr.WriteString(sc.Text())
-	// }
-	// csv_text := wr.String()
-
 	reader := csv.NewReader(file)
 	reader.LazyQuotes = true
-	//reader.Comment = '"'
 	reader.FieldsPerRecord = -1
 
 	records, err := reader.ReadAll()

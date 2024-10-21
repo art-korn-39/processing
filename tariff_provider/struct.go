@@ -18,18 +18,21 @@ type Operation interface {
 	Get_Legal_entity() int
 	Get_Operation_group() string
 	Get_Payment_method() string
-	Get_Payment_method_type() string
+	Get_Payment_type() string // это payment_method_type в файле
 	Get_Region() string
 	Get_Project() string
 	Get_Business_type() string
 	Get_Channel_currency() currency.Currency
 	Get_Channel_amount() float64
+	Get_Traffic_type() string
+	Get_Account_bank_name() string
 }
 
 type Tariff struct {
+	ID_revise             string
 	Provider              string
-	JL                    string
 	Provider_name         string
+	Organization          string
 	DateStart             time.Time
 	Merchant_name         string
 	Merchant_account_name string
@@ -41,6 +44,8 @@ type Tariff struct {
 	Project               string
 	Business_type         string
 	Operation_group       string
+	Traffic_type          string
+	Account_bank_name     string
 
 	Range_turnouver_min float64
 	Range_turnouver_max float64
@@ -101,6 +106,9 @@ func (t *Tariff) StartingFill() {
 }
 
 func (t *Tariff) SetCountUsefulFields() {
+	// if t.Operation_type != "" {
+	// 	t.CountUsefulFields++
+	// }
 	if t.Merchant_name != "" {
 		t.CountUsefulFields++
 	}
@@ -126,6 +134,12 @@ func (t *Tariff) SetCountUsefulFields() {
 		t.CountUsefulFields++
 	}
 	if t.Business_type != "" {
+		t.CountUsefulFields++
+	}
+	if t.Traffic_type != "" {
+		t.CountUsefulFields++
+	}
+	if t.Account_bank_name != "" {
 		t.CountUsefulFields++
 	}
 }

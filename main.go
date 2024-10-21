@@ -2,6 +2,7 @@ package main
 
 import (
 	"app/aws"
+	"app/chargeback"
 	"app/config"
 	"app/conversion"
 	"app/crypto"
@@ -24,8 +25,8 @@ func main() {
 	var app string
 	var file_config string
 
-	// processing_merchant | processing_provider | conversion | decline | crypto | dragonpay | aws
-	flag.StringVar(&app, "app", "dragonpay", "")
+	// processing_merchant | processing_provider | conversion | decline | crypto | dragonpay | aws | chargeback
+	flag.StringVar(&app, "app", "chargeback", "")
 	flag.StringVar(&file_config, "file_config", "", "")
 	flag.Parse()
 
@@ -51,6 +52,8 @@ func main() {
 		dragonpay.Start()
 	case "aws":
 		aws.Start()
+	case "chargeback":
+		chargeback.Start()
 	}
 
 	logs.Add(logs.MAIN, fmt.Sprintf("Общее время выполнения: %v", time.Since(start_time)))

@@ -57,14 +57,14 @@ func Read_XLSX_Tariffs() {
 			if len(row.Cells) < 2 {
 				continue
 			}
-			if row.Cells[0].Value == "Provider" {
+			if row.Cells[1].Value == "Провайдер" {
 				headerLine = slices.Index(sheet.Rows, row)
 				break
 			}
 		}
 
 		if headerLine == 0 {
-			logs.Add(logs.FATAL, errors.New("[тарифы] не обнаружена строка с названиями колонок (\"Provider\" в колонке \"A\")"))
+			logs.Add(logs.FATAL, errors.New("[тарифы] не обнаружена строка с названиями колонок (\"Провайдер\" в колонке \"B\")"))
 			return
 		}
 
@@ -87,20 +87,23 @@ func Read_XLSX_Tariffs() {
 
 			tariff := Tariff{}
 
-			tariff.Provider = row.Cells[map_fileds["provider"]-1].String()
-			tariff.JL = row.Cells[map_fileds["юл"]-1].String()
-			tariff.Provider_name = row.Cells[map_fileds["provider name"]-1].String()
-			tariff.DateStart, _ = row.Cells[map_fileds["date of start"]-1].GetTime(false)
+			tariff.ID_revise = row.Cells[map_fileds["идентификатор сверки"]-1].String()
+			tariff.Provider = row.Cells[map_fileds["провайдер"]-1].String()
+			tariff.Organization = row.Cells[map_fileds["организация"]-1].String()
+			tariff.Provider_name = row.Cells[map_fileds["provider_name"]-1].String()
+			tariff.DateStart, _ = row.Cells[map_fileds["date_of_start"]-1].GetTime(false)
 			tariff.Merchant_name = row.Cells[map_fileds["merchant_name"]-1].String()
-			tariff.Merchant_account_name = row.Cells[map_fileds["merchant account"]-1].String()
-			tariff.Merchant_legal_entity, _ = row.Cells[map_fileds["merchant legal entity"]-1].Int()
-			tariff.Payment_method = row.Cells[map_fileds["payment method"]-1].String()
-			tariff.Payment_method_type = row.Cells[map_fileds["payment method type"]-1].String()
+			tariff.Merchant_account_name = row.Cells[map_fileds["merchant_account_name"]-1].String()
+			tariff.Merchant_legal_entity, _ = row.Cells[map_fileds["merchant_legal_entity"]-1].Int()
+			tariff.Payment_method = row.Cells[map_fileds["payment_method"]-1].String()
+			tariff.Payment_method_type = row.Cells[map_fileds["payment_method_type"]-1].String()
 			tariff.Region = row.Cells[map_fileds["region"]-1].String()
-			tariff.ChannelCurrency = currency.New(row.Cells[map_fileds["channel currency"]-1].String())
-			tariff.Project = row.Cells[map_fileds["project"]-1].String()
-			tariff.Business_type = row.Cells[map_fileds["business type"]-1].String()
-			tariff.Operation_group = row.Cells[map_fileds["operation type (группа)"]-1].String()
+			tariff.ChannelCurrency = currency.New(row.Cells[map_fileds["channel_currency"]-1].String())
+			tariff.Project = row.Cells[map_fileds["project_name"]-1].String()
+			tariff.Business_type = row.Cells[map_fileds["business_type"]-1].String()
+			tariff.Operation_group = row.Cells[map_fileds["operation_group"]-1].String()
+			tariff.Traffic_type = row.Cells[map_fileds["traffic_type"]-1].String()
+			tariff.Account_bank_name = row.Cells[map_fileds["account_bank_name"]-1].String()
 
 			tariff.Range_turnouver_min = util.FloatFromCell(row.Cells[map_fileds["tariff range turnouver min"]-1])
 			tariff.Range_turnouver_max = util.FloatFromCell(row.Cells[map_fileds["tariff range turnouver max"]-1])
@@ -161,17 +164,14 @@ func FindTariffForOperation(id int, op Operation) *Tariff {
 
 	for _, t := range Data {
 
+		// если это более ранняя дата, то смотрим текущий массив подходящих тарифов
 		if !t.DateStart.Equal(current_date_range) {
-
-			tariff := get_result(selected_tariffs)
-			if tariff != nil {
+			if tariff := get_result(selected_tariffs); tariff != nil {
 				return tariff
-			} else {
-				// переходим на новый диапазон
+			} else { // переходим на более ранний диапазон дат
 				current_date_range = t.DateStart
 				selected_tariffs = []*Tariff{}
 			}
-
 		}
 
 		if t.DateStart.Before(operation_date) &&
@@ -201,29 +201,11 @@ func FindTariffForOperation(id int, op Operation) *Tariff {
 	return get_result(selected_tariffs)
 }
 
-// if len(selected_tariffs) > 0 {
-// 	// сортируем по убыванию используемых полей
-// 	sort.Slice(selected_tariffs,
-// 		func(i int, j int) bool {
-// 			return selected_tariffs[i].CountUsefulFields > selected_tariffs[j].CountUsefulFields
-// 		})
-// 	return selected_tariffs[0]
-// } else {
-// 	// переходим на новый диапазон
-// 	current_date_range = t.DateStart
-// 	selected_tariffs = []*Tariff{}
-// }
-
-// if len(selected_tariffs) > 0 {
-// 	// сортируем по убыванию используемых полей
-// 	sort.Slice(selected_tariffs,
-// 		func(i int, j int) bool {
-// 			return selected_tariffs[i].CountUsefulFields > selected_tariffs[j].CountUsefulFields
-// 		})
-// 	return selected_tariffs[0]
-// }
-
 func (t *Tariff) IsValidForOperation(op Operation) bool {
+
+	// if t.Operation_type != "" && t.Operation_type != op.Get_Operation_type() {
+	// 	return false
+	// }
 
 	if t.Merchant_name != "" && t.Merchant_name != op.Get_Merchant_name() {
 		return false
@@ -241,7 +223,7 @@ func (t *Tariff) IsValidForOperation(op Operation) bool {
 		return false
 	}
 
-	if t.Payment_method_type != "" && t.Payment_method_type != op.Get_Payment_method_type() {
+	if t.Payment_method_type != "" && t.Payment_method_type != op.Get_Payment_type() {
 		return false
 	}
 
@@ -258,6 +240,14 @@ func (t *Tariff) IsValidForOperation(op Operation) bool {
 	}
 
 	if t.ChannelCurrency.Name != "" && t.ChannelCurrency != op.Get_Channel_currency() {
+		return false
+	}
+
+	if t.Traffic_type != "" && t.Traffic_type != op.Get_Traffic_type() {
+		return false
+	}
+
+	if t.Account_bank_name != "" && t.Account_bank_name != op.Get_Account_bank_name() {
 		return false
 	}
 

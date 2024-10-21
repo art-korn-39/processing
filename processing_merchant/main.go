@@ -1,7 +1,6 @@
 package processing_merchant
 
 import (
-	"app/config"
 	"app/crypto"
 	"app/dragonpay"
 	"app/holds"
@@ -15,7 +14,7 @@ import (
 )
 
 const (
-	Version = "1.3.7"
+	Version = "1.3.8"
 )
 
 var (
@@ -25,11 +24,6 @@ var (
 func Init() {
 
 	var err error
-
-	err = config.Load()
-	if err != nil {
-		logs.Add(logs.FATAL, err)
-	}
 	logs.Add(logs.INFO, fmt.Sprintf("Загружен файл конфигурации (ver %s)", Version))
 
 	err = storage.Connect()

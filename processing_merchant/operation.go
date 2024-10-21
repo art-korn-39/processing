@@ -45,9 +45,10 @@ type Operation struct {
 
 	Project_name      string `db:"project_name"`
 	Project_id        int    `db:"project_id"`
-	Payment_type      string `db:"payment_type"`
 	Payment_type_id   int    `db:"payment_type_id"`
 	Payment_method_id int    `db:"payment_method_id"`
+	Payment_method    string `db:"payment_method"` //visa,humo,mastercard
+	Payment_type      string `db:"payment_type"`   //sbp-p2p,card-p2p,pix,crypto,bank-transfer
 
 	Operation_type    string `db:"operation_type"`
 	Operation_type_id int    `db:"operation_type_id"`
@@ -268,8 +269,10 @@ func (o *Operation) SetSRAmount() {
 	if t.Convertation == "KGX" && o.ProviderOperation != nil {
 		if t.AmountInChannelCurrency {
 			SR_channel_currency = o.ProviderOperation.BR_amount
+			SR_balance_currency = SR_channel_currency / o.Rate
 		} else {
 			SR_balance_currency = o.ProviderOperation.BR_amount
+			SR_channel_currency = SR_balance_currency * o.Rate
 		}
 	}
 
@@ -294,7 +297,6 @@ func (o *Operation) SetProvider1c() {
 
 	if o.Tariff != nil && o.IsPerevodix && o.Tariff.Convertation == "KGX" && o.ProviderOperation != nil {
 
-		//o.Provider1c = kgx.GetProvider1c(o.Provider_name, o.Operation_type, o.Payment_type, o.Balance_currency)
 		o.Provider1c = o.ProviderOperation.Provider1c
 
 	} else if o.Tariff != nil {
@@ -313,9 +315,9 @@ func (o *Operation) SetCheckFee() {
 		o.CheckFee = util.BaseRound(o.Fee_amount - o.SR_channel_currency)
 	}
 
-	if o.CheckFee != 0 {
-		util.Unused()
-	}
+	// if o.CheckFee != 0 {
+	// 	util.Unused()
+	// }
 
 }
 
@@ -369,12 +371,6 @@ func (o *Operation) SetVerification() {
 
 	if o.Tariff != nil && o.IsPerevodix && o.Tariff.Convertation == "KGX" {
 
-		// if kgx.GetDataLen() == 0 {
-		// 	o.Verification_KGX = VRF_NO_DATA_PEREVODIX_KGX
-		// } else if !kgx.LineContains(o.Provider_name, o.Operation_type, o.Payment_type, o.Balance_currency) {
-		// 	o.Verification_KGX = VRF_NO_MAPPING_KGX_LIST
-		// } else
-
 		if o.Provider1c == "" {
 			o.Verification_KGX = VRF_NO_FILLED_PROVIDER_1C
 		} else {
@@ -400,7 +396,6 @@ const (
 	VRF_DRAGON_PAY            = "Исключение ДрагонПей"
 	VRF_CHECK_BILLING         = "Провень начисления биллинга"
 	VRF_NO_DATA_PEREVODIX_KGX = "В тарифах нет данных на странице KGX"
-	//VRF_NO_MAPPING_KGX_LIST   = "Нет совпадения на листе KGX"
 	VRF_NO_FILLED_PROVIDER_1C = "Не заполнен поставщик 1С в реестре провайдера"
 	VRF_PARTIAL_PAYMENTS      = "Частичные выплаты"
 	VRF_ENDPOINT_DRAGONPAY    = "Endpoint_id пусто обратитесь к сверке/в саппорт"

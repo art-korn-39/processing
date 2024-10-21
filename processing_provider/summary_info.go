@@ -4,6 +4,7 @@ import (
 	"app/config"
 	"app/currency"
 	"app/logs"
+	"app/tariff_provider"
 	"fmt"
 	"time"
 )
@@ -13,8 +14,6 @@ type SumFileds struct {
 	balance_amount      float64
 	BR_balance_currency float64
 	CompensationBR      float64
-	checkFee            float64
-	//checkRates          float64
 }
 
 func (sf *SumFileds) AddValues(o *Operation) {
@@ -22,32 +21,13 @@ func (sf *SumFileds) AddValues(o *Operation) {
 	sf.balance_amount = sf.balance_amount + o.Balance_amount
 	sf.BR_balance_currency = sf.BR_balance_currency + o.BR_balance_currency
 	sf.CompensationBR = sf.CompensationBR + o.CompensationBR
-	sf.checkFee = sf.checkFee + o.CheckFee
-	//sf.checkRates = sf.checkRates + o.CheckRates
 }
-
-// func (sf *SumFileds) AddValuesFromSF(sf2 SumFileds) {
-// 	sf.count_operations = sf.count_operations + sf2.count_operations
-// 	sf.channel_amount = sf.channel_amount + sf2.channel_amount
-// 	sf.balance_amount = sf.balance_amount + sf2.balance_amount
-// 	sf.fee_amount = sf.fee_amount + sf2.fee_amount
-// 	sf.SR_channel_currency = sf.SR_channel_currency + sf2.SR_channel_currency
-// 	sf.SR_balance_currency = sf.SR_balance_currency + sf2.SR_balance_currency
-// 	sf.checkFee = sf.checkFee + sf2.checkFee
-// 	sf.checkRates = sf.checkRates + sf2.checkRates
-// 	sf.RR_amount = sf.RR_amount + sf2.RR_amount
-// 	sf.hold_amount = sf.hold_amount + sf2.hold_amount
-// 	sf.CompensationBC = sf.CompensationBC + sf2.CompensationBC
-// 	sf.CompensationRC = sf.CompensationRC + sf2.CompensationRC
-// 	sf.BalanceRefund_turnover = sf.BalanceRefund_turnover + sf2.BalanceRefund_turnover
-// }
 
 type KeyFields_SummaryInfo struct {
 	document_date time.Time
-	//balance_id            int
-	balance_name          string
-	provider              string
-	JL                    string
+	// id_revise             string
+	provider string
+	// organization          string
 	provider_name         string
 	verification          string
 	operation_type        string
@@ -58,13 +38,12 @@ type KeyFields_SummaryInfo struct {
 	region                string
 	channel_currency      currency.Currency
 	balance_currency      currency.Currency
+	tariff                tariff_provider.Tariff
 }
 
 func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 	KF = KeyFields_SummaryInfo{
-		document_date: o.Document_date,
-		//balance_id:    o.Balance_id,
-		//balance_name:          o.balance_name,
+		document_date:         o.Document_date,
 		provider:              o.Provider_base_name,
 		provider_name:         o.Provider_name,
 		verification:          o.Verification,
@@ -79,8 +58,10 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 	}
 
 	if o.Tariff != nil {
+		KF.tariff = *o.Tariff
+		// KF.id_revise = o.Tariff.ID_revise
 		KF.provider = o.Tariff.Provider
-		KF.JL = o.Tariff.JL
+		// KF.organization = o.Tariff.Organization
 	}
 
 	return

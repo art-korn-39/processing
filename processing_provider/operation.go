@@ -26,8 +26,8 @@ type Operation struct {
 	Merchant_id         int `db:"merchant_id"`
 	Merchant_account_id int `db:"merchant_account_id"`
 	//Balance_id          int    `db:"balance_id"`
-	Company_id          int    `db:"company_id"`
-	Contract_id         int    `db:"contract_id"`
+	Company_id int `db:"company_id"`
+	//Contract_id         int    `db:"contract_id"`
 	Provider_id         int    `db:"provider_id"`
 	Tariff_condition_id int    `db:"tariff_id"`
 	Provider_payment_id string `db:"provider_payment_id"`
@@ -47,6 +47,7 @@ type Operation struct {
 	Payment_type      string `db:"payment_type"`
 	Payment_type_id   int    `db:"payment_type_id"`
 	Payment_method_id int    `db:"payment_method_id"`
+	Payment_method    string `db:"payment_method"`
 
 	Operation_type    string `db:"operation_type"`
 	Operation_type_id int    `db:"operation_type_id"`
@@ -57,55 +58,31 @@ type Operation struct {
 	Provider_currency_str string  `db:"provider_currency"`
 	Provider_currency     currency.Currency
 
-	Msc_amount       float64 `db:"msc_amount"`
-	Msc_currency_str string  `db:"msc_currency"`
-	Msc_currency     currency.Currency
-
 	Channel_amount       float64 `db:"channel_amount"`
 	Channel_currency_str string  `db:"channel_currency"`
 	Channel_currency     currency.Currency
 
-	Fee_amount       float64 `db:"fee_amount"`
-	Fee_currency_str string  `db:"fee_currency"`
-	Fee_currency     currency.Currency
-
 	Balance_amount   float64           // сумма в валюте баланса
 	Balance_currency currency.Currency // валюта баланса
 
-	Actual_amount float64 `db:"actual_amount"`
-
-	Rate                float64
-	SR_channel_currency float64
-	SR_balance_currency float64
 	BR_balance_currency float64
 
-	CheckFee, CheckRates float64
-	Verification         string
-	Verification_KGX     string
-	IsDragonPay          bool
-	IsPerevodix          bool
-	Crypto_network       string
-	Provider1c           string
+	Verification string
+	//Verification_KGX string
+	IsDragonPay    bool
+	IsPerevodix    bool
+	Crypto_network string
+	Provider1c     string
 
-	RR_amount float64
-	RR_date   time.Time
+	// RR_amount float64
+	// RR_date   time.Time
 
-	CompensationRC float64
-	CompensationBC float64
 	CompensationBR float64
 
 	ProviderOperation *provider.Operation
-	//Tariff_bof        *tariff_merchant.Tariff
-	Tariff *tariff_provider.Tariff
-	Hold   *holds.Hold
+	Tariff            *tariff_provider.Tariff
+	Hold              *holds.Hold
 
-	// Tariff_rate_fix     float64 `db:"billing__tariff_rate_fix"`
-	// Tariff_rate_percent float64 `db:"billing__tariff_rate_percent"`
-	// Tariff_rate_min     float64 `db:"billing__tariff_rate_min"`
-	// Tariff_rate_max     float64 `db:"billing__tariff_rate_max"`
-
-	//provider fields
-	//Account_number  string
 	Legal_entity_id int `db:"legal_entity_id"`
 }
 
@@ -121,14 +98,14 @@ func (o *Operation) StartingFill() {
 	o.IsPerevodix = o.Merchant_id == 73162
 
 	o.Provider_currency = currency.New(o.Provider_currency_str)
-	o.Msc_currency = currency.New(o.Msc_currency_str)
 	o.Channel_currency = currency.New(o.Channel_currency_str)
+	//o.Msc_currency = currency.New(o.Msc_currency_str)
 	//o.Fee_currency = currency.New(o.Fee_currency_str)
 
 	o.Provider_amount = util.TR(o.Provider_currency.Exponent, o.Provider_amount, o.Provider_amount/100).(float64)
-	o.Msc_amount = util.TR(o.Msc_currency.Exponent, o.Msc_amount, o.Msc_amount/100).(float64)
 	o.Channel_amount = util.TR(o.Channel_currency.Exponent, o.Channel_amount, o.Channel_amount/100).(float64)
-	o.Actual_amount = util.TR(o.Channel_currency.Exponent, o.Actual_amount, o.Actual_amount/100).(float64)
+	//o.Msc_amount = util.TR(o.Msc_currency.Exponent, o.Msc_amount, o.Msc_amount/100).(float64)
+	//o.Actual_amount = util.TR(o.Channel_currency.Exponent, o.Actual_amount, o.Actual_amount/100).(float64)
 	//o.Fee_amount = util.TR(o.Fee_currency.Exponent, o.Fee_amount, o.Fee_amount/100).(float64)
 
 	if o.Operation_type == "" {
@@ -174,7 +151,7 @@ func (o *Operation) SetBalanceAmount() {
 	//t := o.Tariff
 	o.Balance_currency = o.Channel_currency //временно!!!
 
-	rate := float64(1)
+	//rate := float64(1)
 	balance_amount := float64(0)
 
 	// // у KGX может быть RUB-RUB, но комсу надо брать из операции провайдера
@@ -212,7 +189,7 @@ func (o *Operation) SetBalanceAmount() {
 	balance_amount = o.Channel_amount
 	//}
 
-	o.Rate = util.TR(rate == 0, float64(1), rate).(float64)
+	//o.Rate = util.TR(rate == 0, float64(1), rate).(float64)
 	o.Balance_amount = balance_amount
 
 }
@@ -245,12 +222,11 @@ func (o *Operation) SetSRAmount() {
 
 func (o *Operation) SetCheckFee() {
 
-	if o.Fee_currency == o.Balance_currency {
-		o.CheckFee = util.BaseRound(o.Fee_amount - o.SR_balance_currency)
-	} else {
-		//o.CheckFee = util.BaseRound(o.Fee_amount - o.SR_channel_currency)
-		o.CheckFee = 111
-	}
+	// if o.Fee_currency == o.Balance_currency {
+	// 	o.CheckFee = util.BaseRound(o.Fee_amount - o.SR_balance_currency)
+	// } else {
+	// 	o.CheckFee = util.BaseRound(o.Fee_amount - o.SR_channel_currency)
+	// }
 
 }
 
@@ -284,8 +260,8 @@ func (o *Operation) SetVerification() {
 		// 	} else {
 		// 		o.Verification = VRF_VALID_REG // всё ок
 		// 	}
-	} else if o.CheckFee == 0 {
-		o.Verification = VRF_OK
+		//} else if o.CheckFee == 0 {
+		//	o.Verification = VRF_OK
 	} else if o.Channel_currency != CurrencyBP && Converation != "Колбек" {
 		o.Verification = VRF_CHECK_CURRENCY
 		// } else if o.CheckRates != 0 {
@@ -321,22 +297,16 @@ func (o *Operation) SetVerification() {
 }
 
 const (
-	VRF_OK                    = "ОК"
-	VRF_VALID_REG             = "Валидирован по реестру"
-	VRF_VALID_REG_FEE         = "Валидирован по реестру (см. CheckFee)"
-	VRF_NO_TARIFF             = "Не найден тариф"
-	VRF_NO_IN_REG             = "Нет в реестре"
-	VRF_CHECK_RATE            = "Требует уточнения курса"
-	VRF_DIFF_CHAN_AMOUNT      = "Real amount отличается от реестра"
-	VRF_CHECK_CURRENCY        = "Валюта учёта отлична от валюты в Биллинге"
-	VRF_CHECK_TARIFF          = "Несоответствие тарифа"
-	VRF_DRAGON_PAY            = "Исключение ДрагонПей"
-	VRF_CHECK_BILLING         = "Провень начисления биллинга"
-	VRF_NO_DATA_PEREVODIX_KGX = "В тарифах нет данных на странице KGX"
-	VRF_NO_MAPPING_KGX_LIST   = "Нет совпадения на листе KGX"
-	VRF_NO_FILLED_KGX_LIST    = "Не заполнен поставщик 1С на листе KGX"
-	VRF_PARTIAL_PAYMENTS      = "Частичные выплаты"
-	VRF_ENDPOINT_DRAGONPAY    = "Endpoint_id пусто обратитесь к сверке/в саппорт"
+	VRF_OK                 = "ОК"
+	VRF_NO_TARIFF          = "Не найден тариф"
+	VRF_NO_IN_REG          = "Нет в реестре"
+	VRF_CHECK_RATE         = "Требует уточнения курса"
+	VRF_CHECK_CURRENCY     = "Валюта учёта отлична от валюты в Биллинге"
+	VRF_CHECK_TARIFF       = "Несоответствие тарифа"
+	VRF_DRAGON_PAY         = "Исключение ДрагонПей"
+	VRF_CHECK_BILLING      = "Провень начисления биллинга"
+	VRF_PARTIAL_PAYMENTS   = "Частичные выплаты"
+	VRF_ENDPOINT_DRAGONPAY = "Endpoint_id пусто обратитесь к сверке/в саппорт"
 )
 
 func (op *Operation) Get_Transaction_completed_at() time.Time {
@@ -360,10 +330,10 @@ func (op *Operation) Get_Operation_group() string {
 }
 
 func (op *Operation) Get_Payment_method() string {
-	return ""
+	return op.Payment_method
 }
 
-func (op *Operation) Get_Payment_method_type() string {
+func (op *Operation) Get_Payment_type() string {
 	return op.Payment_type
 }
 
@@ -385,4 +355,13 @@ func (op *Operation) Get_Channel_currency() currency.Currency {
 
 func (op *Operation) Get_Channel_amount() float64 {
 	return op.Channel_amount
+}
+
+func (op *Operation) Get_Traffic_type() string {
+	//return op.Tariff.Traffic_type
+	return ""
+}
+
+func (op *Operation) Get_Account_bank_name() string {
+	return op.Account_bank_name
 }

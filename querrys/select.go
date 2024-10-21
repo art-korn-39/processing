@@ -30,6 +30,7 @@ func Stat_Select_reports() string {
 	IFNULL(operation__business_type, '') AS business_type,
 	IFNULL(operation__project_name, '') AS project_name,
 	IFNULL(billing__project_id, 0) AS project_id,
+	IFNULL(operation__payment_method_name, '') AS payment_method,
 	IFNULL(operation__payment_method_type, '') AS payment_type,
 	IFNULL(billing__payment_type_id, 0) AS payment_type_id,
 	IFNULL(billing__payment_method_id, 0) AS payment_method_id,

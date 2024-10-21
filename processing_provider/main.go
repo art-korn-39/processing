@@ -1,7 +1,6 @@
 package processing_provider
 
 import (
-	"app/config"
 	"app/logs"
 	"app/querrys"
 	"app/tariff_merchant"
@@ -23,10 +22,10 @@ func Init() {
 
 	var err error
 
-	err = config.Load()
-	if err != nil {
-		logs.Add(logs.FATAL, err)
-	}
+	// err = config.Load()
+	// if err != nil {
+	// 	logs.Add(logs.FATAL, err)
+	// }
 	logs.Add(logs.INFO, fmt.Sprintf("Загружен файл конфигурации (ver %s)", Version))
 
 	err = storage.Connect()

@@ -18,6 +18,10 @@ func TestProceesing1(t *testing.T) {
 	file_config := "test\\config1.conf"
 
 	config.New(app, file_config)
+	if err := config.Load(); err != nil {
+		logs.Add(logs.FATAL, err)
+		return
+	}
 
 	processing_merchant.Start()
 
@@ -52,6 +56,10 @@ func TestProceesing2(t *testing.T) {
 	file_config := "test\\config2.conf"
 
 	config.New(app, file_config)
+	if err := config.Load(); err != nil {
+		logs.Add(logs.FATAL, err)
+		return
+	}
 
 	processing_merchant.Start()
 
@@ -86,6 +94,10 @@ func TestProceesing3(t *testing.T) {
 	file_config := "test\\config3.conf"
 
 	config.New(app, file_config)
+	if err := config.Load(); err != nil {
+		logs.Add(logs.FATAL, err)
+		return
+	}
 
 	processing_merchant.Start()
 
@@ -101,6 +113,10 @@ func TestProceesing4(t *testing.T) {
 	file_config := "test\\config4.conf"
 
 	config.New(app, file_config)
+	if err := config.Load(); err != nil {
+		logs.Add(logs.FATAL, err)
+		return
+	}
 
 	processing_provider.Start()
 

@@ -167,3 +167,31 @@ func GetChannelOfDays(startDate, finishDate time.Time, duration time.Duration) c
 	return channel
 
 }
+
+func GetSliceOfDuration(startDate, finishDate time.Time, duration time.Duration) []Period {
+
+	s := []Period{}
+
+	startDay := startDate
+	for {
+		if startDay.After(finishDate) {
+			break
+		}
+
+		endDay := startDay.Add(duration).Add(-1 * time.Second)
+		if endDay.After(finishDate) {
+			endDay = finishDate
+		}
+
+		period := Period{
+			StartDay: startDay,
+			EndDay:   endDay,
+		}
+		s = append(s, period)
+
+		startDay = startDay.Add(duration)
+	}
+
+	return s
+
+}
