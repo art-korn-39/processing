@@ -24,10 +24,8 @@ func (sf *SumFileds) AddValues(o *Operation) {
 }
 
 type KeyFields_SummaryInfo struct {
-	document_date time.Time
-	// id_revise             string
-	provider string
-	// organization          string
+	document_date         time.Time
+	provider              string
 	provider_name         string
 	verification          string
 	operation_type        string
@@ -36,6 +34,7 @@ type KeyFields_SummaryInfo struct {
 	merchant_account_name string
 	merchant_name         string
 	region                string
+	account_bank_name     string
 	channel_currency      currency.Currency
 	balance_currency      currency.Currency
 	tariff                tariff_provider.Tariff
@@ -53,15 +52,14 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		merchant_name:         o.Merchant_name,
 		merchant_account_name: o.Merchant_account_name,
 		region:                o.Region,
+		account_bank_name:     o.Account_bank_name,
 		channel_currency:      o.Channel_currency,
 		balance_currency:      o.Balance_currency,
 	}
 
 	if o.Tariff != nil {
 		KF.tariff = *o.Tariff
-		// KF.id_revise = o.Tariff.ID_revise
 		KF.provider = o.Tariff.Provider
-		// KF.organization = o.Tariff.Organization
 	}
 
 	return
@@ -85,8 +83,6 @@ func GroupRegistryToSummaryInfo() (group_data map[KeyFields_SummaryInfo]SumFiled
 	}
 
 	for k, v := range group_data {
-		//v.checkRates = v.checkRates / float64(v.count_operations)
-		//v.SetBalanceRefund(k.tariff.Convertation, k.tariff.Percent)
 		group_data[k] = v
 	}
 

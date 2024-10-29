@@ -85,9 +85,10 @@ type Operation struct {
 	SR_balance_currency  float64
 	CheckFee, CheckRates float64
 	Verification         string
-	Verification_KGX     string
+	Verification_Tariff  string
 	IsDragonPay          bool
 	IsPerevodix          bool
+	IsMonetix            bool
 	Crypto_network       string
 	Provider1c           string
 
@@ -121,8 +122,8 @@ func (o *Operation) StartingFill() {
 	o.Document_date = util.TruncateToDay(o.Transaction_completed_at)
 
 	o.IsDragonPay = strings.Contains(strings.ToLower(o.Provider_name), "dragonpay")
-	//o.IsPerevodix = strings.Contains(o.Provider_name, "Perevodix") || o.Provider_name == "SbpQRViaIntervaleE46AltIT"
 	o.IsPerevodix = o.Merchant_id == 73162
+	o.IsMonetix = o.Merchant_id == 648
 
 	o.Provider_currency = currency.New(o.Provider_currency_str)
 	o.Msc_currency = currency.New(o.Msc_currency_str)
@@ -266,7 +267,7 @@ func (o *Operation) SetSRAmount() {
 	}
 
 	// для KGX используем BR
-	if t.Convertation == "KGX" && o.ProviderOperation != nil {
+	if t.Convertation == "KGX" && o.ProviderOperation != nil && (o.IsMonetix || o.IsPerevodix) {
 		if t.AmountInChannelCurrency {
 			SR_channel_currency = o.ProviderOperation.BR_amount
 			SR_balance_currency = SR_channel_currency / o.Rate
@@ -295,7 +296,7 @@ func (o *Operation) SetSRAmount() {
 
 func (o *Operation) SetProvider1c() {
 
-	if o.Tariff != nil && o.IsPerevodix && o.Tariff.Convertation == "KGX" && o.ProviderOperation != nil {
+	if o.Tariff != nil && o.Tariff.Convertation == "KGX" && o.ProviderOperation != nil {
 
 		o.Provider1c = o.ProviderOperation.Provider1c
 
@@ -314,10 +315,6 @@ func (o *Operation) SetCheckFee() {
 	} else {
 		o.CheckFee = util.BaseRound(o.Fee_amount - o.SR_channel_currency)
 	}
-
-	// if o.CheckFee != 0 {
-	// 	util.Unused()
-	// }
 
 }
 
@@ -369,17 +366,22 @@ func (o *Operation) SetVerification() {
 		o.Verification = VRF_CHECK_BILLING
 	}
 
-	if o.Tariff != nil && o.IsPerevodix && o.Tariff.Convertation == "KGX" {
-
-		if o.Provider1c == "" {
-			o.Verification_KGX = VRF_NO_FILLED_PROVIDER_1C
+	if o.Tariff != nil {
+		if o.Tariff.Id == 0 {
+			o.Verification_Tariff = VRF_EMPTY_TARIFF_ID
+		} else if o.Tariff.Id != o.Tariff_condition_id {
+			o.Verification_Tariff = VRF_CHECK_TARIFF_ID
 		} else {
-			o.Verification_KGX = VRF_OK
+			o.Verification_Tariff = VRF_OK
 		}
-
-	} else {
-		o.Verification_KGX = VRF_OK
 	}
+
+	// o.Verification_KGX = VRF_OK
+	// if o.Tariff != nil && o.IsPerevodix && o.Tariff.Convertation == "KGX" {
+	// 	if o.Provider1c == "" {
+	// 		o.Verification_KGX = VRF_NO_FILLED_PROVIDER_1C
+	// 	}
+	// }
 
 }
 
@@ -394,11 +396,13 @@ const (
 	VRF_CHECK_CURRENCY        = "Валюта учёта отлична от валюты в Биллинге"
 	VRF_CHECK_TARIFF          = "Несоответствие тарифа"
 	VRF_DRAGON_PAY            = "Исключение ДрагонПей"
-	VRF_CHECK_BILLING         = "Провень начисления биллинга"
+	VRF_CHECK_BILLING         = "Проверь начисления биллинга"
 	VRF_NO_DATA_PEREVODIX_KGX = "В тарифах нет данных на странице KGX"
-	VRF_NO_FILLED_PROVIDER_1C = "Не заполнен поставщик 1С в реестре провайдера"
 	VRF_PARTIAL_PAYMENTS      = "Частичные выплаты"
 	VRF_ENDPOINT_DRAGONPAY    = "Endpoint_id пусто обратитесь к сверке/в саппорт"
+	VRF_EMPTY_TARIFF_ID       = "Заполни tariff_condition_id"
+	VRF_CHECK_TARIFF_ID       = "Проверь  tariff_condition_id"
+	//VRF_NO_FILLED_PROVIDER_1C = "Не заполнен поставщик 1С в реестре провайдера"
 )
 
 func (o *Operation) SetRR() {

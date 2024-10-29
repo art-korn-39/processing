@@ -23,15 +23,15 @@ type Operation struct {
 	Transaction_completed_at time.Time
 	Operation_created_at     time.Time `db:"operation_created_at"`
 
-	Merchant_id         int `db:"merchant_id"`
-	Merchant_account_id int `db:"merchant_account_id"`
-	//Balance_id          int    `db:"balance_id"`
-	Company_id int `db:"company_id"`
-	//Contract_id         int    `db:"contract_id"`
+	Merchant_id         int    `db:"merchant_id"`
+	Merchant_account_id int    `db:"merchant_account_id"`
+	Company_id          int    `db:"company_id"`
 	Provider_id         int    `db:"provider_id"`
 	Tariff_condition_id int    `db:"tariff_id"`
 	Provider_payment_id string `db:"provider_payment_id"`
 	Endpoint_id         string `db:"endpoint_id"`
+	//Balance_id          int    `db:"balance_id"`
+	//Contract_id         int    `db:"contract_id"`
 
 	Provider_base_name    string
 	Provider_name         string `db:"provider_name"`

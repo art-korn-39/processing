@@ -41,13 +41,15 @@ func Write_XLSX_SummaryInfo(M map[KeyFields_SummaryInfo]SumFileds) {
 
 	add_page_detailed(f, M)
 	add_page_detailed_nu(f, M)
-	//add_page_svodno(f, M)
 	add_page_1_makeTariff(f, M)
 	add_page_2_checkBilling(f)
-	//add_page_3_checkRate(f, M)
 	add_page_4_noProviderReg(f)
-	//add_page_5_no_Perevodix_KGX_verification(f)
 	add_page_all_fails(f)
+	add_page_check_tariff_id(f, M)
+
+	//add_page_svodno(f, M)
+	//add_page_3_checkRate(f, M)
+	//add_page_5_no_Perevodix_KGX_verification(f)
 
 	err := f.Save(config.Get().SummaryInfo.Filename)
 	if err != nil {
@@ -70,7 +72,7 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		"ДК тариф формула", "Компенсация BC", "Компенсация RC",
 		"real_amount / channel_amount", "real_amount, fee", "Сумма в валюте баланса",
 		"SR Balance Currency", "ChecFee", "Кол-во операций", "Сумма холда", "СуммаХолдаМ",
-		"К возврату на баланс, оборот", "К возврату на баланс, комиссия", "Surcharge amount"}
+		"К возврату на баланс, оборот", "К возврату на баланс, комиссия", "Surcharge amount", "BOF fee_amount"}
 
 	style := xlsx.NewStyle()
 	style.Fill.FgColor = "5B9BD5"
@@ -209,6 +211,10 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 		cell = row.AddCell() //35 surcharge
 		cell.SetFloat(v.Surcharge_amount)
+		cell.SetFormat("0.00")
+
+		cell = row.AddCell() //36
+		cell.SetFloat(v.fee_amount)
 		cell.SetFormat("0.00")
 	}
 
@@ -808,63 +814,6 @@ func add_page_4_noProviderReg(f *xlsx.File) {
 
 }
 
-func add_page_5_no_Perevodix_KGX_verification(f *xlsx.File) {
-
-	sheet, _ := f.AddSheet("4. Проверка KGX_Perevodix")
-
-	headers := []string{"Баланс", "operation_type", "Валюта баланса",
-		"payment_method_type", "Поставщик 1С", "Проверка"}
-
-	style := xlsx.NewStyle()
-	style.Fill.FgColor = "5B9BD5"
-	style.Fill.PatternType = "solid"
-	style.ApplyFill = true
-	style.Alignment.WrapText = true
-	style.Alignment.Horizontal = "center"
-	style.Alignment.Vertical = "center"
-	style.ApplyAlignment = true
-	style.Font.Bold = true
-	style.Font.Color = "FFFFFF"
-
-	row := sheet.AddRow()
-
-	for _, v := range headers {
-		cell := row.AddCell()
-		cell.SetString(v)
-		cell.SetStyle(style)
-	}
-
-	sheet.SetColWidth(0, 5, 15) //
-
-	already_write := make([]string, 0, 100)
-
-	for _, o := range storage.Registry {
-
-		if o.Verification_KGX == VRF_OK {
-			continue
-		}
-
-		hash := fmt.Sprint(o.Provider_name, o.Operation_type, o.Balance_currency.Name, o.Payment_type)
-
-		if slices.Contains(already_write, hash) {
-			continue
-		} else {
-			already_write = append(already_write, hash)
-		}
-
-		row := sheet.AddRow()
-
-		row.AddCell().SetString(o.Provider_name)
-		row.AddCell().SetString(o.Operation_type)
-		row.AddCell().SetString(o.Balance_currency.Name)
-		row.AddCell().SetString(o.Payment_type)
-		row.AddCell().SetString(o.Provider1c)
-		row.AddCell().SetString(o.Verification_KGX)
-
-	}
-
-}
-
 func add_page_all_fails(f *xlsx.File) {
 
 	sheet, _ := f.AddSheet("Все ошибки")
@@ -1216,3 +1165,124 @@ func arch_add_page_3_checkRate(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFile
 	}
 
 }
+
+func add_page_check_tariff_id(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
+
+	sheet, _ := f.AddSheet("Проверка tariff_condition_id")
+
+	headers := []string{
+		"merchant_name", "merchant_account_name",
+		"merchant_account_id", "balance_id", "real_currency / channel_currency",
+		"operation_type", "Проверка", "tariff_condition_id",
+	}
+
+	style := xlsx.NewStyle()
+	style.Fill.FgColor = "5B9BD5"
+	style.Fill.PatternType = "solid"
+	style.ApplyFill = true
+	style.Alignment.WrapText = true
+	style.Alignment.Horizontal = "center"
+	style.Alignment.Vertical = "center"
+	style.ApplyAlignment = true
+	style.Font.Bold = true
+	style.Font.Color = "FFFFFF"
+
+	row := sheet.AddRow()
+
+	for _, v := range headers {
+		cell := row.AddCell()
+		cell.SetString(v)
+		cell.SetStyle(style)
+	}
+
+	sheet.SetColWidth(0, 0, 15) // merchant_name
+	sheet.SetColWidth(1, 1, 35) // merchant_account_name
+	sheet.SetColWidth(2, 3, 11) // idbalance
+	sheet.SetColWidth(4, 4, 14) // real_currency / channel_currency
+	sheet.SetColWidth(5, 5, 14) // operation_type
+	sheet.SetColWidth(6, 6, 20) // проверка
+	sheet.SetColWidth(7, 7, 18) // tariff_condition_id
+
+	already_write := make([]string, 0, 50)
+
+	for k, _ := range M {
+
+		hash := fmt.Sprint(k.merchant_account_id, k.tariff_condition_id, k.operation_type)
+
+		if slices.Contains(already_write, hash) {
+			continue
+		} else {
+			already_write = append(already_write, hash)
+		}
+
+		row := sheet.AddRow()
+
+		row.AddCell().SetString(k.merchant_name)         //0
+		row.AddCell().SetString(k.merchant_account_name) //1
+		row.AddCell().SetInt(k.merchant_account_id)      //2
+		row.AddCell().SetInt(k.balance_id)               //3
+		row.AddCell().SetString(k.channel_currency.Name) //4
+		row.AddCell().SetString(k.operation_type)        //5
+		row.AddCell().SetString(k.verification_tariff)   //6
+		row.AddCell().SetInt(k.tariff_condition_id)      //7
+
+	}
+
+}
+
+// func add_page_5_no_Perevodix_KGX_verification(f *xlsx.File) {
+
+// 	sheet, _ := f.AddSheet("4. Проверка KGX_Perevodix")
+
+// 	headers := []string{"Баланс", "operation_type", "Валюта баланса",
+// 		"payment_method_type", "Поставщик 1С", "Проверка"}
+
+// 	style := xlsx.NewStyle()
+// 	style.Fill.FgColor = "5B9BD5"
+// 	style.Fill.PatternType = "solid"
+// 	style.ApplyFill = true
+// 	style.Alignment.WrapText = true
+// 	style.Alignment.Horizontal = "center"
+// 	style.Alignment.Vertical = "center"
+// 	style.ApplyAlignment = true
+// 	style.Font.Bold = true
+// 	style.Font.Color = "FFFFFF"
+
+// 	row := sheet.AddRow()
+
+// 	for _, v := range headers {
+// 		cell := row.AddCell()
+// 		cell.SetString(v)
+// 		cell.SetStyle(style)
+// 	}
+
+// 	sheet.SetColWidth(0, 5, 15) //
+
+// 	already_write := make([]string, 0, 100)
+
+// 	for _, o := range storage.Registry {
+
+// 		if o.Verification_KGX == VRF_OK {
+// 			continue
+// 		}
+
+// 		hash := fmt.Sprint(o.Provider_name, o.Operation_type, o.Balance_currency.Name, o.Payment_type)
+
+// 		if slices.Contains(already_write, hash) {
+// 			continue
+// 		} else {
+// 			already_write = append(already_write, hash)
+// 		}
+
+// 		row := sheet.AddRow()
+
+// 		row.AddCell().SetString(o.Provider_name)
+// 		row.AddCell().SetString(o.Operation_type)
+// 		row.AddCell().SetString(o.Balance_currency.Name)
+// 		row.AddCell().SetString(o.Payment_type)
+// 		row.AddCell().SetString(o.Provider1c)
+// 		row.AddCell().SetString(o.Verification_KGX)
+
+// 	}
+
+// }

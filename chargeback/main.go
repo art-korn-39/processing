@@ -73,6 +73,9 @@ func setChargebackInfoIntoOperations() {
 			chargeback, ok := Chargebacks[chargeback_id]
 			if ok {
 				op.Chargeback_case_id = chargeback.Case_ID
+				op.Chargeback_status = chargeback.Status
+				op.Chargeback_deadline = chargeback.Deadline
+				op.Chargeback_code_reason = chargeback.Code_reason
 			} else {
 				countBadId++
 			}

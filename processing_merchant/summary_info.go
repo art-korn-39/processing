@@ -78,6 +78,7 @@ type KeyFields_SummaryInfo struct {
 	balance_id_str string
 
 	verification          string
+	verification_tariff   string
 	operation_type        string
 	country               string
 	payment_type          string
@@ -107,6 +108,7 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		balance_id:            o.Balance_id,
 		balance_id_str:        fmt.Sprint(o.Balance_id),
 		verification:          o.Verification,
+		verification_tariff:   o.Verification_Tariff,
 		operation_type:        o.Operation_type,
 		country:               o.Country,
 		payment_type:          o.Payment_type,

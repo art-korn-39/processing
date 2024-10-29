@@ -41,8 +41,11 @@ type Operation struct {
 	Amount_rub         float64 `json:"amountanalyticcurrency" db:"amount_rub"`
 	Channel_amount_rub float64 `json:"channelamountanalyticcurrency" db:"channel_amount_rub"`
 
-	Chargeback_id      string `db:"chargeback_id"`
-	Chargeback_case_id string `db:"chargeback_case_id"`
+	Chargeback_id          string    `db:"chargeback_id"`
+	Chargeback_case_id     string    `db:"chargeback_case_id"`
+	Chargeback_status      string    `db:"chargeback_status"`
+	Chargeback_deadline    time.Time `db:"chargeback_deadline"`
+	Chargeback_code_reason string    `db:"chargeback_code_reason"`
 
 	// вложенные структуры json файла
 	// перекладываем их значения на верхний уровень

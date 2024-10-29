@@ -128,7 +128,7 @@ func add_page_detail(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 	sheet, _ := f.AddSheet("Детализация")
 
 	headers := []string{"Идентификатор сверки", "Дата", "Provider", "ЮЛ", "provider_name", "operation_type", "issuer_country",
-		"payment_type_id / payment_method_type", "merchant account", "merchant_name", "region",
+		"payment_type_id / payment_method_type", "merchant_account", "merchant_name", "region", "account_bank_name",
 		"real_currency / channel_currency", "Кол-во операций",
 		"Сумма в валюте баланса", "BR Balance Currency", "Компенсация BR",
 		"Акт. тариф формула", "Проверка", "Старт тарифа", "Range",
@@ -161,7 +161,7 @@ func add_page_detail(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 	sheet.SetColWidth(5, 6, 12)  // operation_type, country
 	sheet.SetColWidth(7, 7, 18)  // payment_method_type
 	sheet.SetColWidth(8, 8, 30)  // MA
-	sheet.SetColWidth(9, 19, 15) // merchant_name, real_currency / channel_currency...
+	sheet.SetColWidth(9, 20, 15) // merchant_name, real_currency / channel_currency...
 
 	var cell *xlsx.Cell
 
@@ -179,6 +179,7 @@ func add_page_detail(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		row.AddCell().SetString(k.merchant_account_name)
 		row.AddCell().SetString(k.merchant_name)
 		row.AddCell().SetString(k.region)
+		row.AddCell().SetString(k.account_bank_name)
 		row.AddCell().SetString(k.channel_currency.Name)
 		row.AddCell().SetInt(v.count_operations)
 

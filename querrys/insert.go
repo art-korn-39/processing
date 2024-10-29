@@ -4,21 +4,6 @@ import (
 	"fmt"
 )
 
-func Stat_Insert_provider_registry_prev() string {
-	return `INSERT INTO provider_registry (
-		operation_id, transaction_completed_at, provider_name, merchant_name, merchant_account_name,
-		project_url, payment_method_type, country, rate, operation_type, amount,
-		provider_payment_id, operation_status, account_number, channel_currency, provider_currency, br_amount,
-		transaction_completed_at_day, channel_amount
-	)
-	VALUES (
-		:operation_id, :transaction_completed_at, :provider_name, :merchant_name, :merchant_account_name,
-		:project_url, :payment_method_type, :country, :rate, :operation_type, :amount,
-		:provider_payment_id, :operation_status, :account_number, :channel_currency, :provider_currency, :br_amount,
-		:transaction_completed_at_day, :channel_amount
-	)`
-}
-
 func Stat_Insert_provider_registry() string {
 	return `
 	INSERT INTO provider_registry (
@@ -154,14 +139,14 @@ func Stat_Insert_chargeback_operations() string {
 		project_id, project_name, merchant_id, merchant_name, provider_id, provider_name, 
 		merchant_account_id, merchant_account_name, payment_type_id, payment_type_name, amount,
 		channel_amount, amount_usd, channel_amount_usd, amount_rub, channel_amount_rub,
-		chargeback_id, chargeback_case_id
+		chargeback_id, chargeback_case_id, chargeback_status, chargeback_deadline, chargeback_code_reason
 	)
 	VALUES (
 		:guid, :id, :created_on, :modified_on, :rrn, :receipt_date, :provider_payment_id, :account_number,
 		:project_id, :project_name, :merchant_id, :merchant_name, :provider_id, :provider_name, 
 		:merchant_account_id, :merchant_account_name, :payment_type_id, :payment_type_name, :amount,
 		:channel_amount, :amount_usd, :channel_amount_usd, :amount_rub, :channel_amount_rub,
-		:chargeback_id, :chargeback_case_id
+		:chargeback_id, :chargeback_case_id, :chargeback_status, :chargeback_deadline, :chargeback_code_reason
 	)
 
 	ON CONFLICT ON CONSTRAINT pk_chargeback_operations_guid DO UPDATE
@@ -170,7 +155,8 @@ func Stat_Insert_chargeback_operations() string {
 		channel_amount = EXCLUDED.channel_amount, amount_usd = EXCLUDED.amount_usd, 
 		channel_amount_usd = EXCLUDED.channel_amount_usd, amount_rub = EXCLUDED.amount_rub,
 		channel_amount_rub = EXCLUDED.channel_amount_rub, chargeback_id = EXCLUDED.chargeback_id,
-		chargeback_case_id = EXCLUDED.chargeback_case_id`
+		chargeback_case_id = EXCLUDED.chargeback_case_id, chargeback_status = EXCLUDED.chargeback_status,
+		chargeback_deadline = EXCLUDED.chargeback_deadline, chargeback_code_reason = EXCLUDED.chargeback_code_reason`
 }
 
 func Stat_Insert_summary_merchant() string {
