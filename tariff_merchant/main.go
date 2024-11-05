@@ -187,7 +187,7 @@ func FindTariffForOperation(op Operation) *Tariff {
 
 	for _, t := range Data {
 
-		isDragonPay := op.Get_IsDragonPay()
+		isDragonPay := op.Get_IsDragonPay() && !op.Get_ClassicTariffDragonPay()
 		if (!isDragonPay && t.Merchant_account_id == op.Get_Merchant_account_id()) ||
 			(isDragonPay && t.Schema == "Dragonpay") {
 

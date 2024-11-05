@@ -80,17 +80,18 @@ type Operation struct {
 
 	Actual_amount float64 `db:"actual_amount"`
 
-	Rate                 float64
-	SR_channel_currency  float64
-	SR_balance_currency  float64
-	CheckFee, CheckRates float64
-	Verification         string
-	Verification_Tariff  string
-	IsDragonPay          bool
-	IsPerevodix          bool
-	IsMonetix            bool
-	Crypto_network       string
-	Provider1c           string
+	Rate                   float64
+	SR_channel_currency    float64
+	SR_balance_currency    float64
+	CheckFee, CheckRates   float64
+	Verification           string
+	Verification_Tariff    string
+	IsDragonPay            bool
+	ClassicTariffDragonPay bool
+	IsPerevodix            bool
+	IsMonetix              bool
+	Crypto_network         string
+	Provider1c             string
 
 	RR_amount float64
 	RR_date   time.Time
@@ -101,11 +102,12 @@ type Operation struct {
 	hold_amount float64
 	hold_date   time.Time
 
-	ProviderOperation  *provider.Operation
-	Tariff_bof         *tariff_merchant.Tariff
-	Tariff             *tariff_merchant.Tariff
-	Hold               *holds.Hold
-	DragonpayOperation *dragonpay.Operation
+	ProviderOperation    *provider.Operation
+	Tariff_bof           *tariff_merchant.Tariff
+	Tariff               *tariff_merchant.Tariff
+	Tariff_dragonpay_mid *tariff_merchant.Tariff
+	Hold                 *holds.Hold
+	DragonpayOperation   *dragonpay.Operation
 
 	Tariff_rate_fix     float64 `db:"billing__tariff_rate_fix"`
 	Tariff_rate_percent float64 `db:"billing__tariff_rate_percent"`
@@ -515,6 +517,10 @@ func (op *Operation) Get_IsDragonPay() bool {
 	return op.IsDragonPay
 }
 
+func (op *Operation) Get_ClassicTariffDragonPay() bool {
+	return op.ClassicTariffDragonPay
+}
+
 func (op *Operation) Get_DragonPayProvider1c() string {
 	// if op.DragonpayOperation != nil {
 	// 	return op.DragonpayOperation.Provider
@@ -525,3 +531,27 @@ func (op *Operation) Get_DragonPayProvider1c() string {
 func (op *Operation) Get_Payment_type() string {
 	return op.Payment_type
 }
+
+// func (op *Operation) GetBool(name string) bool {
+// 	var result bool
+// 	return result
+// }
+
+// func (op *Operation) GetInt(name string) int {
+// 	var result int
+// 	return result
+// }
+
+// func (op *Operation) GetFloat(name string) float64 {
+// 	var result float64
+// 	return result
+// }
+
+// func (op *Operation) GetString(name string) string {
+// 	var result string
+// 	switch name {
+// 	case "Payment_type":
+// 		result = op.Payment_type
+// 	}
+// 	return result
+// }

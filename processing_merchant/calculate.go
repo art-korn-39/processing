@@ -42,6 +42,11 @@ func SelectTariffsInRegistry() {
 				if operation.Tariff == nil {
 					atomic.AddInt64(&countWithoutTariff, 1)
 				}
+
+				if operation.IsDragonPay {
+					operation.ClassicTariffDragonPay = true
+					operation.Tariff_dragonpay_mid = tariff_merchant.FindTariffForOperation(operation)
+				}
 			}
 		}()
 	}

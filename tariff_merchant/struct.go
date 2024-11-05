@@ -21,6 +21,7 @@ type Operation interface {
 	Get_Channel_currency() currency.Currency
 	Get_Channel_amount() float64
 	Get_IsDragonPay() bool
+	Get_ClassicTariffDragonPay() bool
 	Get_DragonPayProvider1c() string
 	Get_Payment_type() string
 }
@@ -74,6 +75,8 @@ type Tariff struct {
 	Formula    string
 	DK_formula string
 	Range      string
+
+	IsTest bool
 }
 
 func (t *Tariff) StartingFill() {
@@ -127,5 +130,7 @@ func (t *Tariff) StartingFill() {
 		t.DK_is_zero = true
 		t.DK_formula = "без компенсации"
 	}
+
+	t.IsTest = t.Schema == "Тест"
 
 }

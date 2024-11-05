@@ -112,7 +112,7 @@ func read_csv_file(filename string) (ops []Operation, err error) {
 		o := Operation{}
 		o.Id, _ = strconv.Atoi(arr_record[map_fileds["merchant txn id"]-1])
 		o.Create_date = util.GetDateFromString2(arr_record[map_fileds["create date"]-1])
-		o.Settle_date = util.GetDateFromString2(arr_record[map_fileds["settle date"]-1])
+		//o.Settle_date = util.GetDateFromString2(arr_record[map_fileds["settle date"]-1])
 		o.Refno = arr_record[map_fileds["refno"]-1]
 		o.Currency = currency.New(arr_record[map_fileds["ccy"]-1])
 		o.Currency_str = o.Currency.Name
@@ -120,10 +120,17 @@ func read_csv_file(filename string) (ops []Operation, err error) {
 		o.Endpoint_id = arr_record[map_fileds["proc"]-1]
 		o.Fee_amount, _ = strconv.ParseFloat(arr_record[map_fileds["fee"]-1], 64)
 
-		//o.Description = arr_record[map_fileds["description"]-1]
-		//o.Message = arr_record[map_fileds["procmsg"]-1]
-
 		o.Provider1c = Handbook[o.Endpoint_id]
+
+		idx := map_fileds["settle date"]
+		if idx > 0 {
+			o.Settle_date = util.GetDateFromString2(arr_record[idx-1])
+		} else {
+			idx := map_fileds["success date"]
+			if idx > 0 {
+				o.Settle_date = util.GetDateFromString2(arr_record[idx-1])
+			}
+		}
 
 		ops = append(ops, o)
 

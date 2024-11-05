@@ -65,7 +65,7 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 	sheet, _ := f.AddSheet("Детализация")
 
-	headers := []string{"Баланс", "balance_id", "Дата", "Проверка", "operation_type",
+	headers := []string{"Схема", "Баланс", "balance_id", "Дата", "Проверка", "operation_type",
 		"payment_method_type", "merchant_name", "project_name", "merchant_account_name", "Подразделение", "Рассчетный счет",
 		"Поставщик 1С", "real_currency / channel_currency", "Валюта баланса", "Акт. тариф формула", "Range",
 		"Старт тарифа", "tariff_condition_id", "contract_id", "PPрасхолд", "ДатаРасхолдМ", "CryptoNetWork",
@@ -93,23 +93,24 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		cell.SetStyle(style)
 	}
 
-	sheet.SetColWidth(0, 0, 30)   // баланс
-	sheet.SetColWidth(1, 1, 11)   // idbalance
-	sheet.SetColWidth(2, 2, 12)   // дата
-	sheet.SetColWidth(3, 3, 16)   // проверка
-	sheet.SetColWidth(4, 4, 15)   // operation_type
-	sheet.SetColWidth(5, 5, 18)   // payment_method_type
-	sheet.SetColWidth(8, 8, 35)   // merchant_account_name
-	sheet.SetColWidth(9, 9, 16)   // подразделение
-	sheet.SetColWidth(10, 10, 25) // рассчетный счет
-	sheet.SetColWidth(11, 11, 16) // поставщик 1С
-	sheet.SetColWidth(12, 12, 14) // real_currency / channel_currency
+	sheet.SetColWidth(0, 0, 16)   // проверка
+	sheet.SetColWidth(1, 1, 30)   // баланс
+	sheet.SetColWidth(2, 2, 11)   // idbalance
+	sheet.SetColWidth(3, 3, 12)   // дата
+	sheet.SetColWidth(4, 4, 16)   // проверка
+	sheet.SetColWidth(5, 5, 15)   // operation_type
+	sheet.SetColWidth(6, 6, 18)   // payment_method_type
+	sheet.SetColWidth(9, 9, 35)   // merchant_account_name
+	sheet.SetColWidth(10, 10, 16) // подразделение
+	sheet.SetColWidth(11, 11, 25) // рассчетный счет
+	sheet.SetColWidth(12, 12, 16) // поставщик 1С
+	sheet.SetColWidth(13, 13, 14) // real_currency / channel_currency
 
-	sheet.SetColWidth(16, 16, 12) // старт тарифа
-	sheet.SetColWidth(17, 17, 16) // tariff_condition_id
-	sheet.SetColWidth(18, 18, 12) // contract_id
-	sheet.SetColWidth(19, 20, 12) // PPрасхолд
-	sheet.SetColWidth(21, 35, 16)
+	sheet.SetColWidth(17, 17, 12) // старт тарифа
+	sheet.SetColWidth(18, 18, 16) // tariff_condition_id
+	sheet.SetColWidth(19, 19, 12) // contract_id
+	sheet.SetColWidth(20, 21, 12) // PPрасхолд
+	sheet.SetColWidth(22, 36, 16)
 
 	var cell *xlsx.Cell
 
@@ -120,6 +121,8 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		// }
 
 		row := sheet.AddRow()
+
+		row.AddCell().SetString(k.tariff.Schema)
 		row.AddCell().SetString(k.balance_name)          //k.tariff.Balance_name)   //0
 		row.AddCell().SetInt(k.balance_id)               //1
 		row.AddCell().SetDate(k.document_date)           //2
@@ -277,6 +280,10 @@ func add_page_detailed_nu(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		// if k.verification == VRF_CHECK_RATE {
 		// 	continue
 		// }
+
+		if k.tariff.IsTest {
+			continue
+		}
 
 		row := sheet.AddRow()
 		row.AddCell().SetString(k.balance_name)   //k.tariff.Balance_name)   //0
@@ -445,6 +452,10 @@ func add_page_svodno(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 			continue
 		}
 
+		if k.tariff.IsTest {
+			continue
+		}
+
 		row := sheet.AddRow()
 		row.AddCell().SetString(k.balance_name)   //k.tariff.Balance_name)   //0
 		row.AddCell().SetInt(k.balance_id)        //1
@@ -499,12 +510,11 @@ func add_page_1_makeTariff(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) 
 	sheet, _ := f.AddSheet("1. Создай_проверь Тариф")
 
 	headers := []string{
-		//"Акт. тариф формула",
 		"merchant_name", "merchant_account_name",
 		"merchant_account_id", "balance_id", "real_currency / channel_currency",
 		"tariff_condition_id", "operation_type", "Проверка",
+		"DragonPay MA tariff",
 		"Акт. тариф", "Акт. Фикс", "Акт. Мин", "Акт. Макс",
-		//"Range min", "Range max",
 		"tariff_rate_percent", "tariff_rate_fix", "tariff_rate_min", "tariff_rate_max", "CHECKRATES",
 	}
 
@@ -527,20 +537,23 @@ func add_page_1_makeTariff(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) 
 		cell.SetStyle(style)
 	}
 
-	//sheet.SetColWidth(0, 0, 20) // формула
 	sheet.SetColWidth(1, 1, 35) // merchant_account_name
 	sheet.SetColWidth(3, 3, 11) // idbalance
 	sheet.SetColWidth(4, 4, 14) // real_currency / channel_currency
 	sheet.SetColWidth(5, 5, 16) // tariff_condition_id
 	sheet.SetColWidth(6, 6, 12) // operation_type
 	sheet.SetColWidth(7, 7, 20) // проверка
-	sheet.SetColWidth(8, 16, 16)
+	sheet.SetColWidth(8, 17, 16)
 
 	var cell *xlsx.Cell
 
 	already_write := make([]string, 0, 50)
 
 	for k, v := range M {
+
+		if k.tariff.IsTest {
+			continue
+		}
 
 		if k.verification == VRF_NO_TARIFF || k.verification == VRF_CHECK_TARIFF {
 
@@ -565,8 +578,7 @@ func add_page_1_makeTariff(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) 
 			row.AddCell().SetString(k.operation_type)
 			row.AddCell().SetString(k.verification) //7
 
-			//row.AddCell().SetFloat(k.tariff.RangeMIN) //8
-			//row.AddCell().SetFloat(k.tariff.RangeMAX)
+			row.AddCell().SetString(k.tariff_dragonpay_mid.Formula)
 
 			cell = row.AddCell()
 			cell.SetFloat(k.tariff.Percent)
@@ -645,6 +657,10 @@ func add_page_2_checkBilling(f *xlsx.File) {
 
 	for _, op := range storage.Registry {
 
+		if op.Tariff != nil && op.Tariff.IsTest {
+			continue
+		}
+
 		if op.CheckFee == 0 || op.Verification == VRF_NO_IN_REG || op.Verification == VRF_VALID_REG_FEE {
 			continue
 		}
@@ -679,7 +695,12 @@ func add_page_2_checkBilling(f *xlsx.File) {
 			row.AddCell().SetDate(t.DateStart)
 		}
 
-		row.AddCell().SetString("")        //10 dragonpay
+		if op.Tariff_dragonpay_mid != nil {
+			row.AddCell().SetString(op.Tariff_dragonpay_mid.Formula) //10 dragonpay
+		} else {
+			row.AddCell().SetString("")
+		}
+
 		row.AddCell().SetString(t.Formula) //11
 
 		if t.Id > 0 { //12
@@ -759,6 +780,10 @@ func add_page_4_noProviderReg(f *xlsx.File) {
 	var cell *xlsx.Cell
 
 	for _, o := range storage.Registry {
+
+		if o.Tariff != nil && o.Tariff.IsTest {
+			continue
+		}
 
 		if o.Verification == VRF_NO_IN_REG || o.Verification == VRF_CHECK_RATE {
 
@@ -854,6 +879,10 @@ func add_page_all_fails(f *xlsx.File) {
 
 	for _, op := range storage.Registry {
 
+		if op.Tariff != nil && op.Tariff.IsTest {
+			continue
+		}
+
 		if op.Verification == VRF_OK || op.Verification == VRF_VALID_REG_FEE {
 			continue
 		}
@@ -889,8 +918,13 @@ func add_page_all_fails(f *xlsx.File) {
 			row.AddCell().SetDate(t.DateStart)
 		}
 
-		row.AddCell().SetString("")        //11 dragonpay
-		row.AddCell().SetString(t.Formula) //
+		if op.Tariff_dragonpay_mid != nil {
+			row.AddCell().SetString(op.Tariff_dragonpay_mid.Formula) //11 dragonpay
+		} else {
+			row.AddCell().SetString("")
+		}
+
+		row.AddCell().SetString(t.Formula) // 12
 
 		if t.Id > 0 { //13
 			row.AddCell().SetInt(t.Id)
@@ -1171,9 +1205,9 @@ func add_page_check_tariff_id(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFiled
 	sheet, _ := f.AddSheet("Проверка tariff_condition_id")
 
 	headers := []string{
-		"merchant_name", "merchant_account_name",
+		"Акт. тариф формула", "merchant_name", "merchant_account_name",
 		"merchant_account_id", "balance_id", "real_currency / channel_currency",
-		"operation_type", "Проверка", "tariff_condition_id",
+		"operation_type", "Старт тарифа", "Проверка", "tariff_condition_id",
 	}
 
 	style := xlsx.NewStyle()
@@ -1195,13 +1229,13 @@ func add_page_check_tariff_id(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFiled
 		cell.SetStyle(style)
 	}
 
-	sheet.SetColWidth(0, 0, 15) // merchant_name
-	sheet.SetColWidth(1, 1, 35) // merchant_account_name
-	sheet.SetColWidth(2, 3, 11) // idbalance
-	sheet.SetColWidth(4, 4, 14) // real_currency / channel_currency
-	sheet.SetColWidth(5, 5, 14) // operation_type
-	sheet.SetColWidth(6, 6, 20) // проверка
-	sheet.SetColWidth(7, 7, 18) // tariff_condition_id
+	sheet.SetColWidth(0, 1, 15) // merchant_name
+	sheet.SetColWidth(2, 2, 35) // merchant_account_name
+	sheet.SetColWidth(3, 4, 11) // idbalance
+	sheet.SetColWidth(5, 5, 14) // real_currency / channel_currency
+	sheet.SetColWidth(6, 6, 14) // operation_type
+	sheet.SetColWidth(7, 8, 20) // проверка
+	sheet.SetColWidth(9, 9, 18) // tariff_condition_id
 
 	already_write := make([]string, 0, 50)
 
@@ -1217,14 +1251,22 @@ func add_page_check_tariff_id(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFiled
 
 		row := sheet.AddRow()
 
+		row.AddCell().SetString(k.tariff.Formula)
 		row.AddCell().SetString(k.merchant_name)         //0
 		row.AddCell().SetString(k.merchant_account_name) //1
 		row.AddCell().SetInt(k.merchant_account_id)      //2
 		row.AddCell().SetInt(k.balance_id)               //3
 		row.AddCell().SetString(k.channel_currency.Name) //4
 		row.AddCell().SetString(k.operation_type)        //5
-		row.AddCell().SetString(k.verification_tariff)   //6
-		row.AddCell().SetInt(k.tariff_condition_id)      //7
+
+		if k.tariff.DateStart.IsZero() { //1
+			row.AddCell().SetString("")
+		} else {
+			row.AddCell().SetDate(k.tariff.DateStart)
+		}
+
+		row.AddCell().SetString(k.verification_tariff) //6
+		row.AddCell().SetInt(k.tariff_condition_id)    //7
 
 	}
 

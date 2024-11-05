@@ -135,7 +135,7 @@ func fields_crypto() []string {
 }
 
 func fields_dragonpay_csv() []string {
-	return []string{"merchant txn id", "create date", "settle date", "refno",
+	return []string{"merchant txn id", "create date", "refno",
 		"ccy", "amount", "proc", "fee"}
 }
 

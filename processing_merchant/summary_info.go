@@ -92,8 +92,9 @@ type KeyFields_SummaryInfo struct {
 	channel_currency currency.Currency
 	balance_currency currency.Currency
 
-	tariff     tariff_merchant.Tariff
-	tariff_bof tariff_merchant.Tariff
+	tariff               tariff_merchant.Tariff
+	tariff_bof           tariff_merchant.Tariff
+	tariff_dragonpay_mid tariff_merchant.Tariff
 
 	contract_id    int //???
 	RR_date        time.Time
@@ -140,6 +141,10 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 
 	if o.Tariff_bof != nil {
 		KF.tariff_bof = *o.Tariff_bof
+	}
+
+	if o.Tariff_dragonpay_mid != nil {
+		KF.tariff_dragonpay_mid = *o.Tariff_dragonpay_mid
 	}
 
 	return
