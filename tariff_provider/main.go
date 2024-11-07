@@ -157,7 +157,7 @@ func FindTariffForOperation(id int, op Operation) *Tariff {
 		return nil
 	}
 
-	operation_date := op.Get_Transaction_completed_at()
+	operation_date := op.GetTime("Transaction_completed_at")
 
 	current_date_range := Data[0].DateStart
 	selected_tariffs := []*Tariff{}
@@ -175,7 +175,7 @@ func FindTariffForOperation(id int, op Operation) *Tariff {
 		}
 
 		if t.DateStart.Before(operation_date) &&
-			t.Operation_group == op.Get_Operation_group() {
+			t.Operation_group == op.GetString("Operation_group") {
 
 			if !t.IsValidForOperation(op) {
 				continue
@@ -185,7 +185,7 @@ func FindTariffForOperation(id int, op Operation) *Tariff {
 			if t.Range_amount_min != 0 || t.Range_amount_max != 0 {
 
 				// определелям попадание в диапазон тарифа если он заполнен
-				channel_amount := op.Get_Channel_amount()
+				channel_amount := op.GetFloat("Channel_amount")
 				if channel_amount > t.Range_amount_min &&
 					channel_amount <= t.Range_amount_max {
 					selected_tariffs = append(selected_tariffs, &t)
@@ -203,39 +203,35 @@ func FindTariffForOperation(id int, op Operation) *Tariff {
 
 func (t *Tariff) IsValidForOperation(op Operation) bool {
 
-	// if t.Operation_type != "" && t.Operation_type != op.Get_Operation_type() {
-	// 	return false
-	// }
-
-	if t.Merchant_name != "" && t.Merchant_name != op.Get_Merchant_name() {
+	if t.Merchant_name != "" && t.Merchant_name != op.GetString("Merchant_name") {
 		return false
 	}
 
-	if t.Merchant_account_name != "" && t.Merchant_account_name != op.Get_Merchant_account_name() {
+	if t.Merchant_account_name != "" && t.Merchant_account_name != op.GetString("Merchant_account_name") {
 		return false
 	}
 
-	if t.Merchant_legal_entity != 0 && t.Merchant_legal_entity != op.Get_Legal_entity() {
+	if t.Merchant_legal_entity != 0 && t.Merchant_legal_entity != op.GetInt("Legal_entity_id") {
 		return false
 	}
 
-	if t.Payment_method != "" && t.Payment_method != op.Get_Payment_method() {
+	if t.Payment_method != "" && t.Payment_method != op.GetString("Payment_method") {
 		return false
 	}
 
-	if t.Payment_method_type != "" && t.Payment_method_type != op.Get_Payment_type() {
+	if t.Payment_method_type != "" && t.Payment_method_type != op.GetString("Payment_type") {
 		return false
 	}
 
-	if t.Region != "" && t.Region != op.Get_Region() {
+	if t.Region != "" && t.Region != op.GetString("Region") {
 		return false
 	}
 
-	if t.Project != "" && t.Project != op.Get_Project() {
+	if t.Project != "" && t.Project != op.GetString("Project_name") {
 		return false
 	}
 
-	if t.Business_type != "" && t.Business_type != op.Get_Business_type() {
+	if t.Business_type != "" && t.Business_type != op.GetString("Business_type") {
 		return false
 	}
 
@@ -243,27 +239,14 @@ func (t *Tariff) IsValidForOperation(op Operation) bool {
 		return false
 	}
 
-	if t.Traffic_type != "" && t.Traffic_type != op.Get_Traffic_type() {
+	if t.Traffic_type != "" && t.Traffic_type != op.GetString("Traffic_type") {
 		return false
 	}
 
-	if t.Account_bank_name != "" && t.Account_bank_name != op.Get_Account_bank_name() {
+	if t.Account_bank_name != "" && t.Account_bank_name != op.GetString("Account_bank_name") {
 		return false
 	}
 
 	return true
 
 }
-
-// type my_op provider.Operation
-// func (o my_op) ttt() {
-// 	o.Id = 1
-// }
-
-// func m1() {
-
-// 	arr := []provider.Operation{} // получили реестр операций
-// 	var new_operation my_op
-// 	new_operation = my_op(arr[0])
-// 	new_operation.Id = 3
-// }

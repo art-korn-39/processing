@@ -12,18 +12,12 @@ import (
 const RANGE_MAX = float64(1000000000000)
 
 type Operation interface {
-	Get_Operation_created_at() time.Time
-	Get_Transaction_completed_at() time.Time
-	Get_IsPerevodix() bool
-	Get_Merchant_account_id() int
-	Get_Operation_type() string
-	Get_Crypto_network() string
 	Get_Channel_currency() currency.Currency
-	Get_Channel_amount() float64
-	Get_IsDragonPay() bool
-	Get_ClassicTariffDragonPay() bool
-	Get_DragonPayProvider1c() string
-	Get_Payment_type() string
+	GetBool(string) bool
+	GetTime(string) time.Time
+	GetInt(string) int
+	GetFloat(string) float64
+	GetString(string) string
 }
 
 type Tariff struct {

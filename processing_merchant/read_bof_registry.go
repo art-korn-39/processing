@@ -63,7 +63,7 @@ func NewQuerryArgs(from_cfg bool) (args querrys.Args) {
 		lenght := len(storage.Registry)
 		if lenght > 0 {
 			row := storage.Registry[0]
-			args.Merhcant = append(args.Merhcant, row.Merchant_name)
+			args.Merhcant = append(args.Merhcant, strings.ToLower(row.Merchant_name))
 			args.DateFrom = storage.Registry[0].Transaction_completed_at.Add(-3 * 24 * time.Hour)
 			args.DateTo = storage.Registry[lenght-1].Transaction_completed_at.Add(1 * 24 * time.Hour)
 		}

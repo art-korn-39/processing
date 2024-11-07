@@ -153,6 +153,7 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		Operation_type:        record[map_fileds["operation_type"]-1],
 		Country:               record[map_fileds["issuer_country"]-1],
 		Project_name:          record[map_fileds["project_name"]-1],
+		Project_url:           record[map_fileds["project_url"]-1],
 		Provider_name:         record[map_fileds["provider_name"]-1],
 		Merchant_name:         record[map_fileds["merchant_name"]-1],
 		Merchant_account_name: record[map_fileds["merchant_account_name"]-1],

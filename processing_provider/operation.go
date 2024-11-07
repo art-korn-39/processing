@@ -3,6 +3,7 @@ package processing_provider
 import (
 	"app/currency"
 	"app/holds"
+	"app/logs"
 	"app/provider"
 	"app/tariff_provider"
 	"app/util"
@@ -31,7 +32,7 @@ type Operation struct {
 	Provider_payment_id string `db:"provider_payment_id"`
 	Endpoint_id         string `db:"endpoint_id"`
 	//Balance_id          int    `db:"balance_id"`
-	//Contract_id         int    `db:"contract_id"`
+	Contract_id int `db:"contract_id"`
 
 	Provider_base_name    string
 	Provider_name         string `db:"provider_name"`
@@ -44,6 +45,7 @@ type Operation struct {
 
 	Project_name      string `db:"project_name"`
 	Project_id        int    `db:"project_id"`
+	Project_url       string
 	Payment_type      string `db:"payment_type"`
 	Payment_type_id   int    `db:"payment_type_id"`
 	Payment_method_id int    `db:"payment_method_id"`
@@ -207,7 +209,7 @@ func (o *Operation) SetSRAmount() {
 
 	if t.Min != 0 && commission < t.Min {
 		commission = t.Min
-	} else if t.Max != 0 && commission > t.Min {
+	} else if t.Max != 0 && commission > t.Max {
 		commission = t.Max
 	}
 
@@ -232,8 +234,8 @@ func (o *Operation) SetCheckFee() {
 
 func (o *Operation) SetVerification() {
 
-	var Converation string
-	var CurrencyBP currency.Currency
+	// var Converation string
+	// var CurrencyBP currency.Currency
 
 	// if o.Tariff != nil {
 	// 	//Converation = o.Tariff.Convertation
@@ -246,37 +248,37 @@ func (o *Operation) SetVerification() {
 	// }
 
 	// если реестр и валюты одинаковые, то вылетает "требует уточ. курса"
-	if o.Tariff == nil {
-		o.Verification = VRF_NO_TARIFF
-		// } else if Converation == "Реестр" || Converation == "KGX" {
-		// 	if o.Balance_amount == 0 {
-		// 		o.Verification = VRF_NO_IN_REG // нет курса и операции провайдера
-		// 	} else if o.ProviderOperation == nil {
-		// 		o.Verification = VRF_CHECK_RATE // курс есть, операции еще нет в реестре факт
-		// 	} else if o.Channel_amount != o.ProviderOperation.Channel_amount {
-		// 		o.Verification = VRF_DIFF_CHAN_AMOUNT // channel amount разный в БОФ и реестре пров.
-		// 	} else if o.CheckFee != 0 {
-		// 		o.Verification = VRF_VALID_REG_FEE // есть в реестре факт, но БОФ криво посчитал
-		// 	} else {
-		// 		o.Verification = VRF_VALID_REG // всё ок
-		// 	}
-		//} else if o.CheckFee == 0 {
-		//	o.Verification = VRF_OK
-	} else if o.Channel_currency != CurrencyBP && Converation != "Колбек" {
-		o.Verification = VRF_CHECK_CURRENCY
-		// } else if o.CheckRates != 0 {
-		// 	o.Verification = VRF_CHECK_TARIFF
-		//} else if Converation == "Частичные выплаты" && o.Channel_amount != o.Actual_amount {
-		//	o.Verification = VRF_PARTIAL_PAYMENTS
-	} else if o.IsDragonPay {
-		if o.Endpoint_id == "" {
-			o.Verification = VRF_ENDPOINT_DRAGONPAY
-		} else {
-			o.Verification = VRF_DRAGON_PAY
-		}
-	} else {
-		o.Verification = VRF_CHECK_BILLING
-	}
+	// if o.Tariff == nil {
+	// 	o.Verification = VRF_NO_TARIFF
+	// } else if Converation == "Реестр" || Converation == "KGX" {
+	// 	if o.Balance_amount == 0 {
+	// 		o.Verification = VRF_NO_IN_REG // нет курса и операции провайдера
+	// 	} else if o.ProviderOperation == nil {
+	// 		o.Verification = VRF_CHECK_RATE // курс есть, операции еще нет в реестре факт
+	// 	} else if o.Channel_amount != o.ProviderOperation.Channel_amount {
+	// 		o.Verification = VRF_DIFF_CHAN_AMOUNT // channel amount разный в БОФ и реестре пров.
+	// 	} else if o.CheckFee != 0 {
+	// 		o.Verification = VRF_VALID_REG_FEE // есть в реестре факт, но БОФ криво посчитал
+	// 	} else {
+	// 		o.Verification = VRF_VALID_REG // всё ок
+	// 	}
+	//} else if o.CheckFee == 0 {
+	//	o.Verification = VRF_OK
+	// } else if o.Channel_currency != CurrencyBP && Converation != "Колбек" {
+	// 	o.Verification = VRF_CHECK_CURRENCY
+	// 	// } else if o.CheckRates != 0 {
+	// 	// 	o.Verification = VRF_CHECK_TARIFF
+	// 	//} else if Converation == "Частичные выплаты" && o.Channel_amount != o.Actual_amount {
+	// 	//	o.Verification = VRF_PARTIAL_PAYMENTS
+	// } else if o.IsDragonPay {
+	// 	if o.Endpoint_id == "" {
+	// 		o.Verification = VRF_ENDPOINT_DRAGONPAY
+	// 	} else {
+	// 		o.Verification = VRF_DRAGON_PAY
+	// 	}
+	// } else {
+	// 	o.Verification = VRF_CHECK_BILLING
+	// }
 
 	// if o.Tariff != nil && o.IsPerevodix && o.Tariff.Convertation == "KGX" {
 
@@ -309,59 +311,77 @@ const (
 	VRF_ENDPOINT_DRAGONPAY = "Endpoint_id пусто обратитесь к сверке/в саппорт"
 )
 
-func (op *Operation) Get_Transaction_completed_at() time.Time {
-	return op.Transaction_completed_at
-}
-
-func (op *Operation) Get_Merchant_name() string {
-	return op.Merchant_name
-}
-
-func (op *Operation) Get_Merchant_account_name() string {
-	return op.Merchant_account_name
-}
-
-func (op *Operation) Get_Legal_entity() int {
-	return op.Legal_entity_id
-}
-
-func (op *Operation) Get_Operation_group() string {
-	return op.Operation_group
-}
-
-func (op *Operation) Get_Payment_method() string {
-	return op.Payment_method
-}
-
-func (op *Operation) Get_Payment_type() string {
-	return op.Payment_type
-}
-
-func (op *Operation) Get_Region() string {
-	return op.Region
-}
-
-func (op *Operation) Get_Project() string {
-	return op.Project_name
-}
-
-func (op *Operation) Get_Business_type() string {
-	return op.Business_type
-}
-
 func (op *Operation) Get_Channel_currency() currency.Currency {
 	return op.Channel_currency
 }
 
-func (op *Operation) Get_Channel_amount() float64 {
-	return op.Channel_amount
+func (op *Operation) GetBool(name string) bool {
+	var result bool
+	switch name {
+	default:
+		logs.Add(logs.ERROR, "неизвестное поле bool: ", name)
+	}
+	return result
+}
+func (op *Operation) GetTime(name string) time.Time {
+	var result time.Time
+	switch name {
+	case "Operation_created_at":
+		result = op.Operation_created_at
+	case "Transaction_completed_at":
+		result = op.Transaction_completed_at
+	default:
+		logs.Add(logs.ERROR, "неизвестное поле time: ", name)
+	}
+	return result
+}
+func (op *Operation) GetInt(name string) int {
+	var result int
+	switch name {
+	case "Legal_entity_id":
+		result = op.Legal_entity_id
+	default:
+		logs.Add(logs.ERROR, "неизвестное поле int: ", name)
+	}
+	return result
 }
 
-func (op *Operation) Get_Traffic_type() string {
-	//return op.Tariff.Traffic_type
-	return ""
+func (op *Operation) GetFloat(name string) float64 {
+	var result float64
+	switch name {
+	case "Channel_amount":
+		result = op.Channel_amount
+	default:
+		logs.Add(logs.ERROR, "неизвестное поле float: ", name)
+	}
+	return result
 }
 
-func (op *Operation) Get_Account_bank_name() string {
-	return op.Account_bank_name
+func (op *Operation) GetString(name string) string {
+	var result string
+	switch name {
+	case "Merchant_name":
+		result = op.Merchant_name
+	case "Merchant_account_name":
+		result = op.Merchant_account_name
+	case "Operation_group":
+		result = op.Operation_group
+	case "Payment_method":
+		result = op.Payment_method
+	case "Payment_type":
+		result = op.Payment_type
+	case "Region":
+		result = op.Region
+	case "Project_name":
+		result = op.Project_name
+	case "Business_type":
+		result = op.Business_type
+	case "Traffic_type":
+		result = ""
+	case "Account_bank_name":
+		result = op.Account_bank_name
+	default:
+		logs.Add(logs.ERROR, "неизвестное поле string: ", name)
+	}
+	return result
 }

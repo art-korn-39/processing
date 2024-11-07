@@ -101,6 +101,8 @@ type (
 		DateTo        time.Time `json:"date_to"`
 		Merchant_id   []int     `json:"merchant_id"`
 		Merchant_name []string  `json:"merchant_name"`
+		Provider_id   []int     `json:"provider_id"`
+		Provider_name []string  `json:"provider_name"`
 		Filename      string    `json:"filename"`
 	}
 

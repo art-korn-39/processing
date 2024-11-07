@@ -91,7 +91,7 @@ func fields_bof_registry_merchant() []string {
 func fields_bof_registry_provider() []string {
 	return []string{
 		"id / operation_id", "transaction_id", "transaction_completed_at",
-		"merchant_id", "merchant_account_id", "project_id", "project_name",
+		"merchant_id", "merchant_account_id", "project_id", "project_name", "project_url",
 		"provider_name", "merchant_name", "merchant_account_name",
 		"acquirer_id / provider_payment_id", "issuer_country",
 		"operation_type", "payment_type_id / payment_method_type",

@@ -4,6 +4,7 @@ import (
 	"app/currency"
 	"app/dragonpay"
 	"app/holds"
+	"app/logs"
 	"app/provider"
 	"app/tariff_merchant"
 	"app/util"
@@ -244,7 +245,7 @@ func (o *Operation) SetSRAmount() {
 
 	if t.Min != 0 && commission < t.Min {
 		commission = t.Min
-	} else if t.Max != 0 && commission > t.Min {
+	} else if t.Max != 0 && commission > t.Max {
 		commission = t.Max
 	}
 
@@ -481,77 +482,73 @@ func (o *Operation) SetDK() {
 
 }
 
-func (op *Operation) Get_Operation_created_at() time.Time {
-	return op.Operation_created_at
-}
-
-func (op *Operation) Get_Transaction_completed_at() time.Time {
-	return op.Transaction_completed_at
-}
-
-func (op *Operation) Get_IsPerevodix() bool {
-	return op.IsPerevodix
-}
-
-func (op *Operation) Get_Merchant_account_id() int {
-	return op.Merchant_account_id
-}
-
-func (op *Operation) Get_Operation_type() string {
-	return op.Operation_type
-}
-
-func (op *Operation) Get_Crypto_network() string {
-	return op.Crypto_network
-}
-
 func (op *Operation) Get_Channel_currency() currency.Currency {
 	return op.Channel_currency
 }
 
-func (op *Operation) Get_Channel_amount() float64 {
-	return op.Channel_amount
+func (op *Operation) GetBool(name string) bool {
+	var result bool
+	switch name {
+	case "IsPerevodix":
+		result = op.IsPerevodix
+	case "IsDragonPay":
+		result = op.IsDragonPay
+	case "ClassicTariffDragonPay":
+		result = op.ClassicTariffDragonPay
+	default:
+		logs.Add(logs.ERROR, "неизвестное поле bool: ", name)
+	}
+	return result
 }
 
-func (op *Operation) Get_IsDragonPay() bool {
-	return op.IsDragonPay
+func (op *Operation) GetTime(name string) time.Time {
+	var result time.Time
+	switch name {
+	case "Operation_created_at":
+		result = op.Operation_created_at
+	case "Transaction_completed_at":
+		result = op.Transaction_completed_at
+	default:
+		logs.Add(logs.ERROR, "неизвестное поле time: ", name)
+	}
+	return result
 }
 
-func (op *Operation) Get_ClassicTariffDragonPay() bool {
-	return op.ClassicTariffDragonPay
+func (op *Operation) GetInt(name string) int {
+	var result int
+	switch name {
+	case "Merchant_account_id":
+		result = op.Merchant_account_id
+	default:
+		logs.Add(logs.ERROR, "неизвестное поле int: ", name)
+	}
+	return result
 }
 
-func (op *Operation) Get_DragonPayProvider1c() string {
-	// if op.DragonpayOperation != nil {
-	// 	return op.DragonpayOperation.Provider
-	// }
-	return op.Provider1c
+func (op *Operation) GetFloat(name string) float64 {
+	var result float64
+	switch name {
+	case "Channel_amount":
+		result = op.Channel_amount
+	default:
+		logs.Add(logs.ERROR, "неизвестное поле float: ", name)
+	}
+	return result
 }
 
-func (op *Operation) Get_Payment_type() string {
-	return op.Payment_type
+func (op *Operation) GetString(name string) string {
+	var result string
+	switch name {
+	case "Operation_type":
+		result = op.Operation_type
+	case "Payment_type":
+		result = op.Payment_type
+	case "Crypto_network":
+		result = op.Crypto_network
+	case "Provider1c":
+		result = op.Provider1c
+	default:
+		logs.Add(logs.ERROR, "неизвестное поле string: ", name)
+	}
+	return result
 }
-
-// func (op *Operation) GetBool(name string) bool {
-// 	var result bool
-// 	return result
-// }
-
-// func (op *Operation) GetInt(name string) int {
-// 	var result int
-// 	return result
-// }
-
-// func (op *Operation) GetFloat(name string) float64 {
-// 	var result float64
-// 	return result
-// }
-
-// func (op *Operation) GetString(name string) string {
-// 	var result string
-// 	switch name {
-// 	case "Payment_type":
-// 		result = op.Payment_type
-// 	}
-// 	return result
-// }

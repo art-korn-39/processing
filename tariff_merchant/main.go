@@ -179,27 +179,27 @@ func SortTariffs() {
 func FindTariffForOperation(op Operation) *Tariff {
 
 	var operation_date time.Time
-	if op.Get_IsPerevodix() {
-		operation_date = op.Get_Operation_created_at()
+	if op.GetBool("IsPerevodix") {
+		operation_date = op.GetTime("Operation_created_at")
 	} else {
-		operation_date = op.Get_Transaction_completed_at()
+		operation_date = op.GetTime("Transaction_completed_at")
 	}
 
 	for _, t := range Data {
 
-		isDragonPay := op.Get_IsDragonPay() && !op.Get_ClassicTariffDragonPay()
-		if (!isDragonPay && t.Merchant_account_id == op.Get_Merchant_account_id()) ||
+		isDragonPay := op.GetBool("IsDragonPay") && !op.GetBool("ClassicTariffDragonPay")
+		if (!isDragonPay && t.Merchant_account_id == op.GetInt("Merchant_account_id")) ||
 			(isDragonPay && t.Schema == "Dragonpay") {
 
-			if isDragonPay && op.Get_DragonPayProvider1c() != t.Provider1C {
+			if isDragonPay && op.GetString("Provider1c") != t.Provider1C {
 				continue
 			}
 
 			if t.DateStart.Before(operation_date) &&
-				t.Operation_type == op.Get_Operation_type() {
+				t.Operation_type == op.GetString("Operation_type") {
 
 				// тип сети будет колонка в тарифе и проверять на неё
-				network := op.Get_Crypto_network()
+				network := op.GetString("Crypto_network")
 				if t.IsCrypto && !(network == t.Convertation || network == t.NetworkType) {
 					continue
 				}
@@ -211,7 +211,7 @@ func FindTariffForOperation(op Operation) *Tariff {
 					}
 				}
 
-				if t.Payment_type != "" && t.Payment_type != op.Get_Payment_type() {
+				if t.Payment_type != "" && t.Payment_type != op.GetString("Payment_type") {
 					continue
 				}
 
@@ -219,7 +219,7 @@ func FindTariffForOperation(op Operation) *Tariff {
 				if t.RangeMIN != 0 || t.RangeMAX != 0 {
 
 					// определелям попадание в диапазон тарифа если он заполнен
-					channel_amount := op.Get_Channel_amount()
+					channel_amount := op.GetFloat("Channel_amount")
 					if channel_amount > t.RangeMIN &&
 						channel_amount <= t.RangeMAX {
 						return &t

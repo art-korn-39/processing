@@ -12,20 +12,11 @@ import (
 const RANGE_MAX = float64(1000000000000)
 
 type Operation interface {
-	Get_Transaction_completed_at() time.Time
-	Get_Merchant_name() string
-	Get_Merchant_account_name() string
-	Get_Legal_entity() int
-	Get_Operation_group() string
-	Get_Payment_method() string
-	Get_Payment_type() string // это payment_method_type в файле
-	Get_Region() string
-	Get_Project() string
-	Get_Business_type() string
 	Get_Channel_currency() currency.Currency
-	Get_Channel_amount() float64
-	Get_Traffic_type() string
-	Get_Account_bank_name() string
+	GetTime(string) time.Time
+	GetInt(string) int
+	GetFloat(string) float64
+	GetString(string) string
 }
 
 type Tariff struct {
@@ -106,9 +97,6 @@ func (t *Tariff) StartingFill() {
 }
 
 func (t *Tariff) SetCountUsefulFields() {
-	// if t.Operation_type != "" {
-	// 	t.CountUsefulFields++
-	// }
 	if t.Merchant_name != "" {
 		t.CountUsefulFields++
 	}

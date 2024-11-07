@@ -20,15 +20,9 @@ var (
 
 func Init() {
 
-	var err error
-
-	// err = config.Load()
-	// if err != nil {
-	// 	logs.Add(logs.FATAL, err)
-	// }
 	logs.Add(logs.INFO, fmt.Sprintf("Загружен файл конфигурации (ver %s)", Version))
 
-	err = storage.Connect()
+	err := storage.Connect()
 	if err != nil {
 		logs.Add(logs.FATAL, err)
 	}
@@ -127,13 +121,23 @@ func HandleDataInOperations() {
 
 func SaveResult() {
 
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+
 	// Итоговые данные
 	// Делаем сначала, т.к. они id документа проставляют
 	// summary := GroupRegistryToSummaryProvider()
-	// Write_Summary(summary)
 
-	// Выгрузка в эксель
 	summaryInfo := GroupRegistryToSummaryInfo()
 	Write_SummaryInfo(summaryInfo)
+
+	// Детализированные записи
+	go func() {
+		defer wg.Done()
+		Write_Detailed()
+	}()
+
+	wg.Wait()
 
 }
