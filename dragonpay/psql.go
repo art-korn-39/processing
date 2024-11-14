@@ -27,7 +27,7 @@ func PSQL_read_registry(db *sqlx.DB) {
 	}
 
 	for _, row := range slice_rows {
-		Handbook[row.Endpoint_id] = row.Provider1c
+		handbook[row.Endpoint_id] = row.Provider1c
 	}
 
 	stat = `SELECT * FROM dragonpay`
@@ -42,9 +42,9 @@ func PSQL_read_registry(db *sqlx.DB) {
 
 		operation.Currency = currency.New(operation.Currency_str)
 
-		Registry[operation.Id] = operation
+		registry[operation.Id] = operation
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение операций dragonpay из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(Registry))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение операций dragonpay из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(registry))))
 
 }

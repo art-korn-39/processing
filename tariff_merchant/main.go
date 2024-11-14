@@ -18,7 +18,7 @@ import (
 	"github.com/tealeg/xlsx"
 )
 
-var Data []Tariff
+var data []Tariff
 
 func Read_Sources() {
 
@@ -36,7 +36,7 @@ func Read_XLSX_Tariffs() {
 		return
 	}
 
-	Data = make([]Tariff, 0, 1000)
+	data = make([]Tariff, 0, 1000)
 
 	start_time := time.Now()
 
@@ -156,7 +156,7 @@ func Read_XLSX_Tariffs() {
 
 			tariff.StartingFill()
 
-			Data = append(Data, tariff)
+			data = append(data, tariff)
 
 		}
 
@@ -168,9 +168,9 @@ func Read_XLSX_Tariffs() {
 
 func SortTariffs() {
 	sort.Slice(
-		Data,
+		data,
 		func(i int, j int) bool {
-			return Data[i].DateStart.After(Data[j].DateStart)
+			return data[i].DateStart.After(data[j].DateStart)
 		},
 	)
 }
@@ -185,7 +185,7 @@ func FindTariffForOperation(op Operation) *Tariff {
 		operation_date = op.GetTime("Transaction_completed_at")
 	}
 
-	for _, t := range Data {
+	for _, t := range data {
 
 		isDragonPay := op.GetBool("IsDragonPay") && !op.GetBool("ClassicTariffDragonPay")
 		if (!isDragonPay && t.Merchant_account_id == op.GetInt("Merchant_account_id")) ||
@@ -200,7 +200,7 @@ func FindTariffForOperation(op Operation) *Tariff {
 
 				// тип сети будет колонка в тарифе и проверять на неё
 				network := op.GetString("Crypto_network")
-				if t.IsCrypto && !(network == t.Convertation || network == t.NetworkType) {
+				if t.IsCrypto && !(network == t.Convertation || network == t.NetworkType || t.NetworkType == "") {
 					continue
 				}
 

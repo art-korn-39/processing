@@ -8,13 +8,13 @@ import (
 	"time"
 )
 
-type rates []Operation
+//type rate []Operation
 
-func (r rates) Sort() {
+func SortRates() {
 	sort.Slice(
-		r,
+		rates,
 		func(i int, j int) bool {
-			return r[i].Transaction_completed_at.After(r[j].Transaction_completed_at)
+			return rates[i].Transaction_completed_at.After(rates[j].Transaction_completed_at)
 		},
 	)
 }
@@ -51,12 +51,12 @@ func (sf *sum_fields) AddValues(r Operation) {
 	sf.rate = sf.rate + r.Rate
 }
 
-func (r rates) Group() (res rates) {
+func GroupRates() {
 
 	start_time := time.Now()
 
 	group_Data := map[key_fields]sum_fields{}
-	for _, r := range r {
+	for _, r := range rates {
 		kf := newKeyFields(r) // получили структуру с полями группировки
 		sf := group_Data[kf]  // получили текущие агрегатные данные по ним
 		sf.AddValues(r)       // увеличили агрегатные данные на значения тек. операции
@@ -64,7 +64,7 @@ func (r rates) Group() (res rates) {
 	}
 
 	// обратно собираем массив из операций провайдера
-	res = make([]Operation, 0, len(group_Data))
+	res := make([]Operation, 0, len(group_Data))
 	for k, v := range group_Data {
 		op := Operation{
 			Transaction_completed_at: k.transaction_completed_at,
@@ -79,8 +79,8 @@ func (r rates) Group() (res rates) {
 		res = append(res, op)
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Группировка курсов валют: %v [%d строк]", time.Since(start_time), len(res)))
+	rates = res
 
-	return
+	logs.Add(logs.INFO, fmt.Sprintf("Группировка курсов валют: %v [%d строк]", time.Since(start_time), len(res)))
 
 }

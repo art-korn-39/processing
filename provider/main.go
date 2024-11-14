@@ -8,13 +8,13 @@ import (
 )
 
 var (
-	Registry registry
-	Rates    rates
+	registry Registry
+	rates    []Operation
 )
 
 func init() {
-	Registry = make(map[int]*LinkedOperation, 1000000)
-	Rates = make([]Operation, 0, 1000000)
+	registry = make(map[int]*LinkedOperation, 1000000)
+	rates = make([]Operation, 0, 1000000)
 }
 
 func Read_Registry(db *sqlx.DB, registry_done chan querrys.Args) {

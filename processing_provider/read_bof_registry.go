@@ -151,7 +151,7 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		Provider_payment_id:   record[map_fileds["acquirer_id / provider_payment_id"]-1],
 		Payment_type:          record[map_fileds["payment_type_id / payment_method_type"]-1],
 		Operation_type:        record[map_fileds["operation_type"]-1],
-		Country:               record[map_fileds["issuer_country"]-1],
+		Country_code2:         record[map_fileds["issuer_country"]-1],
 		Project_name:          record[map_fileds["project_name"]-1],
 		Project_url:           record[map_fileds["project_url"]-1],
 		Provider_name:         record[map_fileds["provider_name"]-1],
@@ -166,6 +166,7 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		Channel_amount:        util.FR(strconv.ParseFloat(record[map_fileds["real_amount / channel_amount"]-1], 64)).(float64),
 		Provider_currency_str: record[map_fileds["provider_currency"]-1],
 		Provider_amount:       util.FR(strconv.ParseFloat(record[map_fileds["provider_amount"]-1], 64)).(float64),
+		Currency_str:          record[map_fileds["currency / currency"]-1],
 	}
 
 	idx := map_fileds["created_at / operation_created_at"]

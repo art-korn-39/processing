@@ -53,8 +53,9 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 	sheet, _ := f.AddSheet("Обороты")
 
-	headers := []string{"Идентификатор сверки", "Дата", "Provider", "ЮЛ", "provider_name", "operation_type", "issuer_country",
-		"payment_type_id / payment_method_type", "merchant account", "merchant_name", "region",
+	headers := []string{"Идентификатор сверки", "Дата", "Provider", "ЮЛ", "provider_name",
+		"operation_type", "region",
+		"payment_type_id / payment_method_type", "merchant account", "merchant_name",
 		"real_currency / channel_currency", "Кол-во операций",
 		"Сумма в валюте баланса", "BR Balance Currency", "Компенсация BR",
 	}
@@ -86,7 +87,7 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 	sheet.SetColWidth(5, 6, 12)  // operation_type, country
 	sheet.SetColWidth(7, 7, 18)  // payment_method_type
 	sheet.SetColWidth(8, 8, 30)  // MA
-	sheet.SetColWidth(9, 15, 15) // merchant_name, real_currency / channel_currency...
+	sheet.SetColWidth(9, 14, 15) // merchant_name, real_currency / channel_currency...
 
 	var cell *xlsx.Cell
 
@@ -99,11 +100,12 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		row.AddCell().SetString(k.tariff.Organization)
 		row.AddCell().SetString(k.provider_name)
 		row.AddCell().SetString(k.operation_type)
-		row.AddCell().SetString(k.country)
+		//row.AddCell().SetString(k.country)
+		row.AddCell().SetString(k.region)
 		row.AddCell().SetString(k.payment_type)
 		row.AddCell().SetString(k.merchant_account_name)
 		row.AddCell().SetString(k.merchant_name)
-		row.AddCell().SetString(k.region)
+		//row.AddCell().SetString(k.region)
 		row.AddCell().SetString(k.channel_currency.Name)
 		row.AddCell().SetInt(v.count_operations)
 

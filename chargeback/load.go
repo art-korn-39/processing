@@ -23,7 +23,7 @@ var (
 	_3feb23        = time.Date(2023, 2, 3, 0, 0, 0, 0, time.UTC)
 )
 
-func load_chargebacks(cfg config.Config, token string) error {
+func loadChargebacks(cfg config.Config, token string) error {
 
 	start_time := time.Now()
 
@@ -75,19 +75,19 @@ func load_chargebacks(cfg config.Config, token string) error {
 		return err
 	}
 
-	Chargebacks = map[string]*Chargeback{}
+	chargebacks = map[string]*Chargeback{}
 
 	for _, v := range data.Value {
 		v.fill()
-		Chargebacks[v.ID] = &v
+		chargebacks[v.ID] = &v
 	}
 
-	logs.Add(logs.MAIN, fmt.Sprintf("Получение chargebacks: %v [%s строк]", time.Since(start_time), util.FormatInt(len(Chargebacks))))
+	logs.Add(logs.MAIN, fmt.Sprintf("Получение chargebacks: %v [%s строк]", time.Since(start_time), util.FormatInt(len(chargebacks))))
 
 	return nil
 }
 
-func load_operations(cfg config.Config, token string) error {
+func loadOperations(cfg config.Config, token string) error {
 
 	start_time := time.Now()
 
@@ -105,8 +105,8 @@ func load_operations(cfg config.Config, token string) error {
 		slice_periods = append(slice_periods, util.GetSliceOfDuration(_3feb23, time.Now(), time.Hour*24*30)...)
 	}
 
-	Operations = map[string]*Operation{}
-	Dispute = map[string]string{}
+	operations = map[string]*Operation{}
+	dispute = map[string]string{}
 
 	for _, period := range slice_periods {
 		err := getOperationsForPeriod(cfg, token, period.StartDay, period.EndDay)
@@ -119,7 +119,7 @@ func load_operations(cfg config.Config, token string) error {
 		}
 	}
 
-	logs.Add(logs.MAIN, fmt.Sprintf("Получение операций: %v [%s строк]", time.Since(start_time), util.FormatInt(len(Operations))))
+	logs.Add(logs.MAIN, fmt.Sprintf("Получение операций: %v [%s строк]", time.Since(start_time), util.FormatInt(len(operations))))
 
 	return nil
 }
@@ -182,7 +182,7 @@ func getOperationsForPeriod(cfg config.Config, token string, date_start, date_en
 
 	for _, v := range data.Value {
 		v.fill()
-		Operations[v.GUID] = &v
+		operations[v.GUID] = &v
 	}
 
 	logs.Add(logs.INFO, fmt.Sprintf("Загружены операции: %s [%s -> %s]",
@@ -240,7 +240,7 @@ func getDisputeForPeriod(cfg config.Config, token string, date_start, date_end t
 	}
 
 	for _, v := range data.Value {
-		Dispute[v["OperationId"]] = v["ChargebackId"]
+		dispute[v["OperationId"]] = v["ChargebackId"]
 	}
 
 	logs.Add(logs.INFO, fmt.Sprintf("Загружены мэтчи: %s [%s -> %s]",

@@ -47,14 +47,18 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		provider_name:         o.Provider_name,
 		verification:          o.Verification,
 		operation_type:        o.Operation_type,
-		country:               o.Country,
+		country:               o.Country_code2,
 		payment_type:          o.Payment_type,
 		merchant_name:         o.Merchant_name,
 		merchant_account_name: o.Merchant_account_name,
-		region:                o.Region,
+		region:                o.Country.Region,
 		account_bank_name:     o.Account_bank_name,
 		channel_currency:      o.Channel_currency,
 		balance_currency:      o.Balance_currency,
+	}
+
+	if KF.country == "" {
+		KF.country = o.Country.Code2
 	}
 
 	if o.Tariff != nil {

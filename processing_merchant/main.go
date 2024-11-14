@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	Version = "1.3.11"
+	Version = "1.4.0"
 )
 
 var (
@@ -123,10 +123,10 @@ func PrepareData() {
 		defer wg.Done()
 
 		// Группировка курсов валют
-		provider.Rates = provider.Rates.Group()
+		provider.GroupRates()
 
 		// Сортировка курсов валют
-		provider.Rates.Sort()
+		provider.SortRates()
 	}()
 
 	wg.Wait()

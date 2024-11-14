@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-var Data []Hold
+var data []Hold
 
 type Hold struct {
 	Schema    string
@@ -20,9 +20,22 @@ type Hold struct {
 
 func Sort() {
 	sort.Slice(
-		Data,
+		data,
 		func(i int, j int) bool {
-			return Data[i].DateStart.After(Data[j].DateStart)
+			return data[i].DateStart.After(data[j].DateStart)
 		},
 	)
+}
+
+func FindHoldForOperation(balance_currency currency.Currency, Transaction_completed_at time.Time) (*Hold, bool) {
+
+	for _, h := range data {
+
+		if h.Currency == balance_currency && h.DateStart.Before(Transaction_completed_at) {
+			return &h, true
+		}
+
+	}
+
+	return nil, false
 }

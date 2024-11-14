@@ -46,7 +46,7 @@ func ReadSheet(sheet *xlsx.Sheet) {
 		return
 	}
 
-	Data = make([]Hold, 0, len(sheet.Rows))
+	data = make([]Hold, 0, len(sheet.Rows))
 
 	for _, row := range sheet.Rows {
 
@@ -72,10 +72,10 @@ func ReadSheet(sheet *xlsx.Sheet) {
 
 		hold.Days, _ = row.Cells[map_fileds["кол-во дней"]-1].Int()
 
-		Data = append(Data, hold)
+		data = append(data, hold)
 
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение условий холдов: %v [%d строк]", time.Since(start_time), len(Data)))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение условий холдов: %v [%d строк]", time.Since(start_time), len(data)))
 
 }

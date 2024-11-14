@@ -5,14 +5,14 @@ import (
 	"time"
 )
 
-type registry map[int]*LinkedOperation
+type Registry map[int]*LinkedOperation
 
 type LinkedOperation struct {
 	Operation *Operation
 	Next      *LinkedOperation
 }
 
-func (r registry) Set(o Operation) {
+func (r Registry) Set(o Operation) {
 
 	val, ok := r[o.Id]
 	if ok {
@@ -35,9 +35,9 @@ func (r registry) Set(o Operation) {
 
 }
 
-func (r registry) Get(id int, d time.Time, amount float64) (*Operation, bool) {
+func GetOperation(id int, d time.Time, amount float64) (*Operation, bool) {
 
-	val, ok := r[id]
+	val, ok := registry[id]
 	if ok {
 		for {
 			op := val.Operation

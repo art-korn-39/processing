@@ -119,6 +119,9 @@ func Read_CSV_Registry() {
 			for record := range channel_records {
 				op := ConvertRecordToOperation(record, map_fileds)
 				op.StartingFill()
+				if op.Skip {
+					continue
+				}
 				mu.Lock()
 				storage.Registry = append(storage.Registry, op)
 				mu.Unlock()

@@ -9,7 +9,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func ReadChargebacks(db *sqlx.DB) {
+func readChargebacks(db *sqlx.DB) {
 
 	if db == nil {
 		return
@@ -27,12 +27,12 @@ func ReadChargebacks(db *sqlx.DB) {
 		return
 	}
 
-	Chargebacks = map[string]*Chargeback{}
+	chargebacks = map[string]*Chargeback{}
 
 	for _, chargeback := range slice_chargebacks {
-		Chargebacks[chargeback.ID] = &chargeback
+		chargebacks[chargeback.ID] = &chargeback
 	}
 
-	logs.Add(logs.MAIN, fmt.Sprintf("Чтение chargebacks из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(Chargebacks))))
+	logs.Add(logs.MAIN, fmt.Sprintf("Чтение chargebacks из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(chargebacks))))
 
 }

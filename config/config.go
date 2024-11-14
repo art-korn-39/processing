@@ -230,25 +230,27 @@ func (c *Config) SetDBUsage() {
 
 	c.Clickhouse.Usage = c.Registry.Storage == Clickhouse
 
-	c.PSQL.Usage = c.Tariffs.Storage == PSQL ||
-		c.Decline.Storage == PSQL ||
-		c.Crypto.Storage == PSQL ||
-		c.Rates.Storage == PSQL ||
-		c.Dragonpay.Storage == PSQL ||
-		c.Summary.Storage == PSQL ||
-		c.SummaryInfo.Storage == PSQL ||
-		c.Detailed.Storage == PSQL
+	// c.PSQL.Usage = c.Tariffs.Storage == PSQL ||
+	// 	c.Decline.Storage == PSQL ||
+	// 	c.Crypto.Storage == PSQL ||
+	// 	c.Rates.Storage == PSQL ||
+	// 	c.Dragonpay.Storage == PSQL ||
+	// 	c.Summary.Storage == PSQL ||
+	// 	c.SummaryInfo.Storage == PSQL ||
+	// 	c.Detailed.Storage == PSQL
+
+	c.PSQL.Usage = true
 
 	c.AWS.Usage = c.Registry.Storage == AWS
 	if c.AWS.Usage {
 		c.Clickhouse.Usage = true
-		c.PSQL.Usage = true
+		//c.PSQL.Usage = true
 	}
 
 	c.CRM.Usage = c.Registry.Storage == CRM
 	if c.CRM.Usage {
 		c.Clickhouse.Usage = false
-		c.PSQL.Usage = true
+		//c.PSQL.Usage = true
 	}
 
 }

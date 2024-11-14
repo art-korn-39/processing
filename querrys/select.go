@@ -47,6 +47,7 @@ func Stat_Select_reports() string {
 	IFNULL(operation__provider_currency, '') AS provider_currency,	 
 	IFNULL(operation__channel_amount, 0) AS channel_amount,
 	IFNULL(operation__channel_currency, '') AS channel_currency,
+	IFNULL(operation__currency, '') AS currency,
 	IFNULL(operation__fee_amount, 0) AS fee_amount,
 	IFNULL(operation__fee_currency, '') AS fee_currency,
 	IFNULL(operation__surcharge_amount, 0) as surcharge_amount,

@@ -72,6 +72,9 @@ type Operation struct {
 	Fee_currency_str string  `db:"fee_currency"`
 	Fee_currency     currency.Currency
 
+	Currency_str string `db:"currency"`
+	Currency     currency.Currency
+
 	Balance_amount   float64           // сумма в валюте баланса
 	Balance_currency currency.Currency // валюта баланса
 
@@ -114,6 +117,8 @@ type Operation struct {
 	Tariff_rate_percent float64 `db:"billing__tariff_rate_percent"`
 	Tariff_rate_min     float64 `db:"billing__tariff_rate_min"`
 	Tariff_rate_max     float64 `db:"billing__tariff_rate_max"`
+
+	Skip bool
 }
 
 func (o *Operation) StartingFill() {
@@ -132,6 +137,7 @@ func (o *Operation) StartingFill() {
 	o.Msc_currency = currency.New(o.Msc_currency_str)
 	o.Channel_currency = currency.New(o.Channel_currency_str)
 	o.Fee_currency = currency.New(o.Fee_currency_str)
+	o.Currency = currency.New(o.Currency_str)
 	o.Surcharge_currency = currency.New(o.Surcharge_currency_str)
 
 	o.Provider_amount = util.TR(o.Provider_currency.Exponent, o.Provider_amount, o.Provider_amount/100).(float64)
@@ -177,6 +183,8 @@ func (o *Operation) StartingFill() {
 	}
 	o.Tariff_bof.StartingFill()
 
+	o.Skip = o.Provider_name == "Capitaller transfers"
+
 }
 
 func (o *Operation) SetBalanceAmount() {
@@ -199,7 +207,7 @@ func (o *Operation) SetBalanceAmount() {
 	} else if t.Convertation == "Реестр" || t.Convertation == "KGX" {
 
 		// Поиск в мапе операций провайдера по ID
-		ProviderOperation, ok := provider.Registry.Get(o.Operation_id, o.Document_date, o.Channel_amount)
+		ProviderOperation, ok := provider.GetOperation(o.Operation_id, o.Document_date, o.Channel_amount)
 		o.ProviderOperation = ProviderOperation
 		if ok {
 			balance_amount = ProviderOperation.Amount
@@ -212,7 +220,7 @@ func (o *Operation) SetBalanceAmount() {
 
 		} else {
 			// если не нашли операцию провайдера по ID, то подбираем курс и считаем через него
-			rate = FindRateForOperation(o)
+			rate = provider.FindRateForOperation(o)
 			if rate != 0 {
 				balance_amount = o.Channel_amount / rate
 			}
@@ -486,6 +494,10 @@ func (op *Operation) Get_Channel_currency() currency.Currency {
 	return op.Channel_currency
 }
 
+func (op *Operation) Get_Tariff_currencyBP() currency.Currency {
+	return op.Tariff.CurrencyBP
+}
+
 func (op *Operation) GetBool(name string) bool {
 	var result bool
 	switch name {
@@ -541,6 +553,10 @@ func (op *Operation) GetString(name string) string {
 	switch name {
 	case "Operation_type":
 		result = op.Operation_type
+	case "Country":
+		result = op.Country
+	case "Merchant_name":
+		result = op.Merchant_name
 	case "Payment_type":
 		result = op.Payment_type
 	case "Crypto_network":

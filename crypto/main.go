@@ -44,3 +44,7 @@ func Read_Registry(db *sqlx.DB) {
 	}
 
 }
+
+func GetNetwork(id int) string {
+	return Registry[id].Network
+}

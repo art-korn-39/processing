@@ -10,7 +10,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func insert_into_db(db *sqlx.DB) {
+func insertIntoDB(db *sqlx.DB) {
 
 	if db == nil {
 		return
@@ -25,7 +25,7 @@ func insert_into_db(db *sqlx.DB) {
 		return
 	}
 
-	for k, v := range Handbook {
+	for k, v := range handbook {
 		_, err := db.Exec(stat, k, v)
 		if err != nil {
 			logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД (dragonpay handbook): ", err))
@@ -39,13 +39,13 @@ func insert_into_db(db *sqlx.DB) {
 		return
 	}
 
-	for _, v := range Registry {
+	for _, v := range registry {
 		_, err := db.NamedExec(stat, v)
 		if err != nil {
 			logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД (dragonpay): ", err))
 		}
 	}
 
-	logs.Add(logs.MAIN, fmt.Sprintf("Загрузка dragonpay в Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(Registry))))
+	logs.Add(logs.MAIN, fmt.Sprintf("Загрузка dragonpay в Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(registry))))
 
 }

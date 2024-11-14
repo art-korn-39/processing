@@ -33,21 +33,21 @@ func PSQL_read_registry(db *sqlx.DB, registry_done <-chan querrys.Args) {
 
 	stat := querrys.Stat_Select_provider_registry()
 
-	err := db.Select(&Rates, stat, args...)
+	err := db.Select(&rates, stat, args...)
 	if err != nil {
 		logs.Add(logs.INFO, err)
 		return
 	}
 
-	for i := range Rates {
-		operation := &Rates[i]
+	for i := range rates {
+		operation := &rates[i]
 
 		operation.StartingFill(true)
 
-		Registry.Set(*operation)
+		registry.Set(*operation)
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(Rates))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(rates))))
 
 }
 
@@ -91,7 +91,7 @@ func PSQL_read_registry_async(db *sqlx.DB, registry_done <-chan querrys.Args) {
 				}
 
 				mu.Lock()
-				Rates = append(Rates, res...)
+				rates = append(rates, res...)
 				mu.Unlock()
 			}
 		}()
@@ -99,15 +99,15 @@ func PSQL_read_registry_async(db *sqlx.DB, registry_done <-chan querrys.Args) {
 
 	wg.Wait()
 
-	for i := range Rates {
-		operation := &Rates[i]
+	for i := range rates {
+		operation := &rates[i]
 
 		operation.StartingFill(false)
 
-		Registry.Set(*operation)
+		registry.Set(*operation)
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(Rates))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(rates))))
 
 }
 
@@ -161,7 +161,7 @@ func PSQL_read_registry_async_querry(db *sqlx.DB, registry_done <-chan querrys.A
 					r.StartingFill(false)
 
 					mu.Lock()
-					Registry.Set(r)
+					registry.Set(r)
 					mu.Unlock()
 
 					res = append(res, r)
@@ -169,7 +169,7 @@ func PSQL_read_registry_async_querry(db *sqlx.DB, registry_done <-chan querrys.A
 				}
 
 				mu.Lock()
-				Rates = append(Rates, res...)
+				rates = append(rates, res...)
 				mu.Unlock()
 			}
 		}()
@@ -177,6 +177,6 @@ func PSQL_read_registry_async_querry(db *sqlx.DB, registry_done <-chan querrys.A
 
 	wg.Wait()
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера из Postgres async Q: %v [%s строк]", time.Since(start_time), util.FormatInt(len(Rates))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера из Postgres async Q: %v [%s строк]", time.Since(start_time), util.FormatInt(len(rates))))
 
 }

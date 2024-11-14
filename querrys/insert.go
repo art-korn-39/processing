@@ -159,6 +159,32 @@ func Stat_Insert_chargeback_operations() string {
 		chargeback_deadline = EXCLUDED.chargeback_deadline, chargeback_code_reason = EXCLUDED.chargeback_code_reason`
 }
 
+func Stat_Insert_payment_method() string {
+	return `INSERT INTO payment_method (
+		id, name, parent_id, bof_id
+	)
+	VALUES (
+		:id, :name, :parent_id, :bof_id
+	)
+
+	ON CONFLICT ON CONSTRAINT pk_payment_method_id DO UPDATE
+
+	SET name = EXCLUDED.name, parent_id = EXCLUDED.parent_id, bof_id = EXCLUDED.bof_id`
+}
+
+func Stat_Insert_payment_type() string {
+	return `INSERT INTO payment_type (
+		id, name, method_id, bof_id
+	)
+	VALUES (
+		:id, :name, :method_id, :bof_id
+	)
+
+	ON CONFLICT ON CONSTRAINT pk_payment_type_id DO UPDATE
+
+	SET name = EXCLUDED.name, method_id = EXCLUDED.method_id, bof_id = EXCLUDED.bof_id`
+}
+
 func Stat_Insert_summary_merchant() string {
 	return `INSERT INTO summary_merchant (
 		document_id, document_date, operation_type, operation_group, 

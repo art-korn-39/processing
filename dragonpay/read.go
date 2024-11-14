@@ -19,7 +19,7 @@ import (
 
 const HANDBOOK_NAME = "handbook.xlsx"
 
-func read_files(folder string) {
+func readFiles(folder string) {
 
 	start_time := time.Now()
 
@@ -29,7 +29,7 @@ func read_files(folder string) {
 		return
 	}
 
-	err = read_xlsx_file(filenames)
+	err = readXLSXfile(filenames)
 	if err != nil {
 		logs.Add(logs.MAIN, err)
 		return
@@ -43,7 +43,7 @@ func read_files(folder string) {
 			continue
 		}
 
-		operations, err := read_csv_file(filename)
+		operations, err := readCSVfile(filename)
 		if err != nil {
 			logs.Add(logs.ERROR, filename, " : ", err)
 			continue
@@ -52,7 +52,7 @@ func read_files(folder string) {
 		atomic.AddInt64(&files_readed, 1)
 
 		for _, o := range operations {
-			Registry[o.Id] = o
+			registry[o.Id] = o
 		}
 
 	}
@@ -61,7 +61,7 @@ func read_files(folder string) {
 
 }
 
-func read_csv_file(filename string) (ops []Operation, err error) {
+func readCSVfile(filename string) (ops []Operation, err error) {
 
 	file, err := os.Open(filename)
 	if err != nil {
@@ -120,7 +120,7 @@ func read_csv_file(filename string) (ops []Operation, err error) {
 		o.Endpoint_id = arr_record[map_fileds["proc"]-1]
 		o.Fee_amount, _ = strconv.ParseFloat(arr_record[map_fileds["fee"]-1], 64)
 
-		o.Provider1c = Handbook[o.Endpoint_id]
+		o.Provider1c = handbook[o.Endpoint_id]
 
 		idx := map_fileds["settle date"]
 		if idx > 0 {
@@ -139,7 +139,7 @@ func read_csv_file(filename string) (ops []Operation, err error) {
 	return ops, nil
 }
 
-func read_xlsx_file(filenames []string) error {
+func readXLSXfile(filenames []string) error {
 
 	var xlsx_file string
 	for _, filename := range filenames {
@@ -163,7 +163,7 @@ func read_xlsx_file(filenames []string) error {
 		sheet_name := strings.ToLower(sheet.Name)
 		if sheet_name == "dragonpay" {
 
-			err = read_dragonpay_sheet(sheet)
+			err = readDragonpaySheet(sheet)
 			if err != nil {
 				return err
 			}
@@ -176,7 +176,7 @@ func read_xlsx_file(filenames []string) error {
 
 }
 
-func read_dragonpay_sheet(sheet *xlsx.Sheet) error {
+func readDragonpaySheet(sheet *xlsx.Sheet) error {
 
 	if len(sheet.Rows) < 2 || sheet.Rows[0].Cells[0].Value != "endpoint_id" {
 		return fmt.Errorf("некорректный формат файла %s", HANDBOOK_NAME)
@@ -201,7 +201,7 @@ func read_dragonpay_sheet(sheet *xlsx.Sheet) error {
 		endpoint_id := row.Cells[map_fileds["endpoint_id"]-1].String()
 		provider := row.Cells[map_fileds["поставщик dragonpay"]-1].String()
 
-		Handbook[endpoint_id] = provider
+		handbook[endpoint_id] = provider
 
 	}
 

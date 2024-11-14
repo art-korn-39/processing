@@ -17,7 +17,7 @@ import (
 	"github.com/tealeg/xlsx"
 )
 
-var Data []Tariff
+var data []Tariff
 
 func Read_Sources() {
 
@@ -35,7 +35,7 @@ func Read_XLSX_Tariffs() {
 		return
 	}
 
-	Data = make([]Tariff, 0, 1000)
+	data = make([]Tariff, 0, 1000)
 
 	start_time := time.Now()
 
@@ -120,7 +120,7 @@ func Read_XLSX_Tariffs() {
 
 			tariff.StartingFill()
 
-			Data = append(Data, tariff)
+			data = append(data, tariff)
 
 		}
 
@@ -132,16 +132,16 @@ func Read_XLSX_Tariffs() {
 
 func SortTariffs() {
 	sort.Slice(
-		Data,
+		data,
 		func(i int, j int) bool {
-			return Data[i].DateStart.After(Data[j].DateStart)
+			return data[i].DateStart.After(data[j].DateStart)
 		},
 	)
 }
 
 func FindTariffForOperation(id int, op Operation) *Tariff {
 
-	if len(Data) == 0 {
+	if len(data) == 0 {
 		return nil
 	}
 
@@ -159,10 +159,10 @@ func FindTariffForOperation(id int, op Operation) *Tariff {
 
 	operation_date := op.GetTime("Transaction_completed_at")
 
-	current_date_range := Data[0].DateStart
+	current_date_range := data[0].DateStart
 	selected_tariffs := []*Tariff{}
 
-	for _, t := range Data {
+	for _, t := range data {
 
 		// если это более ранняя дата, то смотрим текущий массив подходящих тарифов
 		if !t.DateStart.Equal(current_date_range) {

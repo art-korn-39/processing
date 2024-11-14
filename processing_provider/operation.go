@@ -1,6 +1,7 @@
 package processing_provider
 
 import (
+	"app/countries"
 	"app/currency"
 	"app/holds"
 	"app/logs"
@@ -40,8 +41,8 @@ type Operation struct {
 	Merchant_account_name string `db:"merchant_account_name"`
 	Account_bank_name     string `db:"account_bank_name"`
 	Business_type         string `db:"business_type"`
-	Country               string `db:"country"`
-	Region                string `db:"region"`
+	Country_code2         string `db:"country"`
+	Region                string //`db:"region"`
 
 	Project_name      string `db:"project_name"`
 	Project_id        int    `db:"project_id"`
@@ -64,26 +65,26 @@ type Operation struct {
 	Channel_currency_str string  `db:"channel_currency"`
 	Channel_currency     currency.Currency
 
+	Currency_str string `db:"currency"`
+	Currency     currency.Currency
+
 	Balance_amount   float64           // сумма в валюте баланса
 	Balance_currency currency.Currency // валюта баланса
 
 	BR_balance_currency float64
 
-	Verification string
-	//Verification_KGX string
+	Verification   string
 	IsDragonPay    bool
 	IsPerevodix    bool
 	Crypto_network string
 	Provider1c     string
-
-	// RR_amount float64
-	// RR_date   time.Time
 
 	CompensationBR float64
 
 	ProviderOperation *provider.Operation
 	Tariff            *tariff_provider.Tariff
 	Hold              *holds.Hold
+	Country           countries.Country
 
 	Legal_entity_id int `db:"legal_entity_id"`
 }
@@ -109,6 +110,8 @@ func (o *Operation) StartingFill() {
 	//o.Msc_amount = util.TR(o.Msc_currency.Exponent, o.Msc_amount, o.Msc_amount/100).(float64)
 	//o.Actual_amount = util.TR(o.Channel_currency.Exponent, o.Actual_amount, o.Actual_amount/100).(float64)
 	//o.Fee_amount = util.TR(o.Fee_currency.Exponent, o.Fee_amount, o.Fee_amount/100).(float64)
+
+	o.Currency = currency.New(o.Currency_str)
 
 	if o.Operation_type == "" {
 		if o.Operation_type_id == 3 {
@@ -146,6 +149,10 @@ func (o *Operation) StartingFill() {
 	// }
 	// o.Tariff_bof.StartingFill()
 
+}
+
+func (o *Operation) SetCountry() {
+	o.Country = countries.GetCountry(o.Country_code2, o.Currency.Name)
 }
 
 func (o *Operation) SetBalanceAmount() {
@@ -371,7 +378,7 @@ func (op *Operation) GetString(name string) string {
 	case "Payment_type":
 		result = op.Payment_type
 	case "Region":
-		result = op.Region
+		result = op.Country.Region
 	case "Project_name":
 		result = op.Project_name
 	case "Business_type":

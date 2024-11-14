@@ -17,9 +17,9 @@ const (
 )
 
 var (
-	Chargebacks map[string]*Chargeback
-	Operations  map[string]*Operation
-	Dispute     map[string]string // operation - chargeback
+	chargebacks map[string]*Chargeback
+	operations  map[string]*Operation
+	dispute     map[string]string // operation - chargeback
 )
 
 func Start() {
@@ -39,19 +39,19 @@ func Start() {
 	}
 
 	// получение чарджбэков (все или за месяц)
-	err = load_chargebacks(cfg, token)
+	err = loadChargebacks(cfg, token)
 	if err != nil {
 		logs.Add(logs.FATAL, err)
 	}
 
 	// поместили загруженные чарджбэки в БД
-	chargebacks_insert_into_db(storage.Postgres)
+	chargebacksInsertIntoDB(storage.Postgres)
 
 	// получили все чарджбэки из БД (для кейса, когда только за месяц грузили)
-	ReadChargebacks(storage.Postgres)
+	readChargebacks(storage.Postgres)
 
 	// получили операции и мэтчи (все или за месяц)
-	err = load_operations(cfg, token)
+	err = loadOperations(cfg, token)
 	if err != nil {
 		logs.Add(logs.FATAL, err)
 	}
@@ -59,18 +59,19 @@ func Start() {
 	// заполнение case_id из чарджей
 	setChargebackInfoIntoOperations()
 
-	operations_insert_into_db(storage.Postgres)
+	operationsInsertIntoDB(storage.Postgres)
 
 }
+
 func setChargebackInfoIntoOperations() {
 	start_time := time.Now()
 	var countNoneInDisput int
 	var countBadId int
-	for _, op := range Operations {
-		chargeback_id, ok := Dispute[op.GUID]
+	for _, op := range operations {
+		chargeback_id, ok := dispute[op.GUID]
 		if ok {
 			op.Chargeback_id = chargeback_id
-			chargeback, ok := Chargebacks[chargeback_id]
+			chargeback, ok := chargebacks[chargeback_id]
 			if ok {
 				op.Chargeback_case_id = chargeback.Case_ID
 				op.Chargeback_status = chargeback.Status

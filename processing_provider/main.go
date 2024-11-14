@@ -1,6 +1,7 @@
 package processing_provider
 
 import (
+	"app/countries"
 	"app/logs"
 	"app/querrys"
 	"app/tariff_merchant"
@@ -11,7 +12,7 @@ import (
 )
 
 const (
-	Version = "1.0.3"
+	Version = "1.0.4"
 )
 
 var (
@@ -65,7 +66,7 @@ func ReadSources() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(2)
+	wg.Add(3)
 
 	registry_done := make(chan querrys.Args, 1)
 	go func() {
@@ -76,6 +77,11 @@ func ReadSources() {
 	go func() {
 		defer wg.Done()
 		tariff_provider.Read_Sources()
+	}()
+
+	go func() {
+		defer wg.Done()
+		countries.Read_Data(storage.Postgres)
 	}()
 
 	wg.Wait()

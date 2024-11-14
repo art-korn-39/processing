@@ -9,13 +9,13 @@ import (
 )
 
 var (
-	Registry map[int]Operation
-	Handbook map[string]string
+	registry map[int]Operation
+	handbook map[string]string
 )
 
 func init() {
-	Registry = make(map[int]Operation, 1000)
-	Handbook = make(map[string]string, 200)
+	registry = make(map[int]Operation, 1000)
+	handbook = make(map[string]string, 200)
 }
 
 func Start() {
@@ -32,8 +32,8 @@ func Start() {
 	}
 	defer db.Close()
 
-	read_files(config.Get().Dragonpay.Filename)
-	insert_into_db(db)
+	readFiles(config.Get().Dragonpay.Filename)
+	insertIntoDB(db)
 
 }
 
@@ -45,11 +45,11 @@ func Read_Registry(db *sqlx.DB) {
 
 func GetOperation(id int, endpoint_id string) (*Operation, string) {
 	if id != 0 {
-		op, ok := Registry[id]
+		op, ok := registry[id]
 		if ok {
 			return &op, op.Provider1c
 		} else {
-			return nil, Handbook[endpoint_id]
+			return nil, handbook[endpoint_id]
 		}
 	}
 	return nil, ""

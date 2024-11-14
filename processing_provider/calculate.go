@@ -66,6 +66,8 @@ func CalculateCommission() {
 
 				operation.mu.Lock()
 
+				operation.SetCountry()
+
 				if operation.Tariff != nil {
 					operation.SetBalanceAmount()
 					operation.SetSRAmount()

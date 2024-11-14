@@ -6,7 +6,6 @@ import (
 	"app/dragonpay"
 	"app/holds"
 	"app/logs"
-	"app/provider"
 	"app/tariff_merchant"
 	"app/util"
 	"fmt"
@@ -36,7 +35,7 @@ func SelectTariffsInRegistry() {
 					operation.DragonpayOperation, operation.Provider1c = dragonpay.GetOperation(operation.Operation_id, operation.Endpoint_id)
 				}
 
-				operation.Crypto_network = crypto.Registry[operation.Operation_id].Network
+				operation.Crypto_network = crypto.GetNetwork(operation.Operation_id)
 
 				operation.Tariff = tariff_merchant.FindTariffForOperation(operation)
 				if operation.Tariff == nil {
@@ -114,35 +113,16 @@ func CalculateCommission() {
 
 }
 
-func FindRateForOperation(o *Operation) float64 {
-
-	for _, r := range provider.Rates {
-
-		if r.Transaction_completed_at.Before(o.Transaction_completed_at) &&
-			r.Operation_type == o.Operation_type &&
-			r.Country == o.Country &&
-			r.Payment_type == o.Payment_type &&
-			r.Merchant_name == o.Merchant_name &&
-			r.Channel_currency == o.Channel_currency &&
-			r.Provider_currency == o.Tariff.CurrencyBP {
-			return r.Rate
-		}
-	}
-
-	return 0
-
-}
-
 func HandleHolds() {
 
-	if len(holds.Data) == 0 {
-		return
-	}
+	// if len(holds.Data) == 0 {
+	// 	return
+	// }
 
 	for i := range storage.Registry {
 		operation := storage.Registry[i]
 
-		hold, ok := FindHoldForOperation(operation)
+		hold, ok := holds.FindHoldForOperation(operation.Balance_currency, operation.Transaction_completed_at)
 		if !ok {
 			continue
 		}
@@ -158,15 +138,15 @@ func HandleHolds() {
 
 }
 
-func FindHoldForOperation(op *Operation) (*holds.Hold, bool) {
+// func FindHoldForOperation(op *Operation) (*holds.Hold, bool) {
 
-	for _, h := range holds.Data {
+// 	for _, h := range holds.Data {
 
-		if h.Currency == op.Balance_currency && h.DateStart.Before(op.Transaction_completed_at) {
-			return &h, true
-		}
+// 		if h.Currency == op.Balance_currency && h.DateStart.Before(op.Transaction_completed_at) {
+// 			return &h, true
+// 		}
 
-	}
+// 	}
 
-	return nil, false
-}
+// 	return nil, false
+// }

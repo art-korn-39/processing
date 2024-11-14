@@ -97,8 +97,7 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.Account_bank_name = o.Account_bank_name
 	d.Project_name = o.Project_name
 	d.Payment_type = o.Payment_type
-	d.Country = o.Country
-	d.Region = o.Region
+	d.Region = o.Country.Region
 	d.Operation_type = o.Operation_type
 	d.Endpoint_id = o.Endpoint_id
 	d.Payment_method = o.Payment_method
@@ -120,6 +119,12 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.Crypto_network = o.Crypto_network
 
 	d.CompensationBR = o.CompensationBR
+
+	if o.Country_code2 != "" {
+		d.Country = o.Country_code2
+	} else {
+		d.Country = o.Country.Code2
+	}
 
 	if o.Tariff != nil {
 		t := o.Tariff
