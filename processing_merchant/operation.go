@@ -6,7 +6,7 @@ import (
 	"app/dragonpay"
 	"app/holds"
 	"app/logs"
-	"app/provider"
+	"app/provider_registry"
 	"app/tariff_merchant"
 	"app/util"
 	"strings"
@@ -107,7 +107,7 @@ type Operation struct {
 	hold_amount float64
 	hold_date   time.Time
 
-	ProviderOperation    *provider.Operation
+	ProviderOperation    *provider_registry.Operation
 	Tariff_bof           *tariff_merchant.Tariff
 	Tariff               *tariff_merchant.Tariff
 	Tariff_dragonpay_mid *tariff_merchant.Tariff
@@ -213,7 +213,7 @@ func (o *Operation) SetBalanceAmount() {
 	} else if t.Convertation == "Реестр" || t.Convertation == "KGX" {
 
 		// Поиск в мапе операций провайдера по ID
-		ProviderOperation, ok := provider.GetOperation(o.Operation_id, o.Document_date, o.Channel_amount)
+		ProviderOperation, ok := provider_registry.GetOperation(o.Operation_id, o.Document_date, o.Channel_amount)
 		o.ProviderOperation = ProviderOperation
 		if ok {
 			balance_amount = ProviderOperation.Amount
@@ -226,7 +226,7 @@ func (o *Operation) SetBalanceAmount() {
 
 		} else {
 			// если не нашли операцию провайдера по ID, то подбираем курс и считаем через него
-			rate = provider.FindRateForOperation(o)
+			rate = provider_registry.FindRateForOperation(o)
 			if rate != 0 {
 				balance_amount = o.Channel_amount / rate
 			}

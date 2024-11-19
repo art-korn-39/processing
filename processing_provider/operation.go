@@ -5,7 +5,6 @@ import (
 	"app/currency"
 	"app/holds"
 	"app/logs"
-	"app/provider"
 	"app/tariff_provider"
 	"app/util"
 	"strings"
@@ -81,10 +80,10 @@ type Operation struct {
 
 	CompensationBR float64
 
-	ProviderOperation *provider.Operation
-	Tariff            *tariff_provider.Tariff
-	Hold              *holds.Hold
-	Country           countries.Country
+	//ProviderOperation *provider_registry.Operation
+	Tariff  *tariff_provider.Tariff
+	Hold    *holds.Hold
+	Country countries.Country
 
 	Legal_entity_id int `db:"legal_entity_id"`
 }

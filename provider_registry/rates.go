@@ -1,4 +1,4 @@
-package provider
+package provider_registry
 
 import (
 	"app/currency"

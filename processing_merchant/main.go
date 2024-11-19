@@ -6,7 +6,7 @@ import (
 	"app/dragonpay"
 	"app/holds"
 	"app/logs"
-	"app/provider"
+	"app/provider_registry"
 	"app/querrys"
 	"app/tariff_merchant"
 	"fmt"
@@ -80,7 +80,7 @@ func ReadSources() {
 
 	go func() {
 		defer wg.Done()
-		provider.Read_Registry(storage.Postgres, registry_done)
+		provider_registry.Read_Registry(storage.Postgres, registry_done)
 	}()
 
 	go func() {
@@ -129,10 +129,10 @@ func PrepareData() {
 		defer wg.Done()
 
 		// Группировка курсов валют
-		provider.GroupRates()
+		provider_registry.GroupRates()
 
 		// Сортировка курсов валют
-		provider.SortRates()
+		provider_registry.SortRates()
 	}()
 
 	wg.Wait()

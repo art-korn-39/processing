@@ -4,7 +4,7 @@ import (
 	"app/config"
 	"app/file"
 	"app/logs"
-	"app/provider"
+	"app/provider_registry"
 	"fmt"
 	"path/filepath"
 	"sync"
@@ -12,11 +12,11 @@ import (
 	"time"
 )
 
-func ReadFiles(files []*file.FileInfo) (chan_operations chan provider.Operation, chan_readed_files chan *file.FileInfo) {
+func ReadFiles(files []*file.FileInfo) (chan_operations chan provider_registry.Operation, chan_readed_files chan *file.FileInfo) {
 
 	var wg sync.WaitGroup
 
-	chan_operations = make(chan provider.Operation, 1000000)
+	chan_operations = make(chan provider_registry.Operation, 1000000)
 	chan_readed_files = make(chan *file.FileInfo, 5000) // с запасом, чтобы deadlock не поймать из-за переполнения
 	chan_files := make(chan *file.FileInfo, 100)
 
@@ -38,7 +38,7 @@ func ReadFiles(files []*file.FileInfo) (chan_operations chan provider.Operation,
 					}
 				}
 
-				operations, err := provider.ReadRates(f.Filename)
+				operations, err := provider_registry.ReadRates(f.Filename)
 				if err != nil {
 					logs.Add(logs.ERROR, fmt.Sprint(filepath.Base(f.Filename), " : ", err))
 					atomic.AddInt64(&count_skipped, 1)

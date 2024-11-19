@@ -151,9 +151,9 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	// 	d.Tariff_rate_max = t.Max
 	// }
 
-	if o.ProviderOperation != nil {
-		d.Provider_registry_amount = o.ProviderOperation.Amount
-	}
+	// if o.ProviderOperation != nil {
+	// 	d.Provider_registry_amount = o.ProviderOperation.Amount
+	// }
 
 	return d
 }

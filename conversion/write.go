@@ -3,7 +3,7 @@ package conversion
 import (
 	"app/file"
 	"app/logs"
-	"app/provider"
+	"app/provider_registry"
 	"app/querrys"
 	"context"
 	"fmt"
@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func WriteIntoDB(chan_operations chan provider.Operation, chan_readed_files chan *file.FileInfo) {
+func WriteIntoDB(chan_operations chan provider_registry.Operation, chan_readed_files chan *file.FileInfo) {
 
 	if db == nil {
 		logs.Add(logs.FATAL, "no connection to postgres")
@@ -22,7 +22,7 @@ func WriteIntoDB(chan_operations chan provider.Operation, chan_readed_files chan
 	var wg sync.WaitGroup
 
 	//1М rows, чтобы читающие горутины на паузу не встали
-	chan_batches := make(chan Batch2, 10000) //1000
+	chan_batches := make(chan Batch, 10000) //1000
 
 	batch_len := 100 //1500 20 fileds
 
@@ -84,12 +84,12 @@ func WriteIntoDB(chan_operations chan provider.Operation, chan_readed_files chan
 		// close(channel_slices)
 
 		i := 1
-		batch := Batch2{}
+		batch := Batch{}
 		for v := range chan_operations {
 			batch.Set(v)
 			if i%batch_len == 0 {
 				chan_batches <- batch
-				batch = Batch2{}
+				batch = Batch{}
 			}
 			i++
 		}

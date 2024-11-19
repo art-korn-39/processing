@@ -1,11 +1,11 @@
-package provider
+package provider_registry
 
 import (
 	"app/currency"
 	"time"
 )
 
-type new_operation interface {
+type bof_operation interface {
 	Get_Channel_currency() currency.Currency
 	Get_Tariff_currencyBP() currency.Currency
 	GetBool(string) bool
@@ -15,7 +15,7 @@ type new_operation interface {
 	GetString(string) string
 }
 
-func FindRateForOperation(o new_operation) float64 {
+func FindRateForOperation(o bof_operation) float64 {
 
 	for _, r := range rates {
 
