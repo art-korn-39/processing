@@ -1,6 +1,7 @@
 package processing_merchant
 
 import (
+	"app/countries"
 	"app/currency"
 	"app/dragonpay"
 	"app/holds"
@@ -41,7 +42,7 @@ type Operation struct {
 	Merchant_account_name string `db:"merchant_account_name"`
 	Account_bank_name     string `db:"account_bank_name"`
 	Business_type         string `db:"business_type"`
-	Country               string `db:"country"`
+	Country_code2         string `db:"country"`
 	Region                string `db:"region"`
 
 	Project_name      string `db:"project_name"`
@@ -112,6 +113,7 @@ type Operation struct {
 	Tariff_dragonpay_mid *tariff_merchant.Tariff
 	Hold                 *holds.Hold
 	DragonpayOperation   *dragonpay.Operation
+	Country              countries.Country
 
 	Tariff_rate_fix     float64 `db:"billing__tariff_rate_fix"`
 	Tariff_rate_percent float64 `db:"billing__tariff_rate_percent"`
@@ -185,6 +187,10 @@ func (o *Operation) StartingFill() {
 
 	o.Skip = o.Provider_name == "Capitaller transfers"
 
+}
+
+func (o *Operation) SetCountry() {
+	o.Country = countries.GetCountry(o.Country_code2, o.Currency.Name)
 }
 
 func (o *Operation) SetBalanceAmount() {
@@ -554,7 +560,7 @@ func (op *Operation) GetString(name string) string {
 	case "Operation_type":
 		result = op.Operation_type
 	case "Country":
-		result = op.Country
+		result = op.Country.Code2
 	case "Merchant_name":
 		result = op.Merchant_name
 	case "Payment_type":

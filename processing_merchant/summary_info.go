@@ -111,7 +111,7 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		verification:          o.Verification,
 		verification_tariff:   o.Verification_Tariff,
 		operation_type:        o.Operation_type,
-		country:               o.Country,
+		country:               o.Country.Code2,
 		payment_type:          o.Payment_type,
 		merchant_name:         o.Merchant_name,
 		project_name:          o.Project_name,

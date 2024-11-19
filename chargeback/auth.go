@@ -9,6 +9,10 @@ import (
 	"net/http"
 )
 
+const (
+	AUTH = "/ServiceModel/AuthService.svc/Login"
+)
+
 func auth(cfg config.Config) (string, error) {
 
 	body_struct := struct {

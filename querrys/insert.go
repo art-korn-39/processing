@@ -139,6 +139,7 @@ func Stat_Insert_chargeback_operations() string {
 		project_id, project_name, merchant_id, merchant_name, provider_id, provider_name, 
 		merchant_account_id, merchant_account_name, payment_type_id, payment_type_name, amount,
 		channel_amount, amount_usd, channel_amount_usd, amount_rub, channel_amount_rub,
+		type, channel_currency, transaction_status,
 		chargeback_id, chargeback_case_id, chargeback_status, chargeback_deadline, chargeback_code_reason
 	)
 	VALUES (
@@ -146,6 +147,7 @@ func Stat_Insert_chargeback_operations() string {
 		:project_id, :project_name, :merchant_id, :merchant_name, :provider_id, :provider_name, 
 		:merchant_account_id, :merchant_account_name, :payment_type_id, :payment_type_name, :amount,
 		:channel_amount, :amount_usd, :channel_amount_usd, :amount_rub, :channel_amount_rub,
+		:type, :channel_currency, :transaction_status,
 		:chargeback_id, :chargeback_case_id, :chargeback_status, :chargeback_deadline, :chargeback_code_reason
 	)
 
@@ -154,7 +156,9 @@ func Stat_Insert_chargeback_operations() string {
 	SET modified_on = EXCLUDED.modified_on, amount = EXCLUDED.amount, 
 		channel_amount = EXCLUDED.channel_amount, amount_usd = EXCLUDED.amount_usd, 
 		channel_amount_usd = EXCLUDED.channel_amount_usd, amount_rub = EXCLUDED.amount_rub,
-		channel_amount_rub = EXCLUDED.channel_amount_rub, chargeback_id = EXCLUDED.chargeback_id,
+		channel_amount_rub = EXCLUDED.channel_amount_rub, type = EXCLUDED.type, 
+		channel_currency = EXCLUDED.channel_currency, transaction_status = EXCLUDED.transaction_status, 
+		chargeback_id = EXCLUDED.chargeback_id,
 		chargeback_case_id = EXCLUDED.chargeback_case_id, chargeback_status = EXCLUDED.chargeback_status,
 		chargeback_deadline = EXCLUDED.chargeback_deadline, chargeback_code_reason = EXCLUDED.chargeback_code_reason`
 }

@@ -200,7 +200,7 @@ func FindTariffForOperation(op Operation) *Tariff {
 
 				// тип сети будет колонка в тарифе и проверять на неё
 				network := op.GetString("Crypto_network")
-				if t.IsCrypto && !(network == t.Convertation || network == t.NetworkType || t.NetworkType == "") {
+				if t.IsCrypto && !(network == t.NetworkType || t.NetworkType == "") {
 					continue
 				}
 

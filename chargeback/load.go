@@ -14,6 +14,10 @@ import (
 )
 
 const (
+	CHARGEBACK = "/0/OData/UsrChargeback"
+	MATCH      = "/0/OData/PspOperationInReqestDispute"
+	OPERATION  = "/0/OData/PspProcessingOperation"
+
 	time_layout = "2006-01-02T15:04:05Z"
 )
 
@@ -141,6 +145,9 @@ func getOperationsForPeriod(cfg config.Config, token string, date_start, date_en
 		"PspMerchantAccount($select=name,number)",
 		"MerchantProcessingProject($select=UsrMerchantProcessingProjectName,PspMerchantProcessingProjectId)",
 		"OperationPaymentProvider($select=UsrName,PspProviderId)",
+		"ChannelCurrency($select=Alpha3Code)",
+		"Type($select=name)",
+		"TransactionStatus($select=name)",
 	}
 	s0 = append(s0, strings.Join(s1, ","))
 

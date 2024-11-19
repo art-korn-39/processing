@@ -54,7 +54,7 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 	sheet, _ := f.AddSheet("Обороты")
 
 	headers := []string{"Ключ", "Дата", "Provider", "ЮЛ", "provider_name", "operation_type", "region",
-		"payment_type_id / payment_method_type", "merchant account", "merchant_name",
+		"payment_type", "merchant account", "merchant_name",
 		"Валюта канала", "Кол-во операций",
 		"Сумма в валюте баланса", "BR в валюте баланса", "Компенсация BR",
 	}
@@ -129,7 +129,7 @@ func add_page_detail(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 	sheet, _ := f.AddSheet("Детализация")
 
 	headers := []string{"Идентификатор сверки", "Дата", "Provider", "ЮЛ", "provider_name", "operation_type", "issuer_country",
-		"payment_type_id / payment_method_type", "merchant_account", "merchant_name", "region", "account_bank_name",
+		"payment_type", "merchant_account", "merchant_name", "region", "account_bank_name",
 		"real_currency / channel_currency", "Кол-во операций",
 		"Сумма в валюте баланса", "BR Balance Currency", "Компенсация BR",
 		"Акт. тариф формула", "Проверка", "Старт тарифа", "Range",

@@ -9,13 +9,6 @@ import (
 	"time"
 )
 
-const (
-	AUTH       = "/ServiceModel/AuthService.svc/Login"
-	CHARGEBACK = "/0/OData/UsrChargeback"
-	MATCH      = "/0/OData/PspOperationInReqestDispute"
-	OPERATION  = "/0/OData/PspProcessingOperation"
-)
-
 var (
 	chargebacks map[string]*Chargeback
 	operations  map[string]*Operation

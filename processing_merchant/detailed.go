@@ -91,9 +91,14 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.Account_bank_name = o.Account_bank_name
 	d.Project_name = o.Project_name
 	d.Payment_type = o.Payment_type
-	d.Country = o.Country
-	d.Region = o.Region
 	d.Operation_type = o.Operation_type
+
+	d.Region = o.Country.Region
+	if o.Country_code2 != "" {
+		d.Country = o.Country_code2
+	} else {
+		d.Country = o.Country.Code2
+	}
 
 	d.Provider_amount = o.Provider_amount
 	d.Provider_currency_str = o.Provider_currency.Name

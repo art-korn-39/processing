@@ -117,8 +117,8 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 		k.Merchant_account_id = o.Merchant_account_id
 		k.Balance_id = o.Balance_id
 		k.Provider_id = o.Provider_id
-		k.Country = o.Country
-		k.Region = o.Region
+		k.Country = o.Country.Code2
+		//k.Region = o.Region
 		k.Project_id = o.Project_id
 		k.Payment_type = o.Payment_type
 		k.Payment_type_id = o.Payment_type_id

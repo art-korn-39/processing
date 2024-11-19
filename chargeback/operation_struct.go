@@ -41,6 +41,10 @@ type Operation struct {
 	Amount_rub         float64 `json:"amountanalyticcurrency" db:"amount_rub"`
 	Channel_amount_rub float64 `json:"channelamountanalyticcurrency" db:"channel_amount_rub"`
 
+	Type_name             string `db:"type"`
+	Channel_currency_name string `db:"channel_currency"`
+	Transaction_status    string `db:"transaction_status"`
+
 	Chargeback_id          string    `db:"chargeback_id"`
 	Chargeback_case_id     string    `db:"chargeback_case_id"`
 	Chargeback_status      string    `db:"chargeback_status"`
@@ -49,11 +53,14 @@ type Operation struct {
 
 	// вложенные структуры json файла
 	// перекладываем их значения на верхний уровень
-	Merchant         map[string]string `json:"merchant"`                  //Name, PspMechantProcessingId
-	Provider         map[string]string `json:"operationpaymentprovider"`  //UsrName, PspProviderId
-	Merchant_account map[string]string `json:"pspmerchantaccount"`        //Name, Number
-	Payment_type     map[string]string `json:"paymentmethodtype"`         //Name, bofid
-	Project          map[string]string `json:"merchantprocessingproject"` //UsrMerchantProcessingProjectName, PspMerchantProcessingProjectId
+	Merchant          map[string]string `json:"merchant"`                  //Name, PspMechantProcessingId
+	Provider          map[string]string `json:"operationpaymentprovider"`  //UsrName, PspProviderId
+	Merchant_account  map[string]string `json:"pspmerchantaccount"`        //Name, Number
+	Payment_type      map[string]string `json:"paymentmethodtype"`         //Name, bofid
+	Project           map[string]string `json:"merchantprocessingproject"` //UsrMerchantProcessingProjectName, PspMerchantProcessingProjectId
+	Channel_currency  map[string]string `json:"channelcurrency"`           //Alpha3Code
+	Type              map[string]string `json:"type"`                      //Name
+	TransactionStatus map[string]string `json:"transactionstatus"`         //Name
 }
 
 func (op *Operation) fill() {
@@ -69,4 +76,7 @@ func (op *Operation) fill() {
 	op.Project_name = op.Project["UsrMerchantProcessingProjectName"]
 	op.Payment_type_id, _ = strconv.Atoi(op.Payment_type["BOFid"])
 	op.Payment_type_name = op.Payment_type["Name"]
+	op.Type_name = op.Type["Name"]
+	op.Channel_currency_name = op.Channel_currency["Alpha3Code"]
+	op.Transaction_status = op.TransactionStatus["Name"]
 }
