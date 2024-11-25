@@ -55,10 +55,12 @@ func NewQuerryArgs(from_cfg bool) (args querrys.Args) {
 
 	args = querrys.Args{}
 
+	bof_reg := config.Get().Registry
+
 	if from_cfg { // clickhouse
-		args.Merhcant = config.Get().Registry.Merchant_name
-		args.DateFrom = config.Get().Registry.DateFrom.Add(-20 * 24 * time.Hour)
-		args.DateTo = config.Get().Registry.DateTo.Add(4 * 24 * time.Hour)
+		args.Merhcant = bof_reg.Merchant_name
+		args.DateFrom = bof_reg.DateFrom.Add(-20 * 24 * time.Hour)
+		args.DateTo = bof_reg.DateTo.Add(4 * 24 * time.Hour)
 	} else { // file
 		lenght := len(storage.Registry)
 		if lenght > 0 {
@@ -191,7 +193,7 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 
 	idx = map_fileds["operation_actual_amount"]
 	if idx > 0 {
-		op.Actual_amount = util.FR(strconv.ParseFloat(record[idx-1], 64)).(float64)
+		op.Actual_amount, _ = strconv.ParseFloat(record[idx-1], 64)
 	}
 
 	idx = map_fileds["endpoint_id"]
@@ -201,12 +203,17 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 
 	idx = map_fileds["surcharge_amount"]
 	if idx > 0 {
-		op.Surcharge_amount = util.FR(strconv.ParseFloat(record[idx-1], 64)).(float64)
+		op.Surcharge_amount, _ = strconv.ParseFloat(record[idx-1], 64)
 	}
 
 	idx = map_fileds["surcharge_currency"]
 	if idx > 0 {
 		op.Surcharge_currency_str = record[idx-1]
+	}
+
+	idx = map_fileds["provider_id"]
+	if idx > 0 {
+		op.Provider_id, _ = strconv.Atoi(record[idx-1])
 	}
 
 	return
@@ -248,15 +255,17 @@ func CH_ReadRegistry_async() error {
 
 	start_time := time.Now()
 
-	merchant_str := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(config.Get().Registry.Merchant_id)), ","), "[]")
+	bof_reg := config.Get().Registry
+
+	merchant_str := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(bof_reg.Merchant_id)), ","), "[]")
 
 	Statement := `SELECT COUNT(*) 
 	FROM reports
 	WHERE 
 		billing__billing_operation_created_at BETWEEN toDateTime('$1') AND toDateTime('$2')
 		AND billing__merchant_id IN ($3)`
-	Statement = strings.ReplaceAll(Statement, "$1", config.Get().Registry.DateFrom.Format(time.DateTime))
-	Statement = strings.ReplaceAll(Statement, "$2", config.Get().Registry.DateTo.Format(time.DateTime))
+	Statement = strings.ReplaceAll(Statement, "$1", bof_reg.DateFrom.Format(time.DateTime))
+	Statement = strings.ReplaceAll(Statement, "$2", bof_reg.DateTo.Format(time.DateTime))
 	Statement = strings.ReplaceAll(Statement, "$3", merchant_str)
 
 	var count_rows int
@@ -264,8 +273,8 @@ func CH_ReadRegistry_async() error {
 
 	storage.Registry = make([]*Operation, 0, count_rows)
 
-	channel_dates := util.GetChannelOfDays(config.Get().Registry.DateFrom,
-		config.Get().Registry.DateTo,
+	channel_dates := util.GetChannelOfDays(bof_reg.DateFrom,
+		bof_reg.DateTo,
 		DUR*time.Hour)
 
 	Statement = querrys.Stat_Select_reports()
@@ -309,12 +318,14 @@ func CH_ReadRegistry_async2() error {
 
 	start_time := time.Now()
 
-	merchant_str := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(config.Get().Registry.Merchant_id)), ","), "[]")
+	bof_reg := config.Get().Registry
+
+	merchant_str := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(bof_reg.Merchant_id)), ","), "[]")
 
 	storage.Registry = make([]*Operation, 0, 1000000)
 
-	channel_dates := util.GetChannelOfDays(config.Get().Registry.DateFrom,
-		config.Get().Registry.DateTo,
+	channel_dates := util.GetChannelOfDays(bof_reg.DateFrom,
+		bof_reg.DateTo,
 		DUR*time.Hour)
 
 	Statement := querrys.Stat_Select_reports()
@@ -357,12 +368,14 @@ func CH_ReadRegistry_async_querry() error {
 
 	start_time := time.Now()
 
-	merchant_str := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(config.Get().Registry.Merchant_id)), ","), "[]")
+	bof_reg := config.Get().Registry
+
+	merchant_str := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(bof_reg.Merchant_id)), ","), "[]")
 
 	storage.Registry = make([]*Operation, 0, 1000000)
 
-	channel_dates := util.GetChannelOfDays(config.Get().Registry.DateFrom,
-		config.Get().Registry.DateTo,
+	channel_dates := util.GetChannelOfDays(bof_reg.DateFrom,
+		bof_reg.DateTo,
 		DUR*time.Hour)
 
 	Statement := querrys.Stat_Select_reports()
@@ -416,15 +429,17 @@ func CH_ReadRegistry_async_querry_cap() error {
 
 	start_time := time.Now()
 
-	merchant_str := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(config.Get().Registry.Merchant_id)), ","), "[]")
+	bof_reg := config.Get().Registry
+
+	merchant_str := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(bof_reg.Merchant_id)), ","), "[]")
 
 	Statement := `SELECT COUNT(*) 
 	FROM reports
 	WHERE 
 		billing__billing_operation_created_at BETWEEN toDateTime('$1') AND toDateTime('$2')
 		AND billing__merchant_id IN ($3)`
-	Statement = strings.ReplaceAll(Statement, "$1", config.Get().Registry.DateFrom.Format(time.DateTime))
-	Statement = strings.ReplaceAll(Statement, "$2", config.Get().Registry.DateTo.Format(time.DateTime))
+	Statement = strings.ReplaceAll(Statement, "$1", bof_reg.DateFrom.Format(time.DateTime))
+	Statement = strings.ReplaceAll(Statement, "$2", bof_reg.DateTo.Format(time.DateTime))
 	Statement = strings.ReplaceAll(Statement, "$3", merchant_str)
 
 	var count_rows int
@@ -432,8 +447,8 @@ func CH_ReadRegistry_async_querry_cap() error {
 
 	storage.Registry = make([]*Operation, 0, count_rows)
 
-	channel_dates := util.GetChannelOfDays(config.Get().Registry.DateFrom,
-		config.Get().Registry.DateTo,
+	channel_dates := util.GetChannelOfDays(bof_reg.DateFrom,
+		bof_reg.DateTo,
 		DUR*time.Hour)
 
 	Statement = querrys.Stat_Select_reports()

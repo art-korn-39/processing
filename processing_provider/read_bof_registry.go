@@ -49,10 +49,12 @@ func NewQuerryArgs(from_cfg bool) (args querrys.Args) {
 
 	args = querrys.Args{}
 
+	bof_reg := config.Get().Registry
+
 	if from_cfg { // clickhouse
-		args.Merhcant = config.Get().Registry.Merchant_name
-		args.DateFrom = config.Get().Registry.DateFrom.Add(-20 * 24 * time.Hour)
-		args.DateTo = config.Get().Registry.DateTo.Add(4 * 24 * time.Hour)
+		args.Merhcant = bof_reg.Merchant_name
+		args.DateFrom = bof_reg.DateFrom.Add(-20 * 24 * time.Hour)
+		args.DateTo = bof_reg.DateTo.Add(4 * 24 * time.Hour)
 	} else { // file
 		lenght := len(storage.Registry)
 		if lenght > 0 {
@@ -191,10 +193,12 @@ func CH_ReadRegistry() error {
 
 	Statement := querrys.Stat_Select_reports()
 
-	merchant_str := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(config.Get().Registry.Merchant_id)), ","), "[]")
+	bof_reg := config.Get().Registry
 
-	Statement = strings.ReplaceAll(Statement, "$1", config.Get().Registry.DateFrom.Format(time.DateTime))
-	Statement = strings.ReplaceAll(Statement, "$2", config.Get().Registry.DateTo.Format(time.DateTime))
+	merchant_str := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(bof_reg.Merchant_id)), ","), "[]")
+
+	Statement = strings.ReplaceAll(Statement, "$1", bof_reg.DateFrom.Format(time.DateTime))
+	Statement = strings.ReplaceAll(Statement, "$2", bof_reg.DateTo.Format(time.DateTime))
 	Statement = strings.ReplaceAll(Statement, "$3", merchant_str)
 
 	err := storage.Clickhouse.Select(&storage.Registry, Statement)

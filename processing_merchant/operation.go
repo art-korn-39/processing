@@ -419,7 +419,7 @@ const (
 	VRF_ENDPOINT_DRAGONPAY    = "Endpoint_id пусто обратитесь к сверке/в саппорт"
 	VRF_EMPTY_TARIFF_ID       = "Заполни tariff_condition_id"
 	VRF_CHECK_TARIFF_ID       = "Проверь  tariff_condition_id"
-	//VRF_NO_FILLED_PROVIDER_1C = "Не заполнен поставщик 1С в реестре провайдера"
+	VRF_CHECK_DATE_START      = "Проверь дату старта тарифа"
 )
 
 func (o *Operation) SetRR() {

@@ -5,6 +5,7 @@ import (
 	"app/chargeback"
 	"app/config"
 	"app/conversion"
+	"app/conversion_raw"
 	"app/crm_dictionary"
 	"app/crypto"
 	"app/decline"
@@ -27,8 +28,8 @@ func main() {
 	var file_config string
 
 	// processing_merchant | processing_provider | conversion | decline
-	// crypto | dragonpay | aws | chargeback | crm_dictionary
-	flag.StringVar(&app, "app", "chargeback", "")
+	// crypto | dragonpay | aws | chargeback | crm_dictionary | conversion_raw
+	flag.StringVar(&app, "app", "conversion_raw", "")
 	flag.StringVar(&file_config, "file_config", "", "")
 	flag.Parse()
 
@@ -58,6 +59,8 @@ func main() {
 		chargeback.Start()
 	case "crm_dictionary":
 		crm_dictionary.Start()
+	case "conversion_raw":
+		conversion_raw.Start()
 	}
 
 	logs.Add(logs.MAIN, fmt.Sprintf("Общее время выполнения: %v", time.Since(start_time)))

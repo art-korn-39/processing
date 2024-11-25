@@ -70,10 +70,50 @@ func Stat_Select_reports() string {
 	limit 5000000`
 }
 
+func Stat_Select_reports_by_id() string {
+	return `
+	SELECT
+		toString(operation__operation_id) AS operation_id, 
+		IFNULL(operation__provider_payment_id, '') AS provider_payment_id,
+		date_add(HOUR, 3, billing__billing_operation_created_at) AS created_at,
+		IFNULL(operation__provider_name, '') AS provider_name,
+		IFNULL(operation__merchant_name, '') AS merchant_name,
+		IFNULL(operation__merchant_account_name, '') AS merchant_account_name,
+		IFNULL(billing__operation_type_id, 0) AS operation_type_id,
+		IFNULL(operation__payment_method_type, '') AS payment_type,
+		IFNULL(operation__issuer_country, '') AS country,
+		IFNULL(operation__operation_status, '') AS status	
+	FROM reports
+	WHERE 
+		toString(operation__$2) IN ('$1')`
+}
+
 func Stat_Select_provider_registry() string {
 	return `SELECT operation_id, transaction_completed_at, operation_type, country, payment_method_type, 
 			merchant_name, rate, amount, channel_amount, channel_currency, provider_currency, br_amount, balance, provider1c
 		FROM provider_registry 
 		WHERE lower(merchant_name) = ANY($1) 
 		AND transaction_completed_at BETWEEN $2 AND $3`
+}
+
+func Stat_Select_conversion() string {
+	return `SELECT 
+				T1.guid,
+				T1.name,
+				T1.key_column,
+				T1.file_format,
+				T1.sheet_name,
+				T1.comma,
+				T2.registry_column,
+				T2.table_column,
+				T2.calculated,
+				T2.from_bof,
+				T2.date_format,
+				T2.skip 
+			FROM conversion_settings AS T1
+				JOIN public.conversion_mapping AS T2
+				ON T1.guid = T2.parent
+			WHERE 
+				T1.provider_guid = ANY($1)
+			ORDER BY guid	`
 }

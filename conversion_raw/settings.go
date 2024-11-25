@@ -1,0 +1,103 @@
+package conversion_raw
+
+import (
+	"app/logs"
+	"app/querrys"
+	"app/util"
+	"fmt"
+	"time"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
+)
+
+type Setting struct {
+	Guid        string
+	Name        string
+	File_format string
+	Sheet_name  string
+	Comma       string
+	values      map[string]Mapping
+	bof_usage   bool
+	Key_column  string
+}
+
+type Mapping struct {
+	Registry_column string
+	Table_column    string
+	Calculated      bool
+	From_bof        bool
+	Skip            bool
+	Date_format     string
+}
+
+func (s *Setting) getCalculatedFields() []string {
+
+	result := []string{}
+
+	for _, v := range s.values {
+		if v.Calculated {
+			result = append(result, v.Registry_column)
+		}
+	}
+
+	return result
+
+}
+
+func readSettings(db *sqlx.DB, provider_guid []string) {
+
+	if db == nil {
+		return
+	}
+
+	type Row struct {
+		Guid            string `db:"guid"`
+		Name            string `db:"name"`
+		Key_column      string `db:"key_column"`
+		File_format     string `db:"file_format"`
+		Sheet_name      string `db:"sheet_name"`
+		Comma           string `db:"comma"`
+		Registry_column string `db:"registry_column"`
+		Table_column    string `db:"table_column"`
+		Date_format     string `db:"date_format"`
+		Calculated      bool   `db:"calculated"`
+		From_bof        bool   `db:"from_bof"`
+		Skip            bool   `db:"skip"`
+	}
+
+	start_time := time.Now()
+
+	stat := querrys.Stat_Select_conversion()
+
+	rows := []Row{}
+
+	err := db.Select(&rows, stat, pq.Array(provider_guid))
+	if err != nil {
+		logs.Add(logs.INFO, err)
+		return
+	}
+
+	for _, row := range rows {
+
+		mapping := Mapping{
+			Registry_column: row.Registry_column, Table_column: row.Table_column,
+			Date_format: row.Date_format, Calculated: row.Calculated, From_bof: row.From_bof, Skip: row.Skip,
+		}
+
+		var setting Setting
+		var ok bool
+
+		setting, ok = all_settings[row.Guid]
+		if !ok {
+			setting = Setting{Name: row.Name, Guid: row.Guid, File_format: row.File_format, Key_column: row.Key_column,
+				Comma: row.Comma, Sheet_name: row.Sheet_name, values: map[string]Mapping{}}
+		}
+		setting.values[row.Registry_column] = mapping
+		setting.bof_usage = setting.bof_usage || mapping.From_bof
+		all_settings[row.Guid] = setting
+	}
+
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение настроек: %v [найдено: %s]", time.Since(start_time), util.FormatInt(len(all_settings))))
+
+}

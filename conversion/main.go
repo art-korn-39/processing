@@ -28,7 +28,7 @@ func Start() {
 	}
 	defer db.Close()
 
-	folder := cfg.Rates.Filename
+	folder := cfg.Provider_registry.Filename
 
 	filenames, err := util.ParseFoldersRecursively(folder)
 	if err != nil {

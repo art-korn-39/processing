@@ -52,21 +52,28 @@ type (
 		Routine_task bool `json:"routine_task"`
 		Full_loading bool `json:"full_loading"`
 
+		Settings Settings `json:"settings"`
+
 		// подключения к базам
 		Clickhouse DatabaseConnection `json:"clickhouse"`
 		PSQL       DatabaseConnection `json:"psql"`
 		AWS        CloudConnection    `json:"aws"`
 		CRM        ODataConnection    `json:"crm"`
 
-		Registry    Registry   `json:"registry"`
-		Tariffs     ImportData `json:"tariffs"`
-		Crypto      ImportData `json:"crypto"`
-		Rates       ImportData `json:"rates"`
-		Decline     ImportData `json:"decline"`
-		Dragonpay   ImportData `json:"dragonpay"`
-		Detailed    ExportData `json:"detailed"`
-		SummaryInfo ExportData `json:"summary_info"`
-		Summary     ExportData `json:"summary"`
+		Registry          Registry   `json:"registry"` //входящие данные (bof,crm,aws)
+		Tariffs           ImportData `json:"tariffs"`
+		Crypto            ImportData `json:"crypto"`
+		Provider_registry ImportData `json:"provider_registry"` //!!!!
+		Decline           ImportData `json:"decline"`
+		Dragonpay         ImportData `json:"dragonpay"`
+		Detailed          ExportData `json:"detailed"`
+		SummaryInfo       ExportData `json:"summary_info"`
+		Summary           ExportData `json:"summary"`
+	}
+
+	Settings struct {
+		Guid     []string `json:"guid"`
+		Handbook string   `json:"handbook"`
 	}
 
 	DatabaseConnection struct {

@@ -54,8 +54,8 @@ func CheckMapOfColumnNames(map_fileds map[string]int, table string) error {
 		s = fields_dragonpay_xlsx()
 	case "provider_registry":
 		s = fields_provider_registry()
-	// case "provider_registry_rub":
-	// 	s = fields_provider_registry_rub()
+	case "kgx_xlsx":
+		s = fields_kgx_xlsx()
 	default:
 		return fmt.Errorf("table %s is not supported", table)
 	}
@@ -142,6 +142,10 @@ func fields_dragonpay_csv() []string {
 
 func fields_dragonpay_xlsx() []string {
 	return []string{"endpoint_id", "поставщик dragonpay"}
+}
+
+func fields_kgx_xlsx() []string {
+	return []string{"team id", "баланс"}
 }
 
 func fields_provider_registry() []string {

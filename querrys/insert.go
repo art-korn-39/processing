@@ -29,6 +29,36 @@ func Stat_Insert_provider_registry() string {
 		provider1c = EXCLUDED.provider1c;`
 }
 
+func Stat_Insert_provider_registry_test() string {
+	return `
+	INSERT INTO provider_registry_test (
+		operation_id, transaction_completed_at, provider_name, merchant_name, merchant_account_name,
+		project_url, payment_method_type, country, rate, operation_type, amount,
+		provider_payment_id, operation_status, account_number, channel_currency, provider_currency, br_amount,
+		transaction_completed_at_day, channel_amount, balance, provider1c
+	)
+	VALUES (
+		:operation_id, :transaction_completed_at, :provider_name, :merchant_name, :merchant_account_name,
+		:project_url, :payment_method_type, :country, :rate, :operation_type, :amount,
+		:provider_payment_id, :operation_status, :account_number, :channel_currency, :provider_currency, :br_amount,
+		:transaction_completed_at_day, :channel_amount, :balance, :provider1c
+	)
+	
+	ON CONFLICT ON CONSTRAINT pk_provider_registry_test_id DO UPDATE
+
+	SET rate = EXCLUDED.rate, amount = EXCLUDED.amount, br_amount = EXCLUDED.br_amount,
+		channel_amount = EXCLUDED.channel_amount, provider_currency = EXCLUDED.provider_currency,
+		transaction_completed_at = EXCLUDED.transaction_completed_at, 
+		transaction_completed_at_day = EXCLUDED.transaction_completed_at_day, 
+		operation_status = EXCLUDED.operation_status, balance = EXCLUDED.balance, 
+		provider1c = EXCLUDED.provider1c, provider_name = EXCLUDED.provider_name, 
+		merchant_name = EXCLUDED.merchant_name, merchant_account_name = EXCLUDED.merchant_account_name,
+		project_url = EXCLUDED.project_url, payment_method_type = EXCLUDED.payment_method_type,
+		country = EXCLUDED.country, operation_type = EXCLUDED.operation_type, 
+		provider_payment_id = EXCLUDED.provider_payment_id, account_number = EXCLUDED.account_number,
+		channel_currency = EXCLUDED.channel_currency;`
+}
+
 func Stat_Insert_detailed() string {
 	return `INSERT INTO detailed (
 		document_id, operation_id, transaction_completed_at, merchant_id, merchant_account_id, balance_id, company_id,
@@ -130,7 +160,7 @@ func Stat_Insert_chargeback() string {
 
 	ON CONFLICT ON CONSTRAINT pk_chargebacks_id DO UPDATE
 
-	SET total_amount = EXCLUDED.total_amount`
+	SET total_amount = EXCLUDED.total_amount, status = EXCLUDED.status`
 }
 
 func Stat_Insert_chargeback_operations() string {
