@@ -14,6 +14,7 @@ type SumFileds struct {
 	balance_amount      float64
 	BR_balance_currency float64
 	CompensationBR      float64
+	channel_amount      float64
 }
 
 func (sf *SumFileds) AddValues(o *Operation) {
@@ -21,6 +22,7 @@ func (sf *SumFileds) AddValues(o *Operation) {
 	sf.balance_amount = sf.balance_amount + o.Balance_amount
 	sf.BR_balance_currency = sf.BR_balance_currency + o.BR_balance_currency
 	sf.CompensationBR = sf.CompensationBR + o.CompensationBR
+	sf.channel_amount = sf.channel_amount + o.Channel_amount
 }
 
 type KeyFields_SummaryInfo struct {
