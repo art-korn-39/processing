@@ -226,7 +226,7 @@ func Stat_Insert_summary_merchant() string {
 		balance_currency, convertation, tariff_date_start, tariff_id, formula, channel_amount, balance_amount, 
 		sr_channel_currency, sr_balance_currency, count_operations, rate,
 		payment_type_id, payment_method_id, rated_account, provider_1c, subdivision_1c, business_type, project_id,
-		rr_amount, rr_date
+		rr_amount, rr_date, schema, category
 	)
 	VALUES (
 		:document_id, :document_date, :operation_type, :operation_group, :merchant_id, :merchant_account_id, 
@@ -234,7 +234,7 @@ func Stat_Insert_summary_merchant() string {
 		:convertation, :tariff_date_start, :tariff_id, :formula, :channel_amount, :balance_amount, 
 		:sr_channel_currency, :sr_balance_currency, :count_operations, :rate,
 		:payment_type_id, :payment_method_id, :rated_account, :provider_1c, :subdivision_1c, :business_type, :project_id,
-		:rr_amount, :rr_date
+		:rr_amount, :rr_date, :schema, :category
 		)`
 }
 

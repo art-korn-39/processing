@@ -1,7 +1,9 @@
 package conversion_raw
 
 import (
+	"app/provider_balances"
 	pg "app/provider_registry"
+	"app/util"
 	"fmt"
 	"slices"
 	"strconv"
@@ -13,23 +15,20 @@ const (
 	PAYID = "provider_payment_id"
 )
 
-type ext_operation struct {
+type raw_operation struct {
 	operation_id  string
 	payment_id    string
 	bof_operation *Bof_operation
 	record        []string
 }
 
-func createExtOperation(record []string, map_fields map[string]int, setting Setting) (op *ext_operation, err error) {
+func createRawOperation(record []string, map_fields map[string]int, setting Setting) (op *raw_operation, err error) {
 
-	op = &ext_operation{}
+	op = &raw_operation{}
 
 	switch setting.Key_column {
 	case OPID:
 		op.operation_id = getValue("operation_id", record, setting, map_fields, Bof_operation{})
-		// if err != nil {
-		// 	return nil, err
-		// }
 	case PAYID:
 		op.payment_id = getValue("provider_payment_id", record, setting, map_fields, Bof_operation{})
 	default:
@@ -41,7 +40,7 @@ func createExtOperation(record []string, map_fields map[string]int, setting Sett
 
 }
 
-func (ext_op *ext_operation) createProviderOperation(map_fields map[string]int, setting Setting) (op *pg.Operation, err error) {
+func (ext_op *raw_operation) createProviderOperation(map_fields map[string]int, setting Setting) (op *pg.Operation, err error) {
 
 	op = &pg.Operation{}
 
@@ -65,17 +64,17 @@ func (ext_op *ext_operation) createProviderOperation(map_fields map[string]int, 
 		return nil, err
 	}
 
-	op.Channel_amount, err = strconv.ParseFloat(getValue("channel_amount", ext_op.record, setting, map_fields, *ext_op.bof_operation), 64)
+	op.Channel_amount, err = util.ParseFloat(getValue("channel_amount", ext_op.record, setting, map_fields, *ext_op.bof_operation))
 	if err != nil {
 		return nil, err
 	}
 
-	op.Amount, err = strconv.ParseFloat(getValue("amount", ext_op.record, setting, map_fields, *ext_op.bof_operation), 64)
+	op.Amount, err = util.ParseFloat(getValue("amount", ext_op.record, setting, map_fields, *ext_op.bof_operation))
 	if err != nil {
 		return nil, err
 	}
 
-	op.BR_amount, err = strconv.ParseFloat(getValue("br_amount", ext_op.record, setting, map_fields, *ext_op.bof_operation), 64)
+	op.BR_amount, err = util.ParseFloat(getValue("br_amount", ext_op.record, setting, map_fields, *ext_op.bof_operation))
 	if err != nil {
 		return nil, err
 	}
@@ -92,8 +91,9 @@ func (ext_op *ext_operation) createProviderOperation(map_fields map[string]int, 
 	op.Provider_currency_str = getValue("provider_currency", ext_op.record, setting, map_fields, *ext_op.bof_operation)
 	op.Balance = getValue("balance", ext_op.record, setting, map_fields, *ext_op.bof_operation)
 	op.Provider1c = getValue("provider1c", ext_op.record, setting, map_fields, *ext_op.bof_operation)
+	op.Project_url = getValue("project_url", ext_op.record, setting, map_fields, *ext_op.bof_operation)
 
-	op.Rate, err = strconv.ParseFloat(getValue("rate", ext_op.record, setting, map_fields, *ext_op.bof_operation), 64)
+	op.Rate, err = util.ParseFloat(getValue("rate", ext_op.record, setting, map_fields, *ext_op.bof_operation))
 	if err != nil {
 		return nil, err
 	}
@@ -133,8 +133,21 @@ func getValue(reg_name string, record []string, setting Setting, map_fields map[
 			result = op.Country_code2
 		case "operation_status":
 			result = op.Status
+		case "project_url":
+			result = op.Project_url
 		case "transaction_completed_at":
 			result = op.Created_at.Format(time.DateTime)
+		case "channel_amount":
+			result = strconv.FormatFloat(op.Channel_amount, 'f', -1, 64)
+		case "channel_currency":
+			result = op.Channel_currency.Name
+		}
+	} else if mapping.External_source {
+		switch reg_name {
+		case "balance":
+			result = getBalance(record, map_fields, op)
+		case "provider_currency":
+			result = getProviderCurrency(op)
 		}
 	} else if mapping.Calculated {
 		switch reg_name {
@@ -153,5 +166,28 @@ func getValue(reg_name string, record []string, setting Setting, map_fields map[
 	}
 
 	return result
+
+}
+
+func getBalance(record []string, map_fields map[string]int, op Bof_operation) (balance_name string) {
+	if is_kgx_tradex {
+		balance_name = getBalanceByTeamID(record, map_fields)
+	} else {
+		balance, ok := provider_balances.GetByMAID(op.Merchant_account_id)
+		if ok {
+			balance_name = balance.Name
+		}
+	}
+	return balance_name
+}
+
+func getProviderCurrency(op Bof_operation) (currency string) {
+
+	balance, ok := provider_balances.GetByMAID(op.Merchant_account_id)
+	if ok {
+		currency = balance.Balance_currency.Name
+	}
+
+	return currency
 
 }

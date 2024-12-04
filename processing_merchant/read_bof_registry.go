@@ -177,6 +177,7 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		Provider_amount:       util.FR(strconv.ParseFloat(record[map_fileds["provider_amount"]-1], 64)).(float64),
 		Fee_currency_str:      record[map_fileds["fee_currency"]-1],
 		Fee_amount:            util.FR(strconv.ParseFloat(record[map_fileds["fee_amount"]-1], 64)).(float64),
+		Currency_str:          record[map_fileds["currency / currency"]-1],
 
 		Tariff_rate_percent: util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_percent"]-1], 64)).(float64) / 100,
 		Tariff_rate_fix:     util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_fix"]-1], 64)).(float64),

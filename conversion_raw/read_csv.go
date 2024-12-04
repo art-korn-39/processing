@@ -28,7 +28,7 @@ func readFile(filename string) (map_fileds map[string]int, setting Setting, err 
 	case ".csv":
 		map_fileds, setting, err = readCSV(filename)
 	case ".xlsx":
-		err = readXLSX(filename)
+		map_fileds, setting, err = readXLSX(filename)
 	default:
 		return nil, Setting{}, fmt.Errorf("формат файла не поддерживается")
 	}
@@ -91,7 +91,7 @@ func readCSV(filename string) (map_fileds map[string]int, setting Setting, baseE
 		// 150 000 records -> 43.500.000 bytes (~0.004)
 		capacity := fileInfo.Size() * 4 / 1000
 
-		ext_registry = make([]*ext_operation, 0, capacity)
+		ext_registry = make([]*raw_operation, 0, capacity)
 
 		channel_records := make(chan []string, 1000)
 
@@ -107,7 +107,7 @@ func readCSV(filename string) (map_fileds map[string]int, setting Setting, baseE
 						if !ok {
 							return
 						}
-						op, err := createExtOperation(record, map_fileds, setting)
+						op, err := createRawOperation(record, map_fileds, setting)
 						if err != nil {
 							baseError = err
 							cancel()
@@ -149,7 +149,7 @@ func checkFields(setting Setting, map_fileds map[string]int) error {
 
 	for _, val := range setting.values {
 
-		if val.Calculated || val.Skip || val.From_bof {
+		if val.Calculated || val.Skip || val.From_bof || val.External_source {
 			continue
 		}
 
@@ -159,11 +159,6 @@ func checkFields(setting Setting, map_fileds map[string]int) error {
 		}
 
 	}
-
-	return nil
-}
-
-func readXLSX(filename string) (err error) {
 
 	return nil
 }

@@ -44,8 +44,8 @@ type KeyFields_SummaryInfo struct {
 
 func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 	KF = KeyFields_SummaryInfo{
-		document_date:         o.Document_date,
-		provider:              o.Provider_base_name,
+		document_date: o.Document_date,
+		//provider:              o.Provider_base_name,
 		provider_name:         o.Provider_name,
 		verification:          o.Verification,
 		operation_type:        o.Operation_type,

@@ -27,6 +27,7 @@ type Tariff struct {
 	Merchant_account_id   int    //`xlsx:"7"`
 	Balance_code          string //`xlsx:"8"`
 	Provider              string //`xlsx:"9"`
+	Company               string
 
 	Schema         string //`xlsx:"18"`
 	IsCrypto       bool

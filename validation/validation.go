@@ -54,8 +54,10 @@ func CheckMapOfColumnNames(map_fileds map[string]int, table string) error {
 		s = fields_dragonpay_xlsx()
 	case "provider_registry":
 		s = fields_provider_registry()
-	case "kgx_xlsx":
-		s = fields_kgx_xlsx()
+	case "kgx__teams_xlsx":
+		s = fields_kgx__teams_xlsx()
+	case "bof_registry_raw_conversion":
+		s = fields_bof_registry_raw_conversion()
 	default:
 		return fmt.Errorf("table %s is not supported", table)
 	}
@@ -81,6 +83,7 @@ func fields_bof_registry_merchant() []string {
 		"acquirer_id / provider_payment_id", "issuer_country",
 		"operation_type", "balance_id", "payment_type_id / payment_method_type",
 		"contract_id", "tariff_condition_id",
+		"currency / currency",
 		"real_currency / channel_currency", "real_amount / channel_amount",
 		"fee_currency", "fee_amount",
 		"provider_currency", "provider_amount",
@@ -144,7 +147,7 @@ func fields_dragonpay_xlsx() []string {
 	return []string{"endpoint_id", "поставщик dragonpay"}
 }
 
-func fields_kgx_xlsx() []string {
+func fields_kgx__teams_xlsx() []string {
 	return []string{"team id", "баланс"}
 }
 
@@ -156,6 +159,18 @@ func fields_provider_registry() []string {
 		"merchant_name", "real_currency / channel_currency", "real_amount / channel_amount",
 		"provider_currency", "курс", "provider_amount",
 		"provider_name", "merchant_account_name", "acquirer_id / provider_payment_id",
+		"project_url", "operation_status",
+	}
+}
+
+func fields_bof_registry_raw_conversion() []string {
+	return []string{
+		"id / operation_id", "merchant_account_id",
+		"provider_name", "merchant_name", "merchant_account_name",
+		"operation_type", "transaction_completed_at",
+		"payment_type_id / payment_method_type", "issuer_country",
+		"real_currency / channel_currency", "real_amount / channel_amount",
+		"acquirer_id / provider_payment_id",
 		"project_url", "operation_status",
 	}
 }

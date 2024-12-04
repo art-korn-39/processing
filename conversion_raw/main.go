@@ -3,6 +3,7 @@ package conversion_raw
 import (
 	"app/config"
 	"app/logs"
+	"app/provider_balances"
 	"app/provider_registry"
 	"app/storage"
 	"fmt"
@@ -10,8 +11,9 @@ import (
 )
 
 var (
+	is_kgx_tradex  bool
 	registry       map[int]*provider_registry.Operation
-	ext_registry   []*ext_operation
+	ext_registry   []*raw_operation
 	bof_operations map[string]*Bof_operation
 	all_settings   map[string]Setting
 	handbook       map[string]string
@@ -31,31 +33,51 @@ func Start() {
 	storage, err := storage.New(cfg)
 	if err != nil {
 		logs.Add(logs.FATAL, err)
-		return
 	}
 	defer storage.Close()
 
+	// чтение настроек маппинга
 	readSettings(storage.Postgres, cfg.Settings.Guid)
+	if len(all_settings) == 0 {
+		logs.Add(logs.FATAL, "По указанному провайдеру не найдены настройки конвертации.")
+	}
 
+	is_kgx_tradex = cfg.Settings.KGX_Tradex
 	filename := cfg.Provider_registry.Filename
 
 	logs.Add(logs.INFO, "Выполняется чтение...")
 
+	// чтение файла реестра провайдера
 	map_fields, setting, err := readFile(filename)
 	if err != nil {
-		logs.Add(logs.INFO, err)
-		return
+		logs.Add(logs.FATAL, err)
 	}
 
-	readBofOperations(storage.Clickhouse, setting.Key_column)
+	// чтение операций БОФ
+	readBofOperations(cfg, storage.Clickhouse, setting.Key_column)
+	if err != nil {
+		logs.Add(logs.FATAL, err)
+	}
 
+	// чтение дополнительного маппинга
+	if setting.external_usage {
+		if is_kgx_tradex {
+			err = readHandbook(cfg.Settings.Handbook)
+			if err != nil {
+				logs.Add(logs.FATAL, err)
+			}
+		}
+		provider_balances.Read(storage.Postgres)
+	}
+
+	// сборка операции провайдера
 	err = handleRecords(map_fields, setting)
 	if err != nil {
-		logs.Add(logs.INFO, err)
-		return
+		logs.Add(logs.FATAL, err)
 	}
 
-	writeIntoDB(storage.Postgres)
+	// запись результата
+	writeResult(cfg, storage.Postgres)
 }
 
 func handleRecords(map_fields map[string]int, setting Setting) error {

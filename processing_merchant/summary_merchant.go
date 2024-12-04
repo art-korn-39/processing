@@ -13,7 +13,9 @@ import (
 type SummaryRowMerchant struct {
 	Document_id         int       `db:"document_id"`
 	Document_date       time.Time `db:"document_date"`
+	Category            int       `db:"category"`
 	Convertation        string    `db:"convertation"`
+	Schema              string    `db:"schema"`
 	Operation_type      string    `db:"operation_type"`
 	Operation_group     string    `db:"operation_group"`
 	Merchant_id         int       `db:"merchant_id"`
@@ -49,8 +51,6 @@ type SummaryRowMerchant struct {
 
 	RR_amount float64   `db:"rr_amount"`
 	RR_date   time.Time `db:"rr_date"`
-
-	//ID_list []int
 }
 
 func (row *SummaryRowMerchant) AddValues(o *Operation) {
@@ -78,18 +78,19 @@ func (row *SummaryRowMerchant) SetRate() {
 
 }
 
+func (row *SummaryRowMerchant) SetCategory() {
+	if row.Convertation == "Реестр" || row.Schema == "KGX" {
+		row.Category = 2
+	} else if row.Convertation == "Без конверта" || row.Schema == "Crypto" {
+		row.Category = 1
+	}
+}
+
 func (row *SummaryRowMerchant) SetID() {
 
 	//id merch len = 5
 	//days len = 5
 	//conv len = 1
-
-	var conv int
-	if row.Convertation == "Реестр" {
-		conv = 2
-	} else if row.Convertation == "Без конверта" {
-		conv = 1
-	}
 
 	date_01_01_2024 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 
@@ -100,7 +101,7 @@ func (row *SummaryRowMerchant) SetID() {
 
 	merch_str := fmt.Sprintf("%05d", row.Merchant_id)
 
-	id_str := fmt.Sprint(10, days_str, merch_str, conv)
+	id_str := fmt.Sprint(10, days_str, merch_str, row.Category)
 	row.Document_id, _ = strconv.Atoi(id_str)
 
 }
@@ -131,6 +132,7 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 
 		if o.Tariff != nil {
 			k.Convertation = o.Tariff.Convertation
+			k.Schema = o.Tariff.Schema
 			k.Tariff_date_start = o.Tariff.DateStart
 			k.Tariff_id = o.Tariff.Id
 			k.Formula = o.Tariff.Formula
@@ -138,7 +140,7 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 			k.Subdivision_1c = o.Tariff.Subdivision1C
 			k.Rated_account = o.Tariff.RatedAccount
 		}
-
+		k.SetCategory()
 		k.SetID()
 		return
 	}

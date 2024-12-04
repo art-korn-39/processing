@@ -49,7 +49,7 @@ func Add(t LogType, v ...any) {
 			log.Println(value)
 		}
 
-	// всегда
+	// всегда (консоль + файл)
 	case MAIN:
 		file, _ := os.OpenFile(config.Get().File_logs, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 		defer file.Close()
@@ -62,6 +62,7 @@ func Add(t LogType, v ...any) {
 
 		log.Println(value)
 
+	// в файл, консоль при отладке
 	case ERROR:
 		file, _ := os.OpenFile(config.Get().File_errors, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 		defer file.Close()
@@ -72,6 +73,7 @@ func Add(t LogType, v ...any) {
 			log.Println(value)
 		}
 
+	// консоль и файл
 	case FATAL:
 		file, _ := os.OpenFile(config.Get().File_logs, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 		defer file.Close()
@@ -79,6 +81,7 @@ func Add(t LogType, v ...any) {
 		file.WriteString(fmt.Sprintf("%s\n", value))
 		log.Fatal(value)
 
+	// в консоль для всех и в файл только для регламентных
 	case REGL:
 		if config.Get().Routine_task {
 			file, _ := os.OpenFile(config.Get().File_logs, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
@@ -89,6 +92,7 @@ func Add(t LogType, v ...any) {
 
 		log.Println(value)
 
+	// в консоль при отладке
 	case DEBUG:
 		if config.Debug {
 			fmt.Println(value)

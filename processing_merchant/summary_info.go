@@ -132,7 +132,11 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 
 		if o.Tariff.Convertation == "KGX" {
 			if o.ProviderOperation != nil {
-				KF.balance_name = o.Provider_name // тут уже лежит баланс из реестра провайдера
+				if o.IsPerevodix {
+					KF.balance_name = o.Provider_name // тут уже лежит баланс из реестра провайдера
+				} else {
+					KF.balance_name = fmt.Sprintf("%s_%s_%s", o.Tariff.Provider, o.Tariff.Company, o.ProviderOperation.Provider_currency.Name)
+				}
 			}
 		} else {
 			KF.balance_name = o.Tariff.Balance_name

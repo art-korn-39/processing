@@ -75,6 +75,7 @@ func Stat_Select_reports_by_id() string {
 	SELECT
 		toString(operation__operation_id) AS operation_id, 
 		IFNULL(operation__provider_payment_id, '') AS provider_payment_id,
+		IFNULL(operation__merchant_account_id, 0) AS merchant_account_id,
 		date_add(HOUR, 3, billing__billing_operation_created_at) AS created_at,
 		IFNULL(operation__provider_name, '') AS provider_name,
 		IFNULL(operation__merchant_name, '') AS merchant_name,
@@ -108,6 +109,7 @@ func Stat_Select_conversion() string {
 				T2.table_column,
 				T2.calculated,
 				T2.from_bof,
+				T2.external_source,
 				T2.date_format,
 				T2.skip 
 			FROM conversion_settings AS T1

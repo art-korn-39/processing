@@ -2,10 +2,15 @@ package conversion_raw
 
 import (
 	"app/config"
+	"app/currency"
 	"app/logs"
 	"app/querrys"
 	"app/util"
+	"app/validation"
+	"encoding/csv"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -19,15 +24,23 @@ type Bof_operation struct {
 	Created_at            time.Time `db:"created_at"`
 	Provider_name         string    `db:"provider_name"`
 	Merchant_name         string    `db:"merchant_name"`
+	Merchant_account_id   int       `db:"merchant_account_id"`
 	Merchant_account_name string    `db:"merchant_account_name"`
 	Operation_type_id     int       `db:"operation_type_id"`
 	Operation_type        string
 	Payment_type          string `db:"payment_type"`
 	Country_code2         string `db:"country"`
 	Status                string `db:"status"`
+	Project_url           string
+
+	Channel_amount       float64 `db:"channel_amount"`
+	Channel_currency_str string  `db:"channel_currency"`
+	Channel_currency     currency.Currency
 }
 
 func (op *Bof_operation) fill() {
+
+	op.Channel_currency = currency.New(op.Channel_currency_str)
 
 	if op.Operation_type_id == 3 {
 		op.Operation_type = "sale"
@@ -43,9 +56,116 @@ func (op *Bof_operation) fill() {
 
 }
 
-func readBofOperations(db *sqlx.DB, key_column string) {
+func readBofOperations(cfg config.Config, db *sqlx.DB, key_column string) (err error) {
 
 	start_time := time.Now()
+
+	switch cfg.Registry.Storage {
+	case config.File:
+		err = readBofFile(cfg.Registry.Filename, key_column)
+	case config.Clickhouse:
+		err = readBofCH(db, key_column)
+	}
+
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение операций БОФ: %v [%s строк]", time.Since(start_time), util.FormatInt(len(bof_operations))))
+
+	return err
+
+}
+
+func readBofFile(filename string, key_column string) error {
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	if filename == "" {
+		return fmt.Errorf("файл реестра БОФ не укаазан")
+	}
+
+	file, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	//fileInfo, _ := file.Stat()
+
+	reader := csv.NewReader(file)
+	reader.Comma = ';'
+	reader.LazyQuotes = true
+
+	// строка с названиями колонок
+	headers, _ := reader.Read()
+
+	map_fileds := validation.GetMapOfColumnNamesStrings(headers)
+	err = validation.CheckMapOfColumnNames(map_fileds, "bof_registry_raw_conversion")
+	if err != nil {
+		return err
+	}
+
+	channel_records := make(chan []string, 1000)
+
+	wg.Add(config.NumCPU)
+	for i := 1; i <= config.NumCPU; i++ {
+		go func() {
+			defer wg.Done()
+			for record := range channel_records {
+				op := ConvertRecordToOperation(record, map_fileds)
+				op.fill()
+				mu.Lock()
+				switch key_column {
+				case OPID:
+					bof_operations[op.Operation_id] = op
+				case PAYID:
+					bof_operations[op.Provider_payment_id] = op
+				}
+
+				mu.Unlock()
+			}
+		}()
+	}
+
+	for {
+		record, err := reader.Read()
+		if err != nil {
+			break
+		}
+		channel_records <- record
+	}
+	close(channel_records)
+
+	wg.Wait()
+
+	return nil
+
+}
+
+func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *Bof_operation) {
+
+	op = &Bof_operation{
+
+		Operation_id:          record[map_fileds["id / operation_id"]-1],
+		Provider_payment_id:   record[map_fileds["acquirer_id / provider_payment_id"]-1],
+		Merchant_account_id:   util.FR(strconv.Atoi(record[map_fileds["merchant_account_id"]-1])).(int),
+		Created_at:            util.GetDateFromString(record[map_fileds["transaction_completed_at"]-1]),
+		Provider_name:         record[map_fileds["provider_name"]-1],
+		Merchant_name:         record[map_fileds["merchant_name"]-1],
+		Merchant_account_name: record[map_fileds["merchant_account_name"]-1],
+		Operation_type:        record[map_fileds["operation_type"]-1],
+		Payment_type:          record[map_fileds["payment_type_id / payment_method_type"]-1],
+		Country_code2:         record[map_fileds["issuer_country"]-1],
+		Status:                record[map_fileds["operation_status"]-1],
+		Project_url:           record[map_fileds["project_url"]-1],
+
+		Channel_currency_str: record[map_fileds["real_currency / channel_currency"]-1],
+		Channel_amount:       util.FR(strconv.ParseFloat(record[map_fileds["real_amount / channel_amount"]-1], 64)).(float64),
+	}
+
+	return
+
+}
+
+func readBofCH(db *sqlx.DB, key_column string) error {
 
 	var mu sync.Mutex
 	var wg sync.WaitGroup
@@ -85,7 +205,7 @@ func readBofOperations(db *sqlx.DB, key_column string) {
 
 	wg.Wait()
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение операций БОФ: %v [%s строк]", time.Since(start_time), util.FormatInt(len(bof_operations))))
+	return nil
 
 }
 

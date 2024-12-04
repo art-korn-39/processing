@@ -72,8 +72,10 @@ type (
 	}
 
 	Settings struct {
-		Guid     []string `json:"guid"`
-		Handbook string   `json:"handbook"`
+		Guid       []string `json:"guid"`
+		Handbook   string   `json:"handbook"`
+		Sheet      string   `json:"sheet"`
+		KGX_Tradex bool     `json:"KGX_Tradex"`
 	}
 
 	DatabaseConnection struct {

@@ -45,6 +45,10 @@ func ReadFiles(files []*file.FileInfo) (chan_operations chan provider_registry.O
 					continue
 				}
 
+				batch := Batch{}
+				batch.SetSlice(operations)
+				operations = batch.Get()
+
 				for _, v := range operations {
 					chan_operations <- v
 				}

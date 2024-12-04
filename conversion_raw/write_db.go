@@ -7,11 +7,31 @@ import (
 	"app/querrys"
 	"app/util"
 	"fmt"
+	"path/filepath"
 	"sync"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 )
+
+func writeResult(cfg config.Config, db *sqlx.DB) {
+
+	if !cfg.Detailed.Usage {
+		return
+	}
+
+	if cfg.Detailed.Storage == config.PSQL {
+		writeIntoDB(db)
+	} else {
+		ext := filepath.Ext(cfg.Detailed.Filename)
+		if ext == ".csv" {
+			writeIntoCSV(cfg.Detailed.Filename)
+		} else if ext == ".xlsx" {
+			writeIntoXLSX(cfg.Detailed.Filename)
+		}
+	}
+
+}
 
 func writeIntoDB(db *sqlx.DB) {
 

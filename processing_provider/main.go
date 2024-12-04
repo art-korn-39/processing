@@ -4,7 +4,6 @@ import (
 	"app/countries"
 	"app/logs"
 	"app/querrys"
-	"app/tariff_merchant"
 	"app/tariff_provider"
 	"fmt"
 	"sync"
@@ -98,7 +97,7 @@ func PrepareData() {
 	// 	defer wg.Done()
 
 	// Сортировка
-	tariff_merchant.SortTariffs()
+	tariff_provider.SortTariffs()
 
 	// Подбор тарифов к операциям
 	SelectTariffsInRegistry()

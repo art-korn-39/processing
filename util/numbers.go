@@ -110,3 +110,8 @@ func FloatFromCell(cell *xlsx.Cell) (num float64) {
 	return
 
 }
+
+func ParseFloat(str string) (float64, error) {
+	str = strings.ReplaceAll(str, ",", "")
+	return strconv.ParseFloat(str, 64)
+}

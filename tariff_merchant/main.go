@@ -154,6 +154,11 @@ func Read_XLSX_Tariffs() {
 				tariff.Payment_type = row.Cells[idx-1].String()
 			}
 
+			idx = map_fileds["юр.лицо"]
+			if idx > 0 {
+				tariff.Company = row.Cells[idx-1].String()
+			}
+
 			tariff.StartingFill()
 
 			data = append(data, tariff)
@@ -186,6 +191,10 @@ func FindTariffForOperation(op Operation) *Tariff {
 	}
 
 	for _, t := range data {
+
+		if t.DateStart.IsZero() {
+			continue
+		}
 
 		isDragonPay := op.GetBool("IsDragonPay") && !op.GetBool("ClassicTariffDragonPay")
 		if (!isDragonPay && t.Merchant_account_id == op.GetInt("Merchant_account_id")) ||

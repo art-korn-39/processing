@@ -12,14 +12,15 @@ import (
 )
 
 type Setting struct {
-	Guid        string
-	Name        string
-	File_format string
-	Sheet_name  string
-	Comma       string
-	values      map[string]Mapping
-	bof_usage   bool
-	Key_column  string
+	Guid           string
+	Name           string
+	File_format    string
+	Sheet_name     string
+	Comma          string
+	values         map[string]Mapping
+	bof_usage      bool
+	external_usage bool
+	Key_column     string
 }
 
 type Mapping struct {
@@ -27,6 +28,7 @@ type Mapping struct {
 	Table_column    string
 	Calculated      bool
 	From_bof        bool
+	External_source bool
 	Skip            bool
 	Date_format     string
 }
@@ -64,6 +66,7 @@ func readSettings(db *sqlx.DB, provider_guid []string) {
 		Calculated      bool   `db:"calculated"`
 		From_bof        bool   `db:"from_bof"`
 		Skip            bool   `db:"skip"`
+		External_source bool   `db:"external_source"`
 	}
 
 	start_time := time.Now()
@@ -81,7 +84,7 @@ func readSettings(db *sqlx.DB, provider_guid []string) {
 	for _, row := range rows {
 
 		mapping := Mapping{
-			Registry_column: row.Registry_column, Table_column: row.Table_column,
+			Registry_column: row.Registry_column, Table_column: row.Table_column, External_source: row.External_source,
 			Date_format: row.Date_format, Calculated: row.Calculated, From_bof: row.From_bof, Skip: row.Skip,
 		}
 
@@ -94,7 +97,10 @@ func readSettings(db *sqlx.DB, provider_guid []string) {
 				Comma: row.Comma, Sheet_name: row.Sheet_name, values: map[string]Mapping{}}
 		}
 		setting.values[row.Registry_column] = mapping
+
 		setting.bof_usage = setting.bof_usage || mapping.From_bof
+		setting.external_usage = setting.external_usage || mapping.External_source
+
 		all_settings[row.Guid] = setting
 	}
 

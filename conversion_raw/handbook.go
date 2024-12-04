@@ -21,7 +21,7 @@ func readHandbook(filename string) error {
 		sheet_name := strings.ToLower(sheet.Name)
 		if sheet_name == "команды" {
 
-			err = readKgxSheet(sheet, filepath.Base(filename))
+			err = readCommandSheet(sheet, filepath.Base(filename))
 			if err != nil {
 				return err
 			}
@@ -32,14 +32,14 @@ func readHandbook(filename string) error {
 
 }
 
-func readKgxSheet(sheet *xlsx.Sheet, file_name string) error {
+func readCommandSheet(sheet *xlsx.Sheet, file_name string) error {
 
 	if len(sheet.Rows) < 2 || sheet.Rows[0].Cells[0].Value != "Team ID" {
 		return fmt.Errorf("некорректный формат файла %s", file_name)
 	}
 
 	map_fileds := validation.GetMapOfColumnNamesCells(sheet.Rows[0].Cells)
-	err := validation.CheckMapOfColumnNames(map_fileds, "kgx_xlsx")
+	err := validation.CheckMapOfColumnNames(map_fileds, "kgx__teams_xlsx")
 	if err != nil {
 		return err
 	}
@@ -62,5 +62,17 @@ func readKgxSheet(sheet *xlsx.Sheet, file_name string) error {
 	}
 
 	return nil
+
+}
+
+func getBalanceByTeamID(record []string, map_fields map[string]int) string {
+
+	idx := map_fields["partnerid"]
+	if idx > 0 {
+		partner_id := record[idx-1]
+		return handbook[partner_id]
+	}
+
+	return ""
 
 }
