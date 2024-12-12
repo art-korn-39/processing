@@ -44,7 +44,7 @@ func writeIntoCSV(filename string) {
 		go func() {
 			defer wg.Done()
 			for i := range channel_indexes {
-				op := registry[i]
+				op := final_registry[i]
 				row := makeDetailedRow(op)
 				channel_rows <- row
 			}
@@ -57,7 +57,7 @@ func writeIntoCSV(filename string) {
 	}()
 
 	go func() {
-		for i := range registry {
+		for i := range final_registry {
 			channel_indexes <- i
 		}
 		close(channel_indexes)

@@ -26,6 +26,10 @@ func (sf *SumFileds) AddValues(o *Operation) {
 }
 
 type KeyFields_SummaryInfo struct {
+	balance      string
+	organization string
+	id_revise    string
+
 	document_date         time.Time
 	provider              string
 	provider_name         string
@@ -40,12 +44,13 @@ type KeyFields_SummaryInfo struct {
 	channel_currency      currency.Currency
 	balance_currency      currency.Currency
 	tariff                tariff_provider.Tariff
+	contractor_provider   string
+	contractor_merchant   string
 }
 
 func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 	KF = KeyFields_SummaryInfo{
-		document_date: o.Document_date,
-		//provider:              o.Provider_base_name,
+		document_date:         o.Document_date,
 		provider_name:         o.Provider_name,
 		verification:          o.Verification,
 		operation_type:        o.Operation_type,
@@ -65,7 +70,18 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 
 	if o.Tariff != nil {
 		KF.tariff = *o.Tariff
-		KF.provider = o.Tariff.Provider
+		//KF.provider = o.Tariff.Provider
+	}
+
+	if o.ProviderBalance != nil {
+		KF.id_revise = o.ProviderBalance.Balance_code
+		KF.balance = o.ProviderBalance.Name
+		KF.organization = o.ProviderBalance.Legal_entity
+		KF.contractor_provider = o.ProviderBalance.Contractor
+	}
+
+	if o.Merchant != nil {
+		KF.contractor_merchant = o.Merchant.Contractor_name
 	}
 
 	return

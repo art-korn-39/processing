@@ -16,10 +16,11 @@ const (
 )
 
 type raw_operation struct {
-	operation_id  string
-	payment_id    string
-	bof_operation *Bof_operation
-	record        []string
+	operation_id       string
+	payment_id         string
+	bof_operation      *Bof_operation
+	provider_operation *pg.Operation
+	record             []string
 }
 
 func createRawOperation(record []string, map_fields map[string]int, setting Setting) (op *raw_operation, err error) {
@@ -28,9 +29,9 @@ func createRawOperation(record []string, map_fields map[string]int, setting Sett
 
 	switch setting.Key_column {
 	case OPID:
-		op.operation_id = getValue("operation_id", record, setting, map_fields, Bof_operation{})
+		op.operation_id = getValue("operation_id", record, setting, map_fields, &Bof_operation{})
 	case PAYID:
-		op.payment_id = getValue("provider_payment_id", record, setting, map_fields, Bof_operation{})
+		op.payment_id = getValue("provider_payment_id", record, setting, map_fields, &Bof_operation{})
 	default:
 		return nil, fmt.Errorf("неизвестный ключ для стыковки: %s", setting.Key_column)
 	}
@@ -47,7 +48,7 @@ func (ext_op *raw_operation) createProviderOperation(map_fields map[string]int, 
 	if ext_op.operation_id != "" {
 		op.Id, err = strconv.Atoi(ext_op.operation_id)
 	} else {
-		op.Id, err = strconv.Atoi(getValue("operation_id", ext_op.record, setting, map_fields, *ext_op.bof_operation))
+		op.Id, err = strconv.Atoi(getValue("operation_id", ext_op.record, setting, map_fields, ext_op.bof_operation))
 	}
 	if err != nil {
 		return nil, fmt.Errorf("field: operation_id - %v", err)
@@ -56,58 +57,65 @@ func (ext_op *raw_operation) createProviderOperation(map_fields map[string]int, 
 	if ext_op.payment_id != "" {
 		op.Provider_payment_id = ext_op.payment_id
 	} else {
-		op.Provider_payment_id = getValue("provider_payment_id", ext_op.record, setting, map_fields, *ext_op.bof_operation)
+		op.Provider_payment_id = getValue("provider_payment_id", ext_op.record, setting, map_fields, ext_op.bof_operation)
 	}
 
-	op.Transaction_completed_at, err = time.Parse(time.DateTime, getValue("transaction_completed_at", ext_op.record, setting, map_fields, *ext_op.bof_operation))
+	op.Transaction_completed_at, err = time.Parse(time.DateTime, getValue("transaction_completed_at", ext_op.record, setting, map_fields, ext_op.bof_operation))
 	if err != nil {
 		return nil, err
 	}
 
-	op.Channel_amount, err = util.ParseFloat(getValue("channel_amount", ext_op.record, setting, map_fields, *ext_op.bof_operation))
+	op.Channel_amount, err = util.ParseFloat(getValue("channel_amount", ext_op.record, setting, map_fields, ext_op.bof_operation))
 	if err != nil {
 		return nil, err
 	}
 
-	op.Amount, err = util.ParseFloat(getValue("amount", ext_op.record, setting, map_fields, *ext_op.bof_operation))
+	op.Amount, err = util.ParseFloat(getValue("amount", ext_op.record, setting, map_fields, ext_op.bof_operation))
 	if err != nil {
 		return nil, err
 	}
 
-	op.BR_amount, err = util.ParseFloat(getValue("br_amount", ext_op.record, setting, map_fields, *ext_op.bof_operation))
+	op.BR_amount, err = util.ParseFloat(getValue("br_amount", ext_op.record, setting, map_fields, ext_op.bof_operation))
 	if err != nil {
 		return nil, err
 	}
 
-	op.Provider_name = getValue("provider_name", ext_op.record, setting, map_fields, *ext_op.bof_operation)
-	op.Merchant_name = getValue("merchant_name", ext_op.record, setting, map_fields, *ext_op.bof_operation)
-	op.Merchant_account_name = getValue("merchant_account_name", ext_op.record, setting, map_fields, *ext_op.bof_operation)
-	op.Operation_type = getValue("operation_type", ext_op.record, setting, map_fields, *ext_op.bof_operation)
-	op.Payment_type = getValue("payment_method_type", ext_op.record, setting, map_fields, *ext_op.bof_operation)
-	op.Country = getValue("country", ext_op.record, setting, map_fields, *ext_op.bof_operation)
-	op.Operation_status = getValue("operation_status", ext_op.record, setting, map_fields, *ext_op.bof_operation)
-	op.Account_number = getValue("account_number", ext_op.record, setting, map_fields, *ext_op.bof_operation)
-	op.Channel_currency_str = getValue("channel_currency", ext_op.record, setting, map_fields, *ext_op.bof_operation)
-	op.Provider_currency_str = getValue("provider_currency", ext_op.record, setting, map_fields, *ext_op.bof_operation)
-	op.Balance = getValue("balance", ext_op.record, setting, map_fields, *ext_op.bof_operation)
-	op.Provider1c = getValue("provider1c", ext_op.record, setting, map_fields, *ext_op.bof_operation)
-	op.Project_url = getValue("project_url", ext_op.record, setting, map_fields, *ext_op.bof_operation)
+	op.Provider_name = getValue("provider_name", ext_op.record, setting, map_fields, ext_op.bof_operation)
+	op.Merchant_name = getValue("merchant_name", ext_op.record, setting, map_fields, ext_op.bof_operation)
+	op.Merchant_account_name = getValue("merchant_account_name", ext_op.record, setting, map_fields, ext_op.bof_operation)
+	op.Operation_type = getValue("operation_type", ext_op.record, setting, map_fields, ext_op.bof_operation)
+	op.Payment_type = getValue("payment_method_type", ext_op.record, setting, map_fields, ext_op.bof_operation)
+	op.Country = getValue("country", ext_op.record, setting, map_fields, ext_op.bof_operation)
+	op.Operation_status = getValue("operation_status", ext_op.record, setting, map_fields, ext_op.bof_operation)
+	op.Account_number = getValue("account_number", ext_op.record, setting, map_fields, ext_op.bof_operation)
+	op.Channel_currency_str = getValue("channel_currency", ext_op.record, setting, map_fields, ext_op.bof_operation)
+	op.Provider_currency_str = getValue("provider_currency", ext_op.record, setting, map_fields, ext_op.bof_operation)
+	op.Balance = getValue("balance", ext_op.record, setting, map_fields, ext_op.bof_operation)
+	op.Provider1c = getValue("provider1c", ext_op.record, setting, map_fields, ext_op.bof_operation)
+	op.Project_url = getValue("project_url", ext_op.record, setting, map_fields, ext_op.bof_operation)
 
-	op.Rate, err = util.ParseFloat(getValue("rate", ext_op.record, setting, map_fields, *ext_op.bof_operation))
+	op.Rate, err = util.ParseFloat(getValue("rate", ext_op.record, setting, map_fields, ext_op.bof_operation))
 	if err != nil {
 		return nil, err
 	}
 
 	op.StartingFill(false)
 
+	ext_op.provider_operation = op
+
 	return op, nil
 
 }
 
-func getValue(reg_name string, record []string, setting Setting, map_fields map[string]int, op Bof_operation) (result string) {
+func getValue(reg_name string, record []string, setting Setting, map_fields map[string]int, bof_op *Bof_operation) (result string) {
 
 	mapping := setting.values[reg_name]
 	float_names := []string{"amount", "channel_amount", "br_amount", "rate"}
+
+	op := Bof_operation{Operation_id: "0"}
+	if bof_op != nil {
+		op = *bof_op
+	}
 
 	if mapping.Skip {
 		if slices.Contains(float_names, reg_name) {
@@ -173,7 +181,7 @@ func getBalance(record []string, map_fields map[string]int, op Bof_operation) (b
 	if is_kgx_tradex {
 		balance_name = getBalanceByTeamID(record, map_fields)
 	} else {
-		balance, ok := provider_balances.GetByMAID(op.Merchant_account_id)
+		balance, ok := provider_balances.GetByProvierAndMA(op.Provider_id, op.Merchant_account_id)
 		if ok {
 			balance_name = balance.Name
 		}
@@ -183,7 +191,8 @@ func getBalance(record []string, map_fields map[string]int, op Bof_operation) (b
 
 func getProviderCurrency(op Bof_operation) (currency string) {
 
-	balance, ok := provider_balances.GetByMAID(op.Merchant_account_id)
+	//balance, ok := provider_balances.GetByMAID(op.Merchant_account_id)
+	balance, ok := provider_balances.GetByProvierAndMA(op.Provider_id, op.Merchant_account_id)
 	if ok {
 		currency = balance.Balance_currency.Name
 	}

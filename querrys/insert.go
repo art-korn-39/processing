@@ -1,9 +1,5 @@
 package querrys
 
-import (
-	"fmt"
-)
-
 func Stat_Insert_provider_registry() string {
 	return `
 	INSERT INTO provider_registry (
@@ -169,7 +165,7 @@ func Stat_Insert_chargeback_operations() string {
 		project_id, project_name, merchant_id, merchant_name, provider_id, provider_name, 
 		merchant_account_id, merchant_account_name, payment_type_id, payment_type_name, amount,
 		channel_amount, amount_usd, channel_amount_usd, amount_rub, channel_amount_rub,
-		type, channel_currency, transaction_status,
+		type, channel_currency, transaction_status, state, state_change_date,
 		chargeback_id, chargeback_case_id, chargeback_status, chargeback_deadline, chargeback_code_reason
 	)
 	VALUES (
@@ -177,7 +173,7 @@ func Stat_Insert_chargeback_operations() string {
 		:project_id, :project_name, :merchant_id, :merchant_name, :provider_id, :provider_name, 
 		:merchant_account_id, :merchant_account_name, :payment_type_id, :payment_type_name, :amount,
 		:channel_amount, :amount_usd, :channel_amount_usd, :amount_rub, :channel_amount_rub,
-		:type, :channel_currency, :transaction_status,
+		:type, :channel_currency, :transaction_status, :state, :state_change_date,
 		:chargeback_id, :chargeback_case_id, :chargeback_status, :chargeback_deadline, :chargeback_code_reason
 	)
 
@@ -188,7 +184,7 @@ func Stat_Insert_chargeback_operations() string {
 		channel_amount_usd = EXCLUDED.channel_amount_usd, amount_rub = EXCLUDED.amount_rub,
 		channel_amount_rub = EXCLUDED.channel_amount_rub, type = EXCLUDED.type, 
 		channel_currency = EXCLUDED.channel_currency, transaction_status = EXCLUDED.transaction_status, 
-		chargeback_id = EXCLUDED.chargeback_id,
+		chargeback_id = EXCLUDED.chargeback_id, state = EXCLUDED.state, state_change_date = EXCLUDED.state_change_date,
 		chargeback_case_id = EXCLUDED.chargeback_case_id, chargeback_status = EXCLUDED.chargeback_status,
 		chargeback_deadline = EXCLUDED.chargeback_deadline, chargeback_code_reason = EXCLUDED.chargeback_code_reason`
 }
@@ -226,7 +222,7 @@ func Stat_Insert_summary_merchant() string {
 		balance_currency, convertation, tariff_date_start, tariff_id, formula, channel_amount, balance_amount, 
 		sr_channel_currency, sr_balance_currency, count_operations, rate,
 		payment_type_id, payment_method_id, rated_account, provider_1c, subdivision_1c, business_type, project_id,
-		rr_amount, rr_date, schema, category
+		rr_amount, rr_date, schema, convertation_id
 	)
 	VALUES (
 		:document_id, :document_date, :operation_type, :operation_group, :merchant_id, :merchant_account_id, 
@@ -234,7 +230,7 @@ func Stat_Insert_summary_merchant() string {
 		:convertation, :tariff_date_start, :tariff_id, :formula, :channel_amount, :balance_amount, 
 		:sr_channel_currency, :sr_balance_currency, :count_operations, :rate,
 		:payment_type_id, :payment_method_id, :rated_account, :provider_1c, :subdivision_1c, :business_type, :project_id,
-		:rr_amount, :rr_date, :schema, :category
+		:rr_amount, :rr_date, :schema, :convertation_id
 		)`
 }
 
@@ -245,40 +241,4 @@ func Stat_Insert_source_files() string {
 	VALUES (
 		:filename, :category, :size, :size_mb, :modified, :rows, :last_upload
 		)`
-}
-
-func Stat_Insert_reports() string {
-	return `INSERT INTO reports 
-	SELECT * 
-	FROM s3('https://s3.$region.amazonaws.com/$bucket/$filename', '$key', '$secret', 'CSV');`
-}
-
-func Stat_Insert_reports_before_250624() string {
-	fields := fileds_before_250624()
-	return fmt.Sprintf(`INSERT INTO reports
-	(%s)
-	SELECT %s
-	FROM s3('https://s3.$region.amazonaws.com/$bucket/$filename', '$key', '$secret', 'CSV');`, fields, fields)
-}
-
-func fileds_before_250624() string {
-	return `billing__amount,billing__balance_currency_id,billing__balance_id,billing__balance_type
-	,billing__billing_operation_created_at,billing__billing_operation_id,billing__billing_operation_type_id
-	,billing__billing_operation_updated_at,billing__company_id,billing__contract_conditions_id
-	,billing__contract_id,billing__legal_entity_id,billing__merchant_id,billing__operation_currency_id
-	,billing__operation_id,billing__operation_type_id,billing__payment_method_id,billing__payment_method_type_id
-	,billing__project_id,billing__provider_id,billing__tariff_conditions_id,billing__transaction_id
-	,billing__transaction_type_id,operation__account_bank_name,operation__actual_amount,operation__amount
-	,operation__brand_id,operation__business_type,operation__channel_amount,operation__channel_currency
-	,operation__coupled_operation_id,operation__currency,operation__fee_amount,operation__fee_currency
-	,operation__issuer_country,operation__issuer_region,operation__merchant_account_id
-	,operation__merchant_account_name,operation__merchant_name,operation__msc_amount,operation__msc_currency
-	,operation__operation_created_at,operation__operation_id,operation__operation_status,operation__payment_id
-	,operation__payment_method_name,operation__payment_method_type,operation__project_name,operation__provider_amount
-	,operation__provider_currency,operation__provider_name,operation__provider_payment_id
-	,operation__split_commission_balance_id,operation__surcharge_amount,operation__surcharge_currency,correction_flag`
-}
-
-func Stat_Optimize_reports() string {
-	return `OPTIMIZE TABLE reports FINAL DEDUPLICATE BY billing__billing_operation_id;`
 }

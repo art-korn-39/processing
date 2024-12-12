@@ -3,6 +3,8 @@ package processing_provider
 import (
 	"app/countries"
 	"app/logs"
+	"app/merchants"
+	"app/provider_balances"
 	"app/querrys"
 	"app/tariff_provider"
 	"fmt"
@@ -11,7 +13,7 @@ import (
 )
 
 const (
-	Version = "1.0.4"
+	Version = "1.1.0"
 )
 
 var (
@@ -65,7 +67,7 @@ func ReadSources() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(3)
+	wg.Add(5)
 
 	registry_done := make(chan querrys.Args, 1)
 	go func() {
@@ -75,12 +77,22 @@ func ReadSources() {
 
 	go func() {
 		defer wg.Done()
-		tariff_provider.Read_Sources()
+		tariff_provider.Read_Sources(storage.Postgres)
 	}()
 
 	go func() {
 		defer wg.Done()
 		countries.Read_Data(storage.Postgres)
+	}()
+
+	go func() {
+		defer wg.Done()
+		provider_balances.Read(storage.Postgres)
+	}()
+
+	go func() {
+		defer wg.Done()
+		merchants.Read(storage.Postgres)
 	}()
 
 	wg.Wait()
@@ -92,27 +104,15 @@ func PrepareData() {
 
 	// wg.Add(2)
 
-	// // 2. Тарифы
-	// go func() {
-	// 	defer wg.Done()
-
 	// Сортировка
 	tariff_provider.SortTariffs()
 
 	// Подбор тарифов к операциям
 	SelectTariffsInRegistry()
-	//}()
 
-	// // 2. Курсы валют
-	// go func() {
-	// 	defer wg.Done()
+	SetBalanceInOperations()
 
-	// 	// Группировка курсов валют
-	// 	provider.Rates = provider.Rates.Group()
-
-	// 	// Сортировка курсов валют
-	// 	provider.Rates.Sort()
-	// }()
+	SetMerchantInOperations()
 
 	// wg.Wait()
 

@@ -2,7 +2,6 @@ package tariff_provider
 
 import (
 	"app/config"
-	"app/currency"
 	"app/logs"
 	"app/util"
 	"app/validation"
@@ -14,15 +13,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/tealeg/xlsx"
 )
 
-var data []Tariff
+var data []*Tariff
 
-func Read_Sources() {
+func Read_Sources(db *sqlx.DB) {
 
 	if config.Get().Tariffs.Storage == config.PSQL {
-		util.Unused()
+		Read_PSQL_Tariffs(db)
 	} else {
 		Read_XLSX_Tariffs()
 	}
@@ -34,8 +34,6 @@ func Read_XLSX_Tariffs() {
 	if config.Get().Tariffs.Filename == "" {
 		return
 	}
-
-	data = make([]Tariff, 0, 1000)
 
 	start_time := time.Now()
 
@@ -75,6 +73,8 @@ func Read_XLSX_Tariffs() {
 			return
 		}
 
+		data = make([]*Tariff, 0, 1000)
+
 		for _, row := range sheet.Rows {
 
 			if slices.Index(sheet.Rows, row) <= headerLine {
@@ -87,10 +87,10 @@ func Read_XLSX_Tariffs() {
 
 			tariff := Tariff{}
 
-			tariff.ID_revise = row.Cells[map_fileds["идентификатор сверки"]-1].String()
-			tariff.Provider = row.Cells[map_fileds["провайдер"]-1].String()
-			tariff.Organization = row.Cells[map_fileds["организация"]-1].String()
-			tariff.Provider_name = row.Cells[map_fileds["provider_name"]-1].String()
+			// tariff.ID_revise = row.Cells[map_fileds["идентификатор сверки"]-1].String()
+			// tariff.Provider = row.Cells[map_fileds["провайдер"]-1].String()
+			// tariff.Organization = row.Cells[map_fileds["организация"]-1].String()
+			//tariff.Provider_name = row.Cells[map_fileds["provider_name"]-1].String()
 			tariff.DateStart, _ = row.Cells[map_fileds["date_of_start"]-1].GetTime(false)
 			tariff.Merchant_name = row.Cells[map_fileds["merchant_name"]-1].String()
 			tariff.Merchant_account_name = row.Cells[map_fileds["merchant_account_name"]-1].String()
@@ -98,7 +98,7 @@ func Read_XLSX_Tariffs() {
 			tariff.Payment_method = row.Cells[map_fileds["payment_method"]-1].String()
 			tariff.Payment_method_type = row.Cells[map_fileds["payment_method_type"]-1].String()
 			tariff.Region = row.Cells[map_fileds["region"]-1].String()
-			tariff.ChannelCurrency = currency.New(row.Cells[map_fileds["channel_currency"]-1].String())
+			tariff.ChannelCurrency_str = row.Cells[map_fileds["channel_currency"]-1].String()
 			tariff.Project = row.Cells[map_fileds["project_name"]-1].String()
 			tariff.Business_type = row.Cells[map_fileds["business_type"]-1].String()
 			tariff.Operation_group = row.Cells[map_fileds["operation_group"]-1].String()
@@ -112,7 +112,7 @@ func Read_XLSX_Tariffs() {
 
 			percent_str := strings.ReplaceAll(row.Cells[map_fileds["percent"]-1].String(), "%", "")
 			tariff.Percent, _ = strconv.ParseFloat(percent_str, 64)
-			tariff.Percent = tariff.Percent / 100
+			//tariff.Percent = tariff.Percent / 100
 
 			tariff.Fix = util.FloatFromCell(row.Cells[map_fileds["fix"]-1])
 			tariff.Min = util.FloatFromCell(row.Cells[map_fileds["min commission"]-1])
@@ -120,7 +120,7 @@ func Read_XLSX_Tariffs() {
 
 			tariff.StartingFill()
 
-			data = append(data, tariff)
+			data = append(data, &tariff)
 
 		}
 
@@ -188,11 +188,11 @@ func FindTariffForOperation(id int, op Operation) *Tariff {
 				channel_amount := op.GetFloat("Channel_amount")
 				if channel_amount > t.Range_amount_min &&
 					channel_amount <= t.Range_amount_max {
-					selected_tariffs = append(selected_tariffs, &t)
+					selected_tariffs = append(selected_tariffs, t)
 				}
 
 			} else {
-				selected_tariffs = append(selected_tariffs, &t)
+				selected_tariffs = append(selected_tariffs, t)
 			}
 
 		}

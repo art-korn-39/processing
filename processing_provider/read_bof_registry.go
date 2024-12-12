@@ -146,6 +146,7 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		Operation_id:        util.FR(strconv.Atoi(record[map_fileds["id / operation_id"]-1])).(int),
 		Transaction_id:      util.FR(strconv.Atoi(record[map_fileds["transaction_id"]-1])).(int),
 		Merchant_id:         util.FR(strconv.Atoi(record[map_fileds["merchant_id"]-1])).(int),
+		Provider_id:         util.FR(strconv.Atoi(record[map_fileds["provider_id"]-1])).(int),
 		Merchant_account_id: util.FR(strconv.Atoi(record[map_fileds["merchant_account_id"]-1])).(int),
 		Project_id:          util.FR(strconv.Atoi(record[map_fileds["project_id"]-1])).(int),
 		Legal_entity_id:     util.FR(strconv.Atoi(record[map_fileds["legal_entity_id"]-1])).(int),

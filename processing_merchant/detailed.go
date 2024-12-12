@@ -124,7 +124,7 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 		d.Provider1C = t.Provider1C
 		d.RatedAccount = t.RatedAccount
 		d.Subdivision1C = t.Subdivision1C
-		d.Tariff_condition_id = t.Id
+		//d.Tariff_condition_id = t.Id
 		d.Tariff_date_start = t.DateStart
 		d.Act_percent = t.Percent
 		d.Act_fix = t.Fix
@@ -132,6 +132,12 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 		d.Act_max = t.Max
 		d.Range_min = t.RangeMIN
 		d.Range_max = t.RangeMAX
+	}
+
+	if o.Tariff_dragonpay_mid != nil {
+		d.Tariff_condition_id = o.Tariff_dragonpay_mid.Id
+	} else if o.Tariff != nil {
+		d.Tariff_condition_id = o.Tariff.Id
 	}
 
 	if o.Tariff_bof != nil {

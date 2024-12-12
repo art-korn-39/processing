@@ -75,7 +75,7 @@ type (
 		Guid       []string `json:"guid"`
 		Handbook   string   `json:"handbook"`
 		Sheet      string   `json:"sheet"`
-		KGX_Tradex bool     `json:"KGX_Tradex"`
+		KGX_Tradex bool     `json:"kgx"`
 	}
 
 	DatabaseConnection struct {

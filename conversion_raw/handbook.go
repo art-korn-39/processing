@@ -34,12 +34,12 @@ func readHandbook(filename string) error {
 
 func readCommandSheet(sheet *xlsx.Sheet, file_name string) error {
 
-	if len(sheet.Rows) < 2 || sheet.Rows[0].Cells[0].Value != "Team ID" {
+	if len(sheet.Rows) < 2 || sheet.Rows[0].Cells[0].Value != "team_id" {
 		return fmt.Errorf("некорректный формат файла %s", file_name)
 	}
 
 	map_fileds := validation.GetMapOfColumnNamesCells(sheet.Rows[0].Cells)
-	err := validation.CheckMapOfColumnNames(map_fileds, "kgx__teams_xlsx")
+	err := validation.CheckMapOfColumnNames(map_fileds, "kgx_teams_xlsx")
 	if err != nil {
 		return err
 	}
@@ -54,8 +54,8 @@ func readCommandSheet(sheet *xlsx.Sheet, file_name string) error {
 			break
 		}
 
-		team_id := row.Cells[map_fileds["team id"]-1].String()
-		balance := row.Cells[map_fileds["баланс"]-1].String()
+		team_id := row.Cells[map_fileds["team_id"]-1].String()
+		balance := row.Cells[map_fileds["balance"]-1].String()
 
 		handbook[team_id] = balance
 

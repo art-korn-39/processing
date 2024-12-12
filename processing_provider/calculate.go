@@ -3,6 +3,8 @@ package processing_provider
 import (
 	"app/config"
 	"app/logs"
+	"app/merchants"
+	"app/provider_balances"
 	"app/tariff_provider"
 	"app/util"
 	"fmt"
@@ -27,7 +29,6 @@ func SelectTariffsInRegistry() {
 			defer wg.Done()
 			for index := range channel_indexes {
 				operation := storage.Registry[index]
-				//operation.Crypto_network = crypto.Registry[operation.Operation_id].Network
 				operation.Tariff = tariff_provider.FindTariffForOperation(operation.Operation_id, operation)
 				if operation.Tariff == nil {
 					atomic.AddInt64(&countWithoutTariff, 1)
@@ -90,5 +91,43 @@ func CalculateCommission() {
 	wg.Wait()
 
 	logs.Add(logs.INFO, fmt.Sprintf("Расчёт комиссии: %v", time.Since(start_time)))
+
+}
+
+func SetBalanceInOperations() {
+
+	start_time := time.Now()
+
+	var countWithout int
+
+	for _, operation := range storage.Registry {
+		balance, ok := provider_balances.GetByProvierAndMA(operation.Provider_id, operation.Merchant_account_id)
+		if ok {
+			operation.ProviderBalance = balance
+		} else {
+			countWithout++
+		}
+	}
+
+	logs.Add(logs.INFO, fmt.Sprintf("Подбор балансов к операциям: %v [без баланса: %d]", time.Since(start_time), countWithout))
+
+}
+
+func SetMerchantInOperations() {
+
+	start_time := time.Now()
+
+	var countWithout int
+
+	for _, operation := range storage.Registry {
+		merchant, ok := merchants.GetByProjectID(operation.Project_id)
+		if ok {
+			operation.Merchant = merchant
+		} else {
+			countWithout++
+		}
+	}
+
+	logs.Add(logs.INFO, fmt.Sprintf("Подбор мерчантов к операциям: %v [не найдено: %d]", time.Since(start_time), countWithout))
 
 }

@@ -16,7 +16,11 @@ type Balance struct {
 	Merchant_account_id int       `db:"merchant_account_id"`
 	Date_start          time.Time `db:"date_start"`
 	Date_finish         time.Time `db:"date_finish"`
-	Key_record          string    `db:"key_record"`
+
+	Convertation    string `db:"convertation"`
+	Convertation_id int    `db:"convertation_id"`
+
+	Key_record string `db:"key_record"`
 
 	Balance_currency_str string `db:"balance_currency"`
 	Balance_currency     currency.Currency

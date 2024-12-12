@@ -110,7 +110,7 @@ func loadOperations(cfg config.Config, token string) error {
 	}
 
 	operations = map[string]*Operation{}
-	dispute = map[string]string{}
+	dispute_map = map[string]Dispute{}
 
 	for _, period := range slice_periods {
 		err := getOperationsForPeriod(cfg, token, period.StartDay, period.EndDay)
@@ -203,13 +203,14 @@ func getOperationsForPeriod(cfg config.Config, token string, date_start, date_en
 func getDisputeForPeriod(cfg config.Config, token string, date_start, date_end time.Time) error {
 
 	type Response struct {
-		Value []map[string]string `json:"value"`
+		Value []Dispute `json:"value"`
 	}
 
 	s0 := []string{
-		"$select=operationid,chargebackid",
+		"$select=operationid,chargebackid,state,statechangedate",
 	}
 
+	s0 = append(s0, "$expand=state($select=Name)")
 	s0 = append(s0, "$filter=CreatedOn+ge+@date1+and+CreatedOn+le+@date2")
 	s0 = append(s0, "@date1="+date_start.Format(time_layout))
 	s0 = append(s0, "@date2="+date_end.Format(time_layout))
@@ -247,7 +248,8 @@ func getDisputeForPeriod(cfg config.Config, token string, date_start, date_end t
 	}
 
 	for _, v := range data.Value {
-		dispute[v["OperationId"]] = v["ChargebackId"]
+		v.fill()
+		dispute_map[v.Operation_guid] = v
 	}
 
 	logs.Add(logs.INFO, fmt.Sprintf("Загружены мэтчи: %s [%s -> %s]",

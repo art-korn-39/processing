@@ -13,7 +13,7 @@ import (
 type SummaryRowMerchant struct {
 	Document_id         int       `db:"document_id"`
 	Document_date       time.Time `db:"document_date"`
-	Category            int       `db:"category"`
+	Convertation_id     int       `db:"convertation_id"`
 	Convertation        string    `db:"convertation"`
 	Schema              string    `db:"schema"`
 	Operation_type      string    `db:"operation_type"`
@@ -78,11 +78,11 @@ func (row *SummaryRowMerchant) SetRate() {
 
 }
 
-func (row *SummaryRowMerchant) SetCategory() {
+func (row *SummaryRowMerchant) SetConvertationID() {
 	if row.Convertation == "Реестр" || row.Schema == "KGX" {
-		row.Category = 2
+		row.Convertation_id = 2
 	} else if row.Convertation == "Без конверта" || row.Schema == "Crypto" {
-		row.Category = 1
+		row.Convertation_id = 1
 	}
 }
 
@@ -101,7 +101,7 @@ func (row *SummaryRowMerchant) SetID() {
 
 	merch_str := fmt.Sprintf("%05d", row.Merchant_id)
 
-	id_str := fmt.Sprint(10, days_str, merch_str, row.Category)
+	id_str := fmt.Sprint(10, days_str, merch_str, row.Convertation_id)
 	row.Document_id, _ = strconv.Atoi(id_str)
 
 }
@@ -134,13 +134,20 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 			k.Convertation = o.Tariff.Convertation
 			k.Schema = o.Tariff.Schema
 			k.Tariff_date_start = o.Tariff.DateStart
-			k.Tariff_id = o.Tariff.Id
+			//k.Tariff_id = o.Tariff.Id
 			k.Formula = o.Tariff.Formula
 			k.Provider_1c = o.Tariff.Provider1C
 			k.Subdivision_1c = o.Tariff.Subdivision1C
 			k.Rated_account = o.Tariff.RatedAccount
 		}
-		k.SetCategory()
+
+		if o.Tariff_dragonpay_mid != nil {
+			k.Tariff_id = o.Tariff_dragonpay_mid.Id
+		} else if o.Tariff != nil {
+			k.Tariff_id = o.Tariff.Id
+		}
+
+		k.SetConvertationID()
 		k.SetID()
 		return
 	}

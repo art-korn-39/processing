@@ -54,8 +54,8 @@ func CheckMapOfColumnNames(map_fileds map[string]int, table string) error {
 		s = fields_dragonpay_xlsx()
 	case "provider_registry":
 		s = fields_provider_registry()
-	case "kgx__teams_xlsx":
-		s = fields_kgx__teams_xlsx()
+	case "kgx_teams_xlsx":
+		s = fields_kgx_teams_xlsx()
 	case "bof_registry_raw_conversion":
 		s = fields_bof_registry_raw_conversion()
 	default:
@@ -95,7 +95,7 @@ func fields_bof_registry_provider() []string {
 	return []string{
 		"id / operation_id", "transaction_id", "transaction_completed_at",
 		"merchant_id", "merchant_account_id", "project_id", "project_name", "project_url",
-		"provider_name", "merchant_name", "merchant_account_name",
+		"provider_name", "merchant_name", "merchant_account_name", "provider_id",
 		"acquirer_id / provider_payment_id", "issuer_country",
 		"operation_type", "payment_type_id / payment_method_type",
 		"real_currency / channel_currency", "real_amount / channel_amount",
@@ -118,8 +118,8 @@ func fields_tariff_merchant() []string {
 
 func fields_tariff_provider() []string {
 	return []string{
-		"идентификатор сверки", "организация",
-		"провайдер", "provider_name", "date_of_start", "merchant_name", "merchant_account_name", "merchant_legal_entity",
+		//"идентификатор сверки", "организация", "провайдер", "provider_name",
+		"date_of_start", "merchant_name", "merchant_account_name", "merchant_legal_entity",
 		"payment_method", "payment_method_type", "region", "channel_currency", "project_name", "business_type",
 		"operation_group", "tariff range turnouver min", "tariff range turnouver max",
 		"tariff range amount min", "tariff range amount max", "percent", "fix", "min commission", "max commission",
@@ -147,8 +147,8 @@ func fields_dragonpay_xlsx() []string {
 	return []string{"endpoint_id", "поставщик dragonpay"}
 }
 
-func fields_kgx__teams_xlsx() []string {
-	return []string{"team id", "баланс"}
+func fields_kgx_teams_xlsx() []string {
+	return []string{"team_id", "balance"}
 }
 
 func fields_provider_registry() []string {
@@ -165,7 +165,7 @@ func fields_provider_registry() []string {
 
 func fields_bof_registry_raw_conversion() []string {
 	return []string{
-		"id / operation_id", "merchant_account_id",
+		"id / operation_id", "merchant_account_id", "provider_id",
 		"provider_name", "merchant_name", "merchant_account_name",
 		"operation_type", "transaction_completed_at",
 		"payment_type_id / payment_method_type", "issuer_country",

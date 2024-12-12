@@ -22,6 +22,7 @@ type Bof_operation struct {
 	Operation_id          string    `db:"operation_id"`
 	Provider_payment_id   string    `db:"provider_payment_id"`
 	Created_at            time.Time `db:"created_at"`
+	Provider_id           int       `db:"provider_id"`
 	Provider_name         string    `db:"provider_name"`
 	Merchant_name         string    `db:"merchant_name"`
 	Merchant_account_id   int       `db:"merchant_account_id"`
@@ -67,7 +68,7 @@ func readBofOperations(cfg config.Config, db *sqlx.DB, key_column string) (err e
 		err = readBofCH(db, key_column)
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение операций БОФ: %v [%s строк]", time.Since(start_time), util.FormatInt(len(bof_operations))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение операций БОФ: %v [%s строк]", time.Since(start_time), util.FormatInt(len(bof_registry))))
 
 	return err
 
@@ -115,11 +116,10 @@ func readBofFile(filename string, key_column string) error {
 				mu.Lock()
 				switch key_column {
 				case OPID:
-					bof_operations[op.Operation_id] = op
+					bof_registry[op.Operation_id] = op
 				case PAYID:
-					bof_operations[op.Provider_payment_id] = op
+					bof_registry[op.Provider_payment_id] = op
 				}
-
 				mu.Unlock()
 			}
 		}()
@@ -145,6 +145,7 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *B
 	op = &Bof_operation{
 
 		Operation_id:          record[map_fileds["id / operation_id"]-1],
+		Provider_id:           util.FR(strconv.Atoi(record[map_fileds["provider_id"]-1])).(int),
 		Provider_payment_id:   record[map_fileds["acquirer_id / provider_payment_id"]-1],
 		Merchant_account_id:   util.FR(strconv.Atoi(record[map_fileds["merchant_account_id"]-1])).(int),
 		Created_at:            util.GetDateFromString(record[map_fileds["transaction_completed_at"]-1]),
@@ -192,9 +193,9 @@ func readBofCH(db *sqlx.DB, key_column string) error {
 					mu.Lock()
 					switch key_column {
 					case OPID:
-						bof_operations[v.Operation_id] = &v
+						bof_registry[v.Operation_id] = &v
 					case PAYID:
-						bof_operations[v.Provider_payment_id] = &v
+						bof_registry[v.Provider_payment_id] = &v
 					}
 
 					mu.Unlock()

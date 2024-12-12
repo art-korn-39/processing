@@ -12,7 +12,7 @@ import (
 var (
 	chargebacks map[string]*Chargeback
 	operations  map[string]*Operation
-	dispute     map[string]string // operation - chargeback
+	dispute_map map[string]Dispute // operation - chargeback
 )
 
 func Start() {
@@ -61,10 +61,12 @@ func setChargebackInfoIntoOperations() {
 	var countNoneInDisput int
 	var countBadId int
 	for _, op := range operations {
-		chargeback_id, ok := dispute[op.GUID]
+		dispute, ok := dispute_map[op.GUID]
 		if ok {
-			op.Chargeback_id = chargeback_id
-			chargeback, ok := chargebacks[chargeback_id]
+			op.Chargeback_id = dispute.Chargeback_id
+			op.State = dispute.State_name
+			op.StateChangeDate = dispute.StateChangeDate
+			chargeback, ok := chargebacks[dispute.Chargeback_id]
 			if ok {
 				op.Chargeback_case_id = chargeback.Case_ID
 				op.Chargeback_status = chargeback.Status

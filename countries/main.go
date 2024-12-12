@@ -2,6 +2,7 @@ package countries
 
 import (
 	"app/logs"
+	"app/querrys"
 	"app/util"
 	"fmt"
 	"time"
@@ -22,7 +23,7 @@ func Read_Data(db *sqlx.DB) {
 
 	start_time := time.Now()
 
-	stat := `SELECT * FROM countries`
+	stat := querrys.Stat_Select_countries()
 
 	slice_countries := []Country{}
 

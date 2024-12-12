@@ -76,6 +76,7 @@ func Stat_Select_reports_by_id() string {
 		toString(operation__operation_id) AS operation_id, 
 		IFNULL(operation__provider_payment_id, '') AS provider_payment_id,
 		IFNULL(operation__merchant_account_id, 0) AS merchant_account_id,
+		IFNULL(billing__provider_id, 0) AS provider_id, 
 		date_add(HOUR, 3, billing__billing_operation_created_at) AS created_at,
 		IFNULL(operation__provider_name, '') AS provider_name,
 		IFNULL(operation__merchant_name, '') AS merchant_name,
@@ -95,6 +96,45 @@ func Stat_Select_provider_registry() string {
 		FROM provider_registry 
 		WHERE lower(merchant_name) = ANY($1) 
 		AND transaction_completed_at BETWEEN $2 AND $3`
+}
+
+func Stat_Select_tariffs_provider() string {
+	return `SELECT 
+				date_start,merchant_name,merchant_account_name,merchant_legal_entity,
+				payment_method,payment_method_type,region,channel_currency,project_name,
+				business_type,operation_group,traffic_type,account_bank_name,
+				tariff_range_turnouver_min,tariff_range_turnouver_max,tariff_range_amount_min,
+				tariff_range_amount_max,percent,fix,min,max
+			FROM tariffs_provider`
+}
+
+func Stat_Select_provider_balances() string {
+	return `SELECT 
+				provider_balance,contractor,provider_name,provider_id,balance_code,
+				legal_entity,merchant_account,merchant_account_id,date_start,
+				date_finish,convertation,convertation_id,key_record,balance_currency
+			FROM provider_balances
+			WHERE provider_id > 0 AND merchant_account_id > 0`
+}
+
+func Stat_Select_crypto() string {
+	return `SELECT 
+				operation_id,network,created_at,created_at_day,operation_type,
+				payment_amount,payment_currency,crypto_amount,crypto_currency
+			FROM crypto`
+}
+
+func Stat_Select_countries() string {
+	return `SELECT 
+				region_name,name,name_en,code,code2,code3,currency
+			FROM countries`
+}
+
+func Stat_Select_merchants() string {
+	return `SELECT 
+				contractor_name,contractor_guid,merchant_name,
+				merchant_id,project_name,project_id,project_url
+			FROM merchants`
 }
 
 func Stat_Select_conversion() string {

@@ -4,25 +4,27 @@ import (
 	"app/config"
 	"app/logs"
 	"app/provider_balances"
-	"app/provider_registry"
+	pr "app/provider_registry"
 	"app/storage"
 	"fmt"
 	"time"
 )
 
 var (
-	is_kgx_tradex  bool
-	registry       map[int]*provider_registry.Operation
+	final_registry map[int]*pr.Operation
 	ext_registry   []*raw_operation
-	bof_operations map[string]*Bof_operation
-	all_settings   map[string]Setting
-	handbook       map[string]string
+	bof_registry   map[string]*Bof_operation
+
+	is_kgx_tradex bool
+	all_settings  map[string]Setting
+	handbook      map[string]string
 )
 
 func init() {
-	registry = map[int]*provider_registry.Operation{}
+	final_registry = map[int]*pr.Operation{}
+	bof_registry = map[string]*Bof_operation{}
+
 	all_settings = map[string]Setting{}
-	bof_operations = map[string]*Bof_operation{}
 	handbook = map[string]string{}
 }
 
@@ -54,7 +56,7 @@ func Start() {
 	}
 
 	// чтение операций БОФ
-	readBofOperations(cfg, storage.Clickhouse, setting.Key_column)
+	err = readBofOperations(cfg, storage.Clickhouse, setting.Key_column)
 	if err != nil {
 		logs.Add(logs.FATAL, err)
 	}
@@ -93,13 +95,13 @@ func handleRecords(map_fields map[string]int, setting Setting) error {
 		var ok bool
 		switch setting.Key_column {
 		case OPID:
-			v.bof_operation, ok = bof_operations[v.operation_id]
+			v.bof_operation, ok = bof_registry[v.operation_id]
 		case PAYID:
-			v.bof_operation, ok = bof_operations[v.payment_id]
+			v.bof_operation, ok = bof_registry[v.payment_id]
 		}
 		if !ok {
 			cntWithoutBof++
-			continue
+			//continue
 		}
 
 		provider_operation, err := v.createProviderOperation(map_fields, setting)
@@ -109,7 +111,9 @@ func handleRecords(map_fields map[string]int, setting Setting) error {
 
 		setCalculatedFields(provider_operation, sliceCalculatedFields)
 
-		registry[provider_operation.Id] = provider_operation
+		if ok {
+			final_registry[provider_operation.Id] = provider_operation
+		}
 
 	}
 
@@ -119,7 +123,7 @@ func handleRecords(map_fields map[string]int, setting Setting) error {
 
 }
 
-func setCalculatedFields(op *provider_registry.Operation, calculatedFields []string) {
+func setCalculatedFields(op *pr.Operation, calculatedFields []string) {
 
 	for _, v := range calculatedFields {
 		switch v {

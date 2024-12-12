@@ -121,3 +121,22 @@ func TestProceesing4(t *testing.T) {
 	processing_provider.Start()
 
 }
+
+// проверка выполнения
+// reg - F; tariff - PQ
+func TestProceesing5(t *testing.T) {
+
+	logs.Testing = true
+
+	app := "processing_provider"
+	file_config := "test\\config5.conf"
+
+	config.New(app, file_config)
+	if err := config.Load(); err != nil {
+		logs.Add(logs.FATAL, err)
+		return
+	}
+
+	processing_provider.Start()
+
+}

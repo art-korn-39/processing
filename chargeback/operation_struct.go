@@ -41,9 +41,11 @@ type Operation struct {
 	Amount_rub         float64 `json:"amountanalyticcurrency" db:"amount_rub"`
 	Channel_amount_rub float64 `json:"channelamountanalyticcurrency" db:"channel_amount_rub"`
 
-	Type_name             string `db:"type"`
-	Channel_currency_name string `db:"channel_currency"`
-	Transaction_status    string `db:"transaction_status"`
+	Type_name             string    `db:"type"`
+	Channel_currency_name string    `db:"channel_currency"`
+	Transaction_status    string    `db:"transaction_status"`
+	State                 string    `db:"state"`
+	StateChangeDate       time.Time `db:"state_change_date"`
 
 	Chargeback_id          string    `db:"chargeback_id"`
 	Chargeback_case_id     string    `db:"chargeback_case_id"`
