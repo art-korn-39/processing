@@ -13,16 +13,18 @@ type SumFileds struct {
 	count_operations    int
 	balance_amount      float64
 	BR_balance_currency float64
-	CompensationBR      float64
+	compensationBR      float64
 	channel_amount      float64
+	surcharge_amount    float64
 }
 
 func (sf *SumFileds) AddValues(o *Operation) {
 	sf.count_operations = sf.count_operations + o.Count_operations
 	sf.balance_amount = sf.balance_amount + o.Balance_amount
 	sf.BR_balance_currency = sf.BR_balance_currency + o.BR_balance_currency
-	sf.CompensationBR = sf.CompensationBR + o.CompensationBR
+	sf.compensationBR = sf.compensationBR + o.CompensationBR
 	sf.channel_amount = sf.channel_amount + o.Channel_amount
+	sf.surcharge_amount = sf.surcharge_amount + o.Surcharge_amount
 }
 
 type KeyFields_SummaryInfo struct {
@@ -78,6 +80,7 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		KF.balance = o.ProviderBalance.Name
 		KF.organization = o.ProviderBalance.Legal_entity
 		KF.contractor_provider = o.ProviderBalance.Contractor
+		//KF.balance_currency = o.ProviderBalance.Balance_currency
 	}
 
 	if o.Merchant != nil {

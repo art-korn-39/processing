@@ -7,6 +7,7 @@ import (
 
 type Balance struct {
 	Name                string    `db:"provider_balance"`
+	GUID                string    `db:"guid"`
 	Contractor          string    `db:"contractor"`
 	Provider_name       string    `db:"provider_name"`
 	Provider_id         int       `db:"provider_id"`

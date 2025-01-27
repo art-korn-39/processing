@@ -5,6 +5,7 @@ import (
 	"app/logs"
 	"app/merchants"
 	"app/provider_balances"
+	"app/provider_registry"
 	"app/tariff_provider"
 	"app/util"
 	"fmt"
@@ -29,7 +30,7 @@ func SelectTariffsInRegistry() {
 			defer wg.Done()
 			for index := range channel_indexes {
 				operation := storage.Registry[index]
-				operation.Tariff = tariff_provider.FindTariffForOperation(operation.Operation_id, operation)
+				operation.Tariff = tariff_provider.FindTariffForOperation(operation)
 				if operation.Tariff == nil {
 					atomic.AddInt64(&countWithoutTariff, 1)
 				}
@@ -69,10 +70,10 @@ func CalculateCommission() {
 
 				operation.SetCountry()
 
-				if operation.Tariff != nil {
-					operation.SetBalanceAmount()
-					operation.SetSRAmount()
-				}
+				//operation.SetBalanceCurrency()
+
+				operation.SetBalanceAmount()
+				operation.SetSRAmount()
 
 				operation.SetCheckFee()
 				operation.SetVerification()
@@ -94,6 +95,33 @@ func CalculateCommission() {
 
 }
 
+func SetProviderOperations() {
+
+	start_time := time.Now()
+
+	var countWithout int
+
+	for _, o := range storage.Registry {
+		ProviderOperation, ok := provider_registry.GetOperation(o.Operation_id, o.Document_date, o.Channel_amount)
+		if ok {
+			o.ProviderOperation = ProviderOperation
+		} else {
+			countWithout++
+		}
+	}
+
+	logs.Add(logs.INFO, fmt.Sprintf("Подбор операций из реестра провайдера: %v [не найдено: %d]", time.Since(start_time), countWithout))
+
+}
+
+func SetBalanceCurrencyInOperations() {
+
+	for _, operation := range storage.Registry {
+		operation.SetBalanceCurrency()
+	}
+
+}
+
 func SetBalanceInOperations() {
 
 	start_time := time.Now()
@@ -101,12 +129,19 @@ func SetBalanceInOperations() {
 	var countWithout int
 
 	for _, operation := range storage.Registry {
-		balance, ok := provider_balances.GetByProvierAndMA(operation.Provider_id, operation.Merchant_account_id)
+
+		var currency string
+		if operation.ProviderOperation != nil {
+			currency = operation.ProviderOperation.Provider_currency.Name
+		}
+
+		balance, ok := provider_balances.GetBalance(operation.Provider_id, operation.Merchant_account_id, currency)
 		if ok {
 			operation.ProviderBalance = balance
 		} else {
 			countWithout++
 		}
+
 	}
 
 	logs.Add(logs.INFO, fmt.Sprintf("Подбор балансов к операциям: %v [без баланса: %d]", time.Since(start_time), countWithout))

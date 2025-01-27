@@ -10,10 +10,10 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func insertIntoDB(db *sqlx.DB) {
+func insertIntoDB(db *sqlx.DB) error {
 
 	if db == nil {
-		return
+		return fmt.Errorf("Не подключена БД")
 	}
 
 	start_time := time.Now()
@@ -21,31 +21,32 @@ func insertIntoDB(db *sqlx.DB) {
 	stat := querrys.Stat_Insert_dragonpay_handbook()
 	_, err := db.PrepareNamed(stat)
 	if err != nil {
-		logs.Add(logs.INFO, err)
-		return
+		return err
 	}
 
 	for k, v := range handbook {
 		_, err := db.Exec(stat, k, v)
 		if err != nil {
-			logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД (dragonpay handbook): ", err))
+			return fmt.Errorf("не удалось записать в БД (dragonpay handbook): %v", err)
+			//logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД (dragonpay handbook): ", err))
 		}
 	}
 
 	stat = querrys.Stat_Insert_dragonpay()
 	_, err = db.PrepareNamed(stat)
 	if err != nil {
-		logs.Add(logs.INFO, err)
-		return
+		return err
 	}
 
 	for _, v := range registry {
 		_, err := db.NamedExec(stat, v)
 		if err != nil {
-			logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД (dragonpay): ", err))
+			return fmt.Errorf("не удалось записать в БД (dragonpay): %v", err)
 		}
 	}
 
 	logs.Add(logs.MAIN, fmt.Sprintf("Загрузка dragonpay в Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(registry))))
+
+	return nil
 
 }

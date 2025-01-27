@@ -36,10 +36,10 @@ func add_page_convertation(f *xlsx.File) {
 	sheet, _ := f.AddSheet("Конвертация")
 
 	headers := []string{"operation_id", "provider_payment_id", "provider_name", "merchant_account_name",
-		"merchant_name", "project_url", "operation_type", "operation_status",
+		"merchant_name", "project_id", "operation_type",
 		"account_number", "channel_amount", "channel_currency", "issuer_country",
-		"payment_method_type", "transaction_completed_at", "provider_currency",
-		"курс", "provider_amount", "BR", "balance"}
+		"payment_method_type", "transaction_completed_at", "transaction_created_at", "provider_currency",
+		"курс", "provider_amount", "BR", "balance", "provider1c"}
 
 	style := xlsx.NewStyle()
 	style.Fill.FgColor = "5B9BD5"
@@ -73,9 +73,8 @@ func add_page_convertation(f *xlsx.File) {
 		row.AddCell().SetString(v.Provider_name)
 		row.AddCell().SetString(v.Merchant_account_name)
 		row.AddCell().SetString(v.Merchant_name)
-		row.AddCell().SetString(v.Project_url)
+		row.AddCell().SetInt(v.Project_id)
 		row.AddCell().SetString(v.Operation_type)
-		row.AddCell().SetString(v.Operation_status)
 		row.AddCell().SetString(v.Account_number)
 
 		cell = row.AddCell()
@@ -90,6 +89,12 @@ func add_page_convertation(f *xlsx.File) {
 			row.AddCell().SetString("")
 		} else {
 			row.AddCell().SetDate(v.Transaction_completed_at)
+		}
+
+		if v.Transaction_created_at.IsZero() { //17
+			row.AddCell().SetString("")
+		} else {
+			row.AddCell().SetDate(v.Transaction_created_at)
 		}
 
 		row.AddCell().SetString(v.Provider_currency.Name)
@@ -107,6 +112,7 @@ func add_page_convertation(f *xlsx.File) {
 		cell.SetFormat("0.00")
 
 		row.AddCell().SetString(v.Balance)
+		row.AddCell().SetString(v.Provider1c)
 	}
 
 }
@@ -202,9 +208,9 @@ func add_page_absentInProiderRegistry(f *xlsx.File) {
 	sheet, _ := f.AddSheet("Нет в реестре")
 
 	headers := []string{"operation_id", "provider_payment_id", "provider_name", "merchant_account_name",
-		"merchant_name", "project_url", "operation_type", "operation_status",
+		"merchant_name", "project_id", "operation_type", "operation_status",
 		"channel_amount", "channel_currency", "issuer_country",
-		"payment_method_type", "created_at",
+		"payment_method_type", "transaction_created_at", "transaction_completed_at",
 	}
 
 	style := xlsx.NewStyle()
@@ -245,9 +251,9 @@ func add_page_absentInProiderRegistry(f *xlsx.File) {
 		row.AddCell().SetString(v.Provider_name)
 		row.AddCell().SetString(v.Merchant_account_name)
 		row.AddCell().SetString(v.Merchant_name)
-		row.AddCell().SetString(v.Project_url)
+		row.AddCell().SetInt(v.Project_id)
 		row.AddCell().SetString(v.Operation_type)
-		row.AddCell().SetString(v.Status)
+		//row.AddCell().SetString(v.Status)
 
 		cell = row.AddCell()
 		cell.SetFloat(v.Channel_amount)
@@ -257,10 +263,16 @@ func add_page_absentInProiderRegistry(f *xlsx.File) {
 		row.AddCell().SetString(v.Country_code2)
 		row.AddCell().SetString(v.Payment_type)
 
-		if v.Created_at.IsZero() { //16
+		if v.Transaction_created_at.IsZero() { //16
 			row.AddCell().SetString("")
 		} else {
-			row.AddCell().SetDate(v.Created_at)
+			row.AddCell().SetDate(v.Transaction_created_at)
+		}
+
+		if v.Transaction_completed_at.IsZero() { //16
+			row.AddCell().SetString("")
+		} else {
+			row.AddCell().SetDate(v.Transaction_completed_at)
 		}
 	}
 

@@ -204,6 +204,10 @@ func FindTariffForOperation(op Operation) *Tariff {
 				continue
 			}
 
+			if t.Balance_id != 0 && op.GetInt("Balance_id") != t.Balance_id {
+				continue
+			}
+
 			if t.DateStart.Before(operation_date) &&
 				t.Operation_type == op.GetString("Operation_type") {
 

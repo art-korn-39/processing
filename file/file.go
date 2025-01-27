@@ -18,6 +18,7 @@ const (
 	REG_PROVIDER = "provider registry"
 	CRYPTO       = "crypto"
 	DECLINE      = "decline"
+	DRAGON_PAY   = "dragonpay"
 )
 
 type FileInfo struct {

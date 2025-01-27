@@ -32,8 +32,19 @@ func Start() {
 	}
 	defer db.Close()
 
-	readFiles(config.Get().Dragonpay.Filename)
-	insertIntoDB(db)
+	files, err := readFiles(db, config.Get().Dragonpay.Filename)
+	if err != nil {
+		logs.Add(logs.FATAL, err)
+	}
+
+	err = insertIntoDB(db)
+	if err != nil {
+		logs.Add(logs.FATAL, err)
+	}
+
+	for _, f := range files {
+		f.InsertIntoDB(db, 0)
+	}
 
 }
 

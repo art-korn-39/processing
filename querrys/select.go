@@ -76,15 +76,16 @@ func Stat_Select_reports_by_id() string {
 		toString(operation__operation_id) AS operation_id, 
 		IFNULL(operation__provider_payment_id, '') AS provider_payment_id,
 		IFNULL(operation__merchant_account_id, 0) AS merchant_account_id,
-		IFNULL(billing__provider_id, 0) AS provider_id, 
-		date_add(HOUR, 3, billing__billing_operation_created_at) AS created_at,
+		IFNULL(billing__provider_id, 0) AS provider_id,
+		IFNULL(billing__project_id, 0) AS project_id, 
+		date_add(HOUR, 3, billing__billing_operation_created_at) AS transaction_created_at,
+		date_add(HOUR, 3, billing__billing_operation_created_at) AS transaction_completed_at,
 		IFNULL(operation__provider_name, '') AS provider_name,
 		IFNULL(operation__merchant_name, '') AS merchant_name,
 		IFNULL(operation__merchant_account_name, '') AS merchant_account_name,
 		IFNULL(billing__operation_type_id, 0) AS operation_type_id,
 		IFNULL(operation__payment_method_type, '') AS payment_type,
-		IFNULL(operation__issuer_country, '') AS country,
-		IFNULL(operation__operation_status, '') AS status	
+		IFNULL(operation__issuer_country, '') AS country	
 	FROM reports
 	WHERE 
 		toString(operation__$2) IN ('$1')`
@@ -92,14 +93,24 @@ func Stat_Select_reports_by_id() string {
 
 func Stat_Select_provider_registry() string {
 	return `SELECT operation_id, transaction_completed_at, operation_type, country, payment_method_type, 
-			merchant_name, rate, amount, channel_amount, channel_currency, provider_currency, br_amount, balance, provider1c
+			merchant_name, rate, amount, channel_amount, channel_currency, provider_currency, br_amount, balance, provider1c,
+			team, project_url, project_id
 		FROM provider_registry 
 		WHERE lower(merchant_name) = ANY($1) 
 		AND transaction_completed_at BETWEEN $2 AND $3`
 }
 
+func Stat_Select_provider_registry_period_only() string {
+	return `SELECT operation_id, transaction_completed_at, operation_type, country, payment_method_type, 
+			merchant_name, rate, amount, channel_amount, channel_currency, provider_currency, br_amount, balance, provider1c,
+			team, project_url, project_id
+		FROM provider_registry 
+		WHERE transaction_completed_at BETWEEN $1 AND $2`
+}
+
 func Stat_Select_tariffs_provider() string {
 	return `SELECT 
+				provider_balance_guid,provider_balance_name,
 				date_start,merchant_name,merchant_account_name,merchant_legal_entity,
 				payment_method,payment_method_type,region,channel_currency,project_name,
 				business_type,operation_group,traffic_type,account_bank_name,
@@ -110,7 +121,7 @@ func Stat_Select_tariffs_provider() string {
 
 func Stat_Select_provider_balances() string {
 	return `SELECT 
-				provider_balance,contractor,provider_name,provider_id,balance_code,
+				guid,provider_balance,contractor,provider_name,provider_id,balance_code,
 				legal_entity,merchant_account,merchant_account_id,date_start,
 				date_finish,convertation,convertation_id,key_record,balance_currency
 			FROM provider_balances

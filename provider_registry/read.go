@@ -147,12 +147,19 @@ func Read_convert_sheet(sheet *xlsx.Sheet, filename string) (ops []Operation, er
 	idx_br := map_fileds["br в валюте пс *при необходимости"] - 1
 	if idx_br < 0 {
 		idx_br = map_fileds["br"] - 1
+		if idx_br < 0 {
+			idx_br = map_fileds["br в валюте пс"] - 1
+		}
 	}
 	idx_account := map_fileds["customer_purse / account_number"] - 1
 	idx_operation_id := map_fileds["id / operation_id"] - 1
 	idx_provider_amount := map_fileds["provider_amount"] - 1
 	idx_balance := map_fileds["баланс"] - 1
 	idx_provider1c := map_fileds["поставщик"] - 1
+	idx_project_id := map_fileds["project_id"] - 1
+	idx_team := map_fileds["team"] - 1
+	idx_project_url := map_fileds["project_url"] - 1
+	idx_operation_status := map_fileds["operation_status"] - 1
 
 	ops = make([]Operation, 0, len(sheet.Rows))
 
@@ -194,8 +201,6 @@ func Read_convert_sheet(sheet *xlsx.Sheet, filename string) (ops []Operation, er
 		operation.Provider_name = row.Cells[map_fileds["provider_name"]-1].String()
 		operation.Merchant_account_name = row.Cells[map_fileds["merchant_account_name"]-1].String()
 		operation.Provider_payment_id = row.Cells[map_fileds["acquirer_id / provider_payment_id"]-1].String()
-		operation.Project_url = row.Cells[map_fileds["project_url"]-1].String()
-		operation.Operation_status = row.Cells[map_fileds["operation_status"]-1].String()
 
 		if idx_account >= 0 {
 			operation.Account_number = row.Cells[map_fileds["customer_purse / account_number"]-1].String()
@@ -212,6 +217,22 @@ func Read_convert_sheet(sheet *xlsx.Sheet, filename string) (ops []Operation, er
 
 		if len(row.Cells) > idx_provider1c && idx_provider1c >= 0 {
 			operation.Provider1c = row.Cells[map_fileds["поставщик"]-1].String()
+		}
+
+		if len(row.Cells) > idx_project_id && idx_project_id >= 0 {
+			operation.Project_id, _ = row.Cells[map_fileds["project_id"]-1].Int()
+		}
+
+		if len(row.Cells) > idx_project_url && idx_project_url >= 0 {
+			operation.Project_url = row.Cells[map_fileds["project_url"]-1].String()
+		}
+
+		if len(row.Cells) > idx_operation_status && idx_operation_status >= 0 {
+			operation.Operation_status = row.Cells[map_fileds["operation_status"]-1].String()
+		}
+
+		if len(row.Cells) > idx_team && idx_team >= 0 {
+			operation.Team = row.Cells[map_fileds["team"]-1].String()
 		}
 
 		operation.StartingFill(true)

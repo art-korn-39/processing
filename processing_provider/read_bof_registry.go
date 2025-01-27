@@ -52,14 +52,14 @@ func NewQuerryArgs(from_cfg bool) (args querrys.Args) {
 	bof_reg := config.Get().Registry
 
 	if from_cfg { // clickhouse
-		args.Merhcant = bof_reg.Merchant_name
+		//args.Merhcant = bof_reg.Merchant_name
 		args.DateFrom = bof_reg.DateFrom.Add(-20 * 24 * time.Hour)
 		args.DateTo = bof_reg.DateTo.Add(4 * 24 * time.Hour)
 	} else { // file
 		lenght := len(storage.Registry)
 		if lenght > 0 {
-			row := storage.Registry[0]
-			args.Merhcant = append(args.Merhcant, row.Merchant_name)
+			//row := storage.Registry[0]
+			//args.Merhcant = append(args.Merhcant, strings.ToLower(row.Merchant_name))
 			args.DateFrom = storage.Registry[0].Transaction_completed_at.Add(-3 * 24 * time.Hour)
 			args.DateTo = storage.Registry[lenght-1].Transaction_completed_at.Add(1 * 24 * time.Hour)
 		}
@@ -142,6 +142,7 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 	op = &Operation{
 
 		Transaction_completed_at: util.GetDateFromString(record[map_fileds["transaction_completed_at"]-1]),
+		Transaction_created_at:   util.GetDateFromString(record[map_fileds["transaction_created_at"]-1]),
 
 		Operation_id:        util.FR(strconv.Atoi(record[map_fileds["id / operation_id"]-1])).(int),
 		Transaction_id:      util.FR(strconv.Atoi(record[map_fileds["transaction_id"]-1])).(int),
@@ -163,6 +164,8 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		Business_type:         record[map_fileds["business_type"]-1],
 		Account_bank_name:     record[map_fileds["account_bank_name"]-1],
 		Payment_method:        record[map_fileds["payment_method_name"]-1],
+		RRN:                   record[map_fileds["rrn"]-1],
+		External_id:           record[map_fileds["external_id / payment_id"]-1],
 
 		Count_operations:      1,
 		Channel_currency_str:  record[map_fileds["real_currency / channel_currency"]-1],
@@ -170,6 +173,8 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		Provider_currency_str: record[map_fileds["provider_currency"]-1],
 		Provider_amount:       util.FR(strconv.ParseFloat(record[map_fileds["provider_amount"]-1], 64)).(float64),
 		Currency_str:          record[map_fileds["currency / currency"]-1],
+
+		Operation_actual_amount: util.FR(strconv.ParseFloat(record[map_fileds["operation_actual_amount"]-1], 64)).(float64),
 	}
 
 	idx := map_fileds["created_at / operation_created_at"]
@@ -182,6 +187,16 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 	idx = map_fileds["endpoint_id"]
 	if idx > 0 {
 		op.Endpoint_id = record[idx-1]
+	}
+
+	idx = map_fileds["surcharge_currency"]
+	if idx > 0 {
+		op.Surcharge_currency_str = record[idx-1]
+	}
+
+	idx = map_fileds["surcharge_amount"]
+	if idx > 0 {
+		op.Surcharge_amount = util.FR(strconv.ParseFloat(record[idx-1], 64)).(float64)
 	}
 
 	return

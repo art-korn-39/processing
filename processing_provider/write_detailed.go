@@ -89,17 +89,18 @@ func Write_CSV_Detailed() {
 
 func SetHeaders_detailed(writer *csv.Writer) {
 	headers := []string{
-		"merchant_name", "merchant_id", "project_name", "project_id", "project_url",
-		"operation_id", "merchant_account_id", "payment_method_type", "region", "issuer_country",
-		"operation_type", "merchant_account_name",
-		"transaction_completed_at", "provider_name",
+		"operation_id", "provider_payment_id", "transaction_id", "RRN", "payment_id",
+		"coupled_operation_id", "parent_payout_operation_id",
+		"provider_name", "merchant_account_name", "merchant_name", "project_id", "operation_type",
+		"payment_method_type", "issuer_country", "transaction_created_at", "transaction_completed_at",
 		"real_amount / channel_amount", "real_currency / channel_currency",
-		"endpoint_id", "account_bank_name", "business_type",
-		"payment_method_group", "payment_method_name",
-		"Сумма в валюте баланса", "Валюта баланса", "BR_balance_currency", "Компенсация BR",
-		"Проверка", "Старт тарифа",
+		"provider_amount", "provider_currency", "operation_actual_amount",
+		"surcharge amount", "surcharge currency", "endpoint_id", "account_bank_name", "operation_created_at",
+		"Сумма в валюте баланса", "BR в валюте баланса", "Доп BR", "Валюта баланса", "Курс",
+		"Компенсация BR", "Проверка", "Старт тарифа",
 		"Акт. тариф", "Акт. фикс", "Акт. Мин", "Акт. Макс",
 		"Range min", "Range max",
+		"region",
 	}
 	writer.Write(headers)
 }
@@ -107,30 +108,36 @@ func SetHeaders_detailed(writer *csv.Writer) {
 func MakeDetailedRow(d Detailed_row) (row []string) {
 
 	row = []string{
-		d.Merchant_name,
-		fmt.Sprint(d.Merchant_id),
-		d.Project_name,
-		fmt.Sprint(d.Project_id),
-		d.Project_url,
 		fmt.Sprint(d.Operation_id),
-		fmt.Sprint(d.Merchant_account_id),
-		d.Payment_type,
-		d.Region,
-		d.Country,
-		d.Operation_type,
-		d.Merchant_account_name,
-		d.Transaction_completed_at.Format(time.DateTime),
+		d.Provider_payment_id,
+		fmt.Sprint(d.Transaction_id),
+		d.RRN,
+		d.External_id,
+		"", "",
 		d.Provider_name,
+		d.Merchant_account_name,
+		d.Merchant_name,
+		fmt.Sprint(d.Project_id),
+		d.Operation_type,
+		d.Payment_type,
+		d.Country,
+		d.Transaction_created_at.Format(time.DateTime),
+		d.Transaction_completed_at.Format(time.DateTime),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Channel_amount), ".", ","),
 		d.Channel_currency_str,
-		d.Endpoint_id,
-		d.Account_bank_name,
-		d.Business_type,
-		"",
-		d.Payment_method,
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Provider_amount), ".", ","),
 		d.Provider_currency_str,
+		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Operation_actual_amount), ".", ","),
+		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Surcharge_amount), ".", ","),
+		d.Surcharge_currency_str,
+		d.Endpoint_id,
+		d.Account_bank_name,
+		d.Operation_created_at.Format(time.DateTime),
+		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Balance_amount), ".", ","),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.BR_balance_currency), ".", ","),
+		"",
+		d.Balance_currency_str,
+		strings.ReplaceAll(fmt.Sprintf("%.4f", d.Rate), ".", ","),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.CompensationBR), ".", ","),
 		d.Verification,
 		d.Tariff_date_start.Format(time.DateOnly),
@@ -140,6 +147,7 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Act_max), ".", ","),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Range_min), ".", ","),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Range_max), ".", ","),
+		d.Region,
 	}
 
 	return
@@ -160,7 +168,7 @@ func PSQL_Insert_Detailed() {
 	var wg sync.WaitGroup
 	var once sync.Once
 
-	stat := querrys.Stat_Insert_detailed()
+	stat := querrys.Stat_Insert_detailed_provider()
 	_, err := storage.Postgres.PrepareNamed(stat)
 	if err != nil {
 		logs.Add(logs.INFO, err)

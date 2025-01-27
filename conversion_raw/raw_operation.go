@@ -65,6 +65,11 @@ func (ext_op *raw_operation) createProviderOperation(map_fields map[string]int, 
 		return nil, err
 	}
 
+	op.Transaction_created_at, err = time.Parse(time.DateTime, getValue("transaction_created_at", ext_op.record, setting, map_fields, ext_op.bof_operation))
+	if err != nil {
+		return nil, err
+	}
+
 	op.Channel_amount, err = util.ParseFloat(getValue("channel_amount", ext_op.record, setting, map_fields, ext_op.bof_operation))
 	if err != nil {
 		return nil, err
@@ -86,13 +91,13 @@ func (ext_op *raw_operation) createProviderOperation(map_fields map[string]int, 
 	op.Operation_type = getValue("operation_type", ext_op.record, setting, map_fields, ext_op.bof_operation)
 	op.Payment_type = getValue("payment_method_type", ext_op.record, setting, map_fields, ext_op.bof_operation)
 	op.Country = getValue("country", ext_op.record, setting, map_fields, ext_op.bof_operation)
-	op.Operation_status = getValue("operation_status", ext_op.record, setting, map_fields, ext_op.bof_operation)
+	//op.Operation_status = getValue("operation_status", ext_op.record, setting, map_fields, ext_op.bof_operation)
 	op.Account_number = getValue("account_number", ext_op.record, setting, map_fields, ext_op.bof_operation)
 	op.Channel_currency_str = getValue("channel_currency", ext_op.record, setting, map_fields, ext_op.bof_operation)
 	op.Provider_currency_str = getValue("provider_currency", ext_op.record, setting, map_fields, ext_op.bof_operation)
 	op.Balance = getValue("balance", ext_op.record, setting, map_fields, ext_op.bof_operation)
 	op.Provider1c = getValue("provider1c", ext_op.record, setting, map_fields, ext_op.bof_operation)
-	op.Project_url = getValue("project_url", ext_op.record, setting, map_fields, ext_op.bof_operation)
+	op.Project_id, _ = strconv.Atoi(getValue("project_id", ext_op.record, setting, map_fields, ext_op.bof_operation))
 
 	op.Rate, err = util.ParseFloat(getValue("rate", ext_op.record, setting, map_fields, ext_op.bof_operation))
 	if err != nil {
@@ -139,12 +144,14 @@ func getValue(reg_name string, record []string, setting Setting, map_fields map[
 			result = op.Provider_payment_id
 		case "country":
 			result = op.Country_code2
-		case "operation_status":
-			result = op.Status
-		case "project_url":
-			result = op.Project_url
+		// case "operation_status":
+		// 	result = op.Status
+		case "project_id":
+			result = fmt.Sprint(op.Project_id)
 		case "transaction_completed_at":
-			result = op.Created_at.Format(time.DateTime)
+			result = op.Transaction_completed_at.Format(time.DateTime)
+		case "transaction_created_at":
+			result = op.Transaction_created_at.Format(time.DateTime)
 		case "channel_amount":
 			result = strconv.FormatFloat(op.Channel_amount, 'f', -1, 64)
 		case "channel_currency":
@@ -154,6 +161,9 @@ func getValue(reg_name string, record []string, setting Setting, map_fields map[
 		switch reg_name {
 		case "balance":
 			result = getBalance(record, map_fields, op)
+			balances[op] = result
+		case "provider1c":
+			result = getProvider1c(op)
 		case "provider_currency":
 			result = getProviderCurrency(op)
 		}
@@ -187,6 +197,39 @@ func getBalance(record []string, map_fields map[string]int, op Bof_operation) (b
 		}
 	}
 	return balance_name
+}
+
+func getProvider1c(op Bof_operation) (provider1c string) {
+
+	balance := balances[op]
+
+	if is_kgx_tradex {
+
+		for _, v := range providers {
+
+			if v.balance != "" && v.balance != balance {
+				continue
+			}
+
+			if v.currency != "" && v.currency != op.Channel_currency.Name {
+				continue
+			}
+
+			if v.country != "" && v.country != op.Country_code2 {
+				continue
+			}
+
+			if v.payment_type != "" && v.payment_type != op.Payment_type {
+				continue
+			}
+
+			return v.provider1c
+
+		}
+
+	}
+
+	return provider1c
 }
 
 func getProviderCurrency(op Bof_operation) (currency string) {

@@ -63,16 +63,23 @@ func PSQL_read_registry_async(db *sqlx.DB, registry_done <-chan querrys.Args) {
 	// MERCHANT_NAME + DATE
 	Args := <-registry_done
 
-	if len(Args.Merhcant) == 0 {
-		logs.Add(logs.INFO, `пустой массив "merchant_name" для чтения операций провайдера`)
-		return
-	}
+	// if len(Args.Merhcant) == 0 {
+	// 	logs.Add(logs.INFO, `пустой массив "merchant_name" для чтения операций провайдера`)
+	// 	return
+	// }
 
 	start_time := time.Now()
 
 	channel_dates := util.GetChannelOfDays(Args.DateFrom, Args.DateTo, 24*time.Hour)
 
-	stat := querrys.Stat_Select_provider_registry()
+	usePeriodOnly := len(Args.Merhcant) == 0
+
+	var stat string
+	if usePeriodOnly {
+		stat = querrys.Stat_Select_provider_registry_period_only()
+	} else {
+		stat = querrys.Stat_Select_provider_registry()
+	}
 
 	wg.Add(config.NumCPU)
 	for i := 1; i <= config.NumCPU; i++ {
@@ -80,7 +87,12 @@ func PSQL_read_registry_async(db *sqlx.DB, registry_done <-chan querrys.Args) {
 			defer wg.Done()
 			for period := range channel_dates {
 
-				args := []any{pq.Array(Args.Merhcant), period.StartDay, period.EndDay}
+				var args []any
+				if usePeriodOnly {
+					args = []any{period.StartDay, period.EndDay}
+				} else {
+					args = []any{pq.Array(Args.Merhcant), period.StartDay, period.EndDay}
+				}
 
 				res := make([]Operation, 0, 10000)
 

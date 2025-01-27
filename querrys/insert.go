@@ -6,13 +6,13 @@ func Stat_Insert_provider_registry() string {
 		operation_id, transaction_completed_at, provider_name, merchant_name, merchant_account_name,
 		project_url, payment_method_type, country, rate, operation_type, amount,
 		provider_payment_id, operation_status, account_number, channel_currency, provider_currency, br_amount,
-		transaction_completed_at_day, channel_amount, balance, provider1c
+		transaction_completed_at_day, channel_amount, balance, provider1c, project_id, team
 	)
 	VALUES (
 		:operation_id, :transaction_completed_at, :provider_name, :merchant_name, :merchant_account_name,
 		:project_url, :payment_method_type, :country, :rate, :operation_type, :amount,
 		:provider_payment_id, :operation_status, :account_number, :channel_currency, :provider_currency, :br_amount,
-		:transaction_completed_at_day, :channel_amount, :balance, :provider1c
+		:transaction_completed_at_day, :channel_amount, :balance, :provider1c, :project_id, :team
 	)
 	
 	ON CONFLICT ON CONSTRAINT pk_id DO UPDATE
@@ -21,7 +21,8 @@ func Stat_Insert_provider_registry() string {
 		channel_amount = EXCLUDED.channel_amount, provider_currency = EXCLUDED.provider_currency,
 		transaction_completed_at = EXCLUDED.transaction_completed_at, 
 		transaction_completed_at_day = EXCLUDED.transaction_completed_at_day, 
-		operation_status = EXCLUDED.operation_status, balance = EXCLUDED.balance, 
+		operation_status = EXCLUDED.operation_status, balance = EXCLUDED.balance,
+		project_id = EXCLUDED.project_id, team = EXCLUDED.team, 
 		provider1c = EXCLUDED.provider1c;`
 }
 
@@ -29,15 +30,15 @@ func Stat_Insert_provider_registry_test() string {
 	return `
 	INSERT INTO provider_registry_test (
 		operation_id, transaction_completed_at, provider_name, merchant_name, merchant_account_name,
-		project_url, payment_method_type, country, rate, operation_type, amount,
-		provider_payment_id, operation_status, account_number, channel_currency, provider_currency, br_amount,
-		transaction_completed_at_day, channel_amount, balance, provider1c
+		payment_method_type, country, rate, operation_type, amount,
+		provider_payment_id, account_number, channel_currency, provider_currency, br_amount,
+		transaction_completed_at_day, channel_amount, balance, provider1c, transaction_created_at, project_id
 	)
 	VALUES (
 		:operation_id, :transaction_completed_at, :provider_name, :merchant_name, :merchant_account_name,
-		:project_url, :payment_method_type, :country, :rate, :operation_type, :amount,
-		:provider_payment_id, :operation_status, :account_number, :channel_currency, :provider_currency, :br_amount,
-		:transaction_completed_at_day, :channel_amount, :balance, :provider1c
+		:payment_method_type, :country, :rate, :operation_type, :amount,
+		:provider_payment_id, :account_number, :channel_currency, :provider_currency, :br_amount,
+		:transaction_completed_at_day, :channel_amount, :balance, :provider1c, :transaction_created_at, :project_id
 	)
 	
 	ON CONFLICT ON CONSTRAINT pk_provider_registry_test_id DO UPDATE
@@ -46,12 +47,13 @@ func Stat_Insert_provider_registry_test() string {
 		channel_amount = EXCLUDED.channel_amount, provider_currency = EXCLUDED.provider_currency,
 		transaction_completed_at = EXCLUDED.transaction_completed_at, 
 		transaction_completed_at_day = EXCLUDED.transaction_completed_at_day, 
-		operation_status = EXCLUDED.operation_status, balance = EXCLUDED.balance, 
+		balance = EXCLUDED.balance, 
 		provider1c = EXCLUDED.provider1c, provider_name = EXCLUDED.provider_name, 
 		merchant_name = EXCLUDED.merchant_name, merchant_account_name = EXCLUDED.merchant_account_name,
-		project_url = EXCLUDED.project_url, payment_method_type = EXCLUDED.payment_method_type,
+		payment_method_type = EXCLUDED.payment_method_type,
 		country = EXCLUDED.country, operation_type = EXCLUDED.operation_type, 
 		provider_payment_id = EXCLUDED.provider_payment_id, account_number = EXCLUDED.account_number,
+		transaction_created_at = EXCLUDED.transaction_created_at, project_id = EXCLUDED.project_id,
 		channel_currency = EXCLUDED.channel_currency;`
 }
 
@@ -75,6 +77,27 @@ func Stat_Insert_detailed() string {
 		:verification, :crypto_network, :convertation, :provider_1c, :subdivision_1c, :rated_account, :tariff_id,
 		:tariff_date_start, :act_percent, :act_fix, :act_min, :act_max, :range_min, :range_max,
 		:tariff_rate_percent, :tariff_rate_fix, :tariff_rate_min, :tariff_rate_max
+		)`
+}
+
+func Stat_Insert_detailed_provider() string {
+	return `INSERT INTO detailed_provider (
+		document_id, operation_id, provider_payment_id, transaction_id, rrn, payment_id,
+		provider_name, merchant_name, merchant_account_name, project_id, operation_type,
+		payment_type, transaction_created_at, transaction_completed_at, channel_amount, channel_currency,
+		provider_amount, provider_currency, operation_actual_amount, surcharge_amount, surcharge_currency,
+		endpoint_id, account_bank_name, operation_created_at, balance_amount, br_balance_currency,
+		balance_currency, rate, compensation_br, verification,
+		tariff_date_start, act_percent, act_fix, act_min, act_max, range_min, range_max, region
+	)
+	VALUES (
+		:document_id, :operation_id,  :provider_payment_id, :transaction_id, :rrn, :payment_id,
+		:provider_name, :merchant_name, :merchant_account_name, :project_id, :operation_type,
+		:payment_type, :transaction_created_at, :transaction_completed_at, :channel_amount, :channel_currency,
+		:provider_amount, :provider_currency, :operation_actual_amount, :surcharge_amount, :surcharge_currency,
+		:endpoint_id, :account_bank_name, :operation_created_at, :balance_amount, :br_balance_currency,
+		:balance_currency, :rate, :compensation_br, :verification,
+		:tariff_date_start, :act_percent, :act_fix, :act_min, :act_max, :range_min, :range_max, :region
 		)`
 }
 
@@ -102,17 +125,20 @@ func Stat_Insert_decline() string {
 func Stat_Insert_crypto() string {
 	return `INSERT INTO crypto (
 		operation_id, created_at, created_at_day, network, operation_type, 
-		payment_amount, payment_currency, crypto_amount, crypto_currency
+		payment_amount, payment_currency, crypto_amount, crypto_currency,
+		transfer_fee_rate_usdt
 	)
 	VALUES (
 		:operation_id, :created_at, :created_at_day, :network, :operation_type, 
-		:payment_amount, :payment_currency, :crypto_amount, :crypto_currency
+		:payment_amount, :payment_currency, :crypto_amount, :crypto_currency,
+		:transfer_fee_rate_usdt
 	)
 
 	ON CONFLICT ON CONSTRAINT pk_operation_id DO UPDATE
 
 	SET created_at = EXCLUDED.created_at, created_at_day = EXCLUDED.created_at_day,
-		payment_amount = EXCLUDED.payment_amount, crypto_amount = EXCLUDED.crypto_amount`
+		payment_amount = EXCLUDED.payment_amount, crypto_amount = EXCLUDED.crypto_amount,
+		transfer_fee_rate_usdt = EXCLUDED.transfer_fee_rate_usdt`
 }
 
 func Stat_Insert_dragonpay() string {

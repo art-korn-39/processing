@@ -1,7 +1,9 @@
 package dragonpay
 
 import (
+	"app/config"
 	"app/currency"
+	"app/file"
 	"app/logs"
 	"app/util"
 	"app/validation"
@@ -14,38 +16,49 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/tealeg/xlsx"
 )
 
 const HANDBOOK_NAME = "handbook.xlsx"
 
-func readFiles(folder string) {
+func readFiles(db *sqlx.DB, folder string) (files []*file.FileInfo, err error) {
 
 	start_time := time.Now()
 
 	filenames, err := util.ParseFoldersRecursively(folder)
 	if err != nil {
-		logs.Add(logs.FATAL, err)
-		return
+		return nil, err
 	}
 
 	err = readXLSXfile(filenames)
 	if err != nil {
-		logs.Add(logs.MAIN, err)
-		return
+		return nil, err
 	}
 
+	files = file.GetFiles(filenames, file.DRAGON_PAY, ".csv")
+	new_files := []*file.FileInfo{}
+
 	var files_readed int64
+	var count_skipped int64
 
-	for _, filename := range filenames {
+	for _, file := range files {
 
-		if filepath.Ext(filename) != ".csv" {
-			continue
+		// if filepath.Ext(filename) != ".csv" {
+		// 	continue
+		// }
+
+		if !config.Debug {
+			file.GetLastUpload(db)
+			if file.LastUpload.After(file.Modified) {
+				atomic.AddInt64(&count_skipped, 1)
+				continue
+			}
 		}
 
-		operations, err := readCSVfile(filename)
+		operations, err := readCSVfile(file.Filename)
 		if err != nil {
-			logs.Add(logs.ERROR, filename, " : ", err)
+			logs.Add(logs.ERROR, file.Filename, " : ", err)
 			continue
 		}
 
@@ -55,9 +68,16 @@ func readFiles(folder string) {
 			registry[o.Id] = o
 		}
 
+		file.Rows = len(operations)
+		file.LastUpload = time.Now()
+
+		new_files = append(new_files, file)
+
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение файлов: %v [%d прочитано]", time.Since(start_time), files_readed))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение файлов: %v [%d пропущено, %d прочитано]", time.Since(start_time), count_skipped, files_readed))
+
+	return new_files, nil
 
 }
 

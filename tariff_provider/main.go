@@ -139,7 +139,7 @@ func SortTariffs() {
 	)
 }
 
-func FindTariffForOperation(id int, op Operation) *Tariff {
+func FindTariffForOperation(op Operation) *Tariff {
 
 	if len(data) == 0 {
 		return nil
@@ -157,12 +157,17 @@ func FindTariffForOperation(id int, op Operation) *Tariff {
 		return nil
 	}
 
+	operation_balance_guid := op.GetString("Balance_guid")
 	operation_date := op.GetTime("Transaction_completed_at")
 
 	current_date_range := data[0].DateStart
 	selected_tariffs := []*Tariff{}
 
 	for _, t := range data {
+
+		if operation_balance_guid != t.Provider_balance_guid {
+			continue
+		}
 
 		// если это более ранняя дата, то смотрим текущий массив подходящих тарифов
 		if !t.DateStart.Equal(current_date_range) {
@@ -235,7 +240,7 @@ func (t *Tariff) IsValidForOperation(op Operation) bool {
 		return false
 	}
 
-	if t.ChannelCurrency.Name != "" && t.ChannelCurrency != op.Get_Channel_currency() {
+	if t.ChannelCurrency.Name != "" && t.ChannelCurrency != op.Get_Balance_currency() {
 		return false
 	}
 

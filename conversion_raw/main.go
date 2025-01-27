@@ -17,7 +17,9 @@ var (
 
 	is_kgx_tradex bool
 	all_settings  map[string]Setting
-	handbook      map[string]string
+	teams         map[string]string
+	providers     []provider_params
+	balances      map[Bof_operation]string
 )
 
 func init() {
@@ -25,7 +27,9 @@ func init() {
 	bof_registry = map[string]*Bof_operation{}
 
 	all_settings = map[string]Setting{}
-	handbook = map[string]string{}
+	teams = map[string]string{}
+	providers = []provider_params{}
+	balances = map[Bof_operation]string{}
 }
 
 func Start() {

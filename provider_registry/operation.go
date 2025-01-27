@@ -9,6 +9,7 @@ type Operation struct {
 	Id                           int       `db:"operation_id"`
 	Transaction_completed_at     time.Time `db:"transaction_completed_at"`
 	Transaction_completed_at_day time.Time `db:"transaction_completed_at_day"`
+	Transaction_created_at       time.Time `db:"transaction_created_at"`
 	Operation_type               string    `db:"operation_type"`
 	Country                      string    `db:"country"`
 	Payment_type                 string    `db:"payment_method_type"`
@@ -21,11 +22,13 @@ type Operation struct {
 	Merchant_account_name string  `db:"merchant_account_name"`
 	Provider_payment_id   string  `db:"provider_payment_id"`
 	Project_url           string  `db:"project_url"`
+	Project_id            int     `db:"project_id"`
 	Operation_status      string  `db:"operation_status"`
 	Account_number        string  `db:"account_number"`
 	BR_amount             float64 `db:"br_amount"`
 	Balance               string  `db:"balance"`
 	Provider1c            string  `db:"provider1c"`
+	Team                  string  `db:"team"`
 
 	Partner_id string
 

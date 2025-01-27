@@ -5,6 +5,7 @@ import (
 	"app/logs"
 	"app/merchants"
 	"app/provider_balances"
+	"app/provider_registry"
 	"app/querrys"
 	"app/tariff_provider"
 	"fmt"
@@ -13,7 +14,7 @@ import (
 )
 
 const (
-	Version = "1.1.0"
+	Version = "1.2.0"
 )
 
 var (
@@ -67,12 +68,17 @@ func ReadSources() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(5)
+	wg.Add(6)
 
 	registry_done := make(chan querrys.Args, 1)
 	go func() {
 		defer wg.Done()
 		Read_Registry(registry_done)
+	}()
+
+	go func() {
+		defer wg.Done()
+		provider_registry.Read_Registry(storage.Postgres, registry_done)
 	}()
 
 	go func() {
@@ -100,21 +106,21 @@ func ReadSources() {
 
 func PrepareData() {
 
-	// var wg sync.WaitGroup
-
-	// wg.Add(2)
-
 	// Сортировка
 	tariff_provider.SortTariffs()
+
+	// Подбор операций из реестра провайдера
+	SetProviderOperations()
+
+	// Подбор балансов к операциям
+	SetBalanceInOperations()
+
+	SetBalanceCurrencyInOperations()
 
 	// Подбор тарифов к операциям
 	SelectTariffsInRegistry()
 
-	SetBalanceInOperations()
-
 	SetMerchantInOperations()
-
-	// wg.Wait()
 
 }
 

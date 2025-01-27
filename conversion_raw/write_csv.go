@@ -74,10 +74,10 @@ func writeIntoCSV(filename string) {
 func SetHeaders_detailed(writer *csv.Writer) {
 	headers := []string{
 		"operation_id", "provider_payment_id", "provider_name", "merchant_account_name",
-		"merchant_name", "project_url", "operation_type", "operation_status",
+		"merchant_name", "project_id", "operation_type", "operation_status",
 		"account_number", "channel_amount", "channel_currency", "issuer_country",
-		"payment_method_type", "transaction_completed_at", "provider_currency",
-		"курс", "provider_amount", "BR", "balance",
+		"payment_method_type", "transaction_completed_at", "transaction_created_at", "provider_currency",
+		"курс", "provider_amount", "BR", "balance", "provider1c",
 	}
 
 	writer.Write(headers)
@@ -91,7 +91,7 @@ func makeDetailedRow(op *pr.Operation) []string {
 		op.Provider_name,
 		op.Merchant_account_name,
 		op.Merchant_name,
-		op.Project_url,
+		fmt.Sprint(op.Project_id),
 		op.Operation_type,
 		op.Operation_status,
 		op.Account_number,
@@ -100,11 +100,13 @@ func makeDetailedRow(op *pr.Operation) []string {
 		op.Country,
 		op.Payment_type,
 		op.Transaction_completed_at.Format(time.DateTime),
+		op.Transaction_created_at.Format(time.DateTime),
 		op.Provider_currency.Name,
 		strings.ReplaceAll(fmt.Sprintf("%.2f", op.Rate), ".", ","),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", op.Amount), ".", ","),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", op.BR_amount), ".", ","),
 		op.Balance,
+		op.Provider1c,
 	}
 
 	return result

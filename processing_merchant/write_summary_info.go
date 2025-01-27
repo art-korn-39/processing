@@ -559,7 +559,7 @@ func add_page_1_makeTariff(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) 
 
 			t1 := k.tariff.Percent + k.tariff.Fix + k.tariff.Min + k.tariff.Max
 			t2 := k.tariff_bof.Percent + k.tariff_bof.Fix + k.tariff_bof.Min + k.tariff_bof.Max
-			hash := fmt.Sprint(k.tariff_condition_id, t1, t2)
+			hash := fmt.Sprint(k.merchant_account_id, k.tariff_condition_id, t1, t2)
 
 			if slices.Contains(already_write, hash) {
 				continue

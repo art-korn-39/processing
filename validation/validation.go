@@ -56,6 +56,8 @@ func CheckMapOfColumnNames(map_fileds map[string]int, table string) error {
 		s = fields_provider_registry()
 	case "kgx_teams_xlsx":
 		s = fields_kgx_teams_xlsx()
+	case "kgx_providers_xlsx":
+		s = fields_kgx_providers_xlsx()
 	case "bof_registry_raw_conversion":
 		s = fields_bof_registry_raw_conversion()
 	default:
@@ -102,6 +104,8 @@ func fields_bof_registry_provider() []string {
 		"currency / currency",
 		"provider_currency", "provider_amount",
 		"legal_entity_id", "business_type", "account_bank_name", "payment_method_name",
+		"surcharge_currency", "surcharge_amount",
+		"rrn", "external_id / payment_id", "transaction_created_at", "operation_actual_amount",
 	}
 }
 
@@ -135,7 +139,8 @@ func fields_holds() []string {
 
 func fields_crypto() []string {
 	return []string{"operation id", "crypto network", "created at", "operation type",
-		"payment amount", "payment currency", "crypto amount", "crypto currency"}
+		"payment amount", "payment currency", "crypto amount", "crypto currency",
+		"transfer fee rate, usdt"}
 }
 
 func fields_dragonpay_csv() []string {
@@ -151,6 +156,10 @@ func fields_kgx_teams_xlsx() []string {
 	return []string{"team_id", "balance"}
 }
 
+func fields_kgx_providers_xlsx() []string {
+	return []string{"issuer_country", "payment_type_id / payment_method_type", "баланс", "валюта в пс", "provider1c"}
+}
+
 func fields_provider_registry() []string {
 	return []string{
 		"id / operation_id", "transaction_completed_at",
@@ -159,7 +168,7 @@ func fields_provider_registry() []string {
 		"merchant_name", "real_currency / channel_currency", "real_amount / channel_amount",
 		"provider_currency", "курс", "provider_amount",
 		"provider_name", "merchant_account_name", "acquirer_id / provider_payment_id",
-		"project_url", "operation_status",
+		//"project_url", "operation_status",
 	}
 }
 
@@ -167,11 +176,12 @@ func fields_bof_registry_raw_conversion() []string {
 	return []string{
 		"id / operation_id", "merchant_account_id", "provider_id",
 		"provider_name", "merchant_name", "merchant_account_name",
-		"operation_type", "transaction_completed_at",
+		"operation_type", "completed_at / operation_completed_at", "transaction_created_at",
 		"payment_type_id / payment_method_type", "issuer_country",
 		"real_currency / channel_currency", "real_amount / channel_amount",
 		"acquirer_id / provider_payment_id",
-		"project_url", "operation_status",
+		"project_id",
+		//"project_url", "operation_status",
 	}
 }
 

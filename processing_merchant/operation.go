@@ -367,10 +367,10 @@ func (o *Operation) SetVerification() {
 		}
 	} else if o.CheckFee == 0 {
 		o.Verification = VRF_OK
-	} else if o.Channel_currency != CurrencyBP && Converation != "Колбек" {
-		o.Verification = VRF_CHECK_CURRENCY
 	} else if o.CheckRates != 0 {
 		o.Verification = VRF_CHECK_TARIFF
+	} else if o.Channel_currency != CurrencyBP && Converation != "Колбек" {
+		o.Verification = VRF_CHECK_CURRENCY
 	} else if Converation == "Частичные выплаты" && o.Channel_amount != o.Actual_amount {
 		o.Verification = VRF_PARTIAL_PAYMENTS
 	} else if o.IsDragonPay {
@@ -475,11 +475,11 @@ func (o *Operation) SetDK() {
 	}
 
 	if t.AmountInChannelCurrency {
-		o.CompensationRC = o.SR_channel_currency - commission
-		o.CompensationBC = o.SR_balance_currency - commission/o.Rate
+		o.CompensationRC = commission - o.SR_channel_currency
+		o.CompensationBC = commission/o.Rate - o.SR_balance_currency
 	} else {
-		o.CompensationBC = o.SR_balance_currency - commission
-		o.CompensationRC = o.SR_channel_currency - commission*o.Rate
+		o.CompensationBC = commission - o.SR_balance_currency
+		o.CompensationRC = commission*o.Rate - o.SR_channel_currency
 	}
 
 	if o.Balance_currency.Exponent {
@@ -537,6 +537,8 @@ func (op *Operation) GetInt(name string) int {
 	switch name {
 	case "Merchant_account_id":
 		result = op.Merchant_account_id
+	case "Balance_id":
+		result = op.Balance_id
 	default:
 		logs.Add(logs.ERROR, "неизвестное поле int: ", name)
 	}

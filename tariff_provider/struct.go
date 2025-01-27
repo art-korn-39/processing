@@ -13,6 +13,7 @@ const RANGE_MAX = float64(1000000000000)
 
 type Operation interface {
 	Get_Channel_currency() currency.Currency
+	Get_Balance_currency() currency.Currency
 	GetTime(string) time.Time
 	GetInt(string) int
 	GetFloat(string) float64
@@ -24,6 +25,8 @@ type Tariff struct {
 	// Provider              string
 	// Provider_name         string
 	// Organization          string
+	Provider_balance_guid string    `db:"provider_balance_guid"`
+	Provider_balance_name string    `db:"provider_balance_name"`
 	DateStart             time.Time `db:"date_start"`
 	Merchant_name         string    `db:"merchant_name"`
 	Merchant_account_name string    `db:"merchant_account_name"`

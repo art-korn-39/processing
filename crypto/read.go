@@ -121,6 +121,8 @@ func ReadFile(filename string) (ops []Operation, err error) {
 		o.Crypto_amount, _ = strconv.ParseFloat(record[map_fileds["crypto amount"]-1], 64)
 		o.Crypto_currency_str = record[map_fileds["crypto currency"]-1]
 
+		o.Transfer_fee_rate_USDT, _ = strconv.ParseFloat(record[map_fileds["transfer fee rate, usdt"]-1], 64)
+
 		o.Payment_currency = currency.New(record[map_fileds["payment currency"]-1])
 		o.Crypto_currency = currency.New(record[map_fileds["crypto currency"]-1])
 
