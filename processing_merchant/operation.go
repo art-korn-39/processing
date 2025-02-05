@@ -95,6 +95,7 @@ type Operation struct {
 	ClassicTariffDragonPay bool
 	IsPerevodix            bool
 	IsMonetix              bool
+	IsQafpay               bool
 	Crypto_network         string
 	Provider1c             string
 
@@ -134,6 +135,7 @@ func (o *Operation) StartingFill() {
 	o.IsDragonPay = strings.Contains(strings.ToLower(o.Provider_name), "dragonpay")
 	o.IsPerevodix = o.Merchant_id == 73162
 	o.IsMonetix = o.Merchant_id == 648
+	o.IsQafpay = o.Merchant_id == 74032
 
 	o.Provider_currency = currency.New(o.Provider_currency_str)
 	o.Msc_currency = currency.New(o.Msc_currency_str)
@@ -284,7 +286,9 @@ func (o *Operation) SetSRAmount() {
 	}
 
 	// для KGX используем BR
-	if t.Convertation == "KGX" && o.ProviderOperation != nil && (o.IsMonetix || o.IsPerevodix) {
+	if (t.Convertation == "Реестр" || t.Convertation == "KGX") &&
+		o.ProviderOperation != nil && (o.IsMonetix || o.IsPerevodix || o.IsQafpay) {
+
 		if t.AmountInChannelCurrency {
 			SR_channel_currency = o.ProviderOperation.BR_amount
 			SR_balance_currency = SR_channel_currency / o.Rate
@@ -392,13 +396,6 @@ func (o *Operation) SetVerification() {
 			o.Verification_Tariff = VRF_OK
 		}
 	}
-
-	// o.Verification_KGX = VRF_OK
-	// if o.Tariff != nil && o.IsPerevodix && o.Tariff.Convertation == "KGX" {
-	// 	if o.Provider1c == "" {
-	// 		o.Verification_KGX = VRF_NO_FILLED_PROVIDER_1C
-	// 	}
-	// }
 
 }
 

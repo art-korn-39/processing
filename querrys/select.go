@@ -113,7 +113,7 @@ func Stat_Select_tariffs_provider() string {
 				provider_balance_guid,provider_balance_name,
 				date_start,merchant_name,merchant_account_name,merchant_legal_entity,
 				payment_method,payment_method_type,region,channel_currency,project_name,
-				business_type,operation_group,traffic_type,account_bank_name,
+				business_type,operation_group,traffic_type,account_bank_name, use_transaction_created_at,
 				tariff_range_turnouver_min,tariff_range_turnouver_max,tariff_range_amount_min,
 				tariff_range_amount_max,percent,fix,min,max
 			FROM tariffs_provider`

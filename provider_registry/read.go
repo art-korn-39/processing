@@ -149,17 +149,29 @@ func Read_convert_sheet(sheet *xlsx.Sheet, filename string) (ops []Operation, er
 		idx_br = map_fileds["br"] - 1
 		if idx_br < 0 {
 			idx_br = map_fileds["br в валюте пс"] - 1
+			if idx_br < 0 {
+				idx_br = map_fileds["br в валюте баланса"] - 1
+			}
 		}
 	}
 	idx_account := map_fileds["customer_purse / account_number"] - 1
 	idx_operation_id := map_fileds["id / operation_id"] - 1
-	idx_provider_amount := map_fileds["provider_amount"] - 1
 	idx_balance := map_fileds["баланс"] - 1
 	idx_provider1c := map_fileds["поставщик"] - 1
 	idx_project_id := map_fileds["project_id"] - 1
 	idx_team := map_fileds["team"] - 1
 	idx_project_url := map_fileds["project_url"] - 1
 	idx_operation_status := map_fileds["operation_status"] - 1
+
+	idx_amount := map_fileds["сумма в валюте баланса"] - 1
+	if idx_amount < 0 {
+		idx_amount = map_fileds["provider_amount"] - 1
+	}
+
+	idx_provider_currency := map_fileds["валюта баланса"] - 1
+	if idx_provider_currency < 0 {
+		idx_provider_currency = map_fileds["provider_currency"] - 1
+	}
 
 	ops = make([]Operation, 0, len(sheet.Rows))
 
@@ -173,7 +185,7 @@ func Read_convert_sheet(sheet *xlsx.Sheet, filename string) (ops []Operation, er
 			break
 		}
 
-		if len(row.Cells) <= idx_provider_amount { // иначе словим panic
+		if len(row.Cells) <= idx_amount { // иначе словим panic
 			continue
 		}
 
@@ -186,13 +198,18 @@ func Read_convert_sheet(sheet *xlsx.Sheet, filename string) (ops []Operation, er
 		operation.Payment_type = row.Cells[map_fileds["payment_type_id / payment_method_type"]-1].String()
 		operation.Merchant_name = row.Cells[map_fileds["merchant_name"]-1].String()
 		operation.Channel_currency = currency.New(row.Cells[map_fileds["real_currency / channel_currency"]-1].String())
-		operation.Provider_currency = currency.New(row.Cells[map_fileds["provider_currency"]-1].String())
+
+		if idx_provider_currency > 0 {
+			operation.Provider_currency = currency.New(row.Cells[idx_provider_currency].String())
+		}
 
 		operation.Rate, _ = row.Cells[map_fileds["курс"]-1].Float()
 		operation.Rate = util.TR(math.IsNaN(operation.Rate), float64(0), operation.Rate).(float64)
 
-		operation.Amount, _ = row.Cells[map_fileds["provider_amount"]-1].Float()
-		operation.Amount = util.TR(math.IsNaN(operation.Amount), float64(0), operation.Amount).(float64)
+		if idx_amount > 0 {
+			operation.Amount, _ = row.Cells[idx_amount].Float()
+			operation.Amount = util.TR(math.IsNaN(operation.Amount), float64(0), operation.Amount).(float64)
+		}
 
 		operation.Channel_amount, _ = row.Cells[map_fileds["real_amount / channel_amount"]-1].Float()
 		operation.Channel_amount = util.TR(math.IsNaN(operation.Channel_amount), float64(0), operation.Channel_amount).(float64)

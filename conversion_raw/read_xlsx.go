@@ -10,7 +10,7 @@ import (
 	"github.com/tealeg/xlsx"
 )
 
-func readXLSX(filename string) (map_fileds map[string]int, setting Setting, baseError error) {
+func readXLSX(filename string) (baseError error) {
 
 	var mu sync.Mutex
 
@@ -21,7 +21,7 @@ func readXLSX(filename string) (map_fileds map[string]int, setting Setting, base
 	}
 
 	var last_iteration bool
-	for _, setting = range all_settings {
+	for _, setting := range all_settings {
 
 		if setting.File_format != "XLSX" {
 			continue
@@ -57,13 +57,14 @@ func readXLSX(filename string) (map_fileds map[string]int, setting Setting, base
 					continue
 				}
 
-				map_fileds = validation.GetMapOfColumnNamesCells(sheet.Rows[headerLine].Cells)
+				map_fileds := validation.GetMapOfColumnNamesCells(sheet.Rows[headerLine].Cells)
 				err = checkFields(setting, map_fileds)
 				if err != nil {
 					logs.Add(logs.INFO, err)
 					continue
 				}
 
+				used_settings[setting.Guid] = setting
 				last_iteration = true
 
 				for _, row := range sheet.Rows {
@@ -95,7 +96,7 @@ func readXLSX(filename string) (map_fileds map[string]int, setting Setting, base
 		}
 	}
 
-	return map_fileds, setting, nil
+	return nil
 }
 
 func getRecordFromCells(cells []*xlsx.Cell) []string {

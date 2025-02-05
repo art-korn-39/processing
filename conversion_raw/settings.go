@@ -88,12 +88,12 @@ func readSettings(db *sqlx.DB, provider_guid []string) {
 			Date_format: row.Date_format, Calculated: row.Calculated, From_bof: row.From_bof, Skip: row.Skip,
 		}
 
-		var setting Setting
+		var setting *Setting
 		var ok bool
 
 		setting, ok = all_settings[row.Guid]
 		if !ok {
-			setting = Setting{Name: row.Name, Guid: row.Guid, File_format: row.File_format, Key_column: row.Key_column,
+			setting = &Setting{Name: row.Name, Guid: row.Guid, File_format: row.File_format, Key_column: row.Key_column,
 				Comma: row.Comma, Sheet_name: row.Sheet_name, values: map[string]Mapping{}}
 		}
 		setting.values[row.Registry_column] = mapping
@@ -105,5 +105,24 @@ func readSettings(db *sqlx.DB, provider_guid []string) {
 	}
 
 	logs.Add(logs.INFO, fmt.Sprintf("Чтение настроек: %v [найдено: %s]", time.Since(start_time), util.FormatInt(len(all_settings))))
+
+}
+
+func checkUsedSettings() (key_column string, external_usage bool, err error) {
+
+	for _, v := range used_settings {
+
+		if key_column != "" && v.Key_column != key_column {
+			err = fmt.Errorf("обнаружены настройки с разными значениями key_column")
+			return
+		}
+
+		key_column = v.Key_column
+
+		external_usage = v.external_usage || external_usage
+
+	}
+
+	return
 
 }

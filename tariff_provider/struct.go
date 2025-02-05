@@ -25,22 +25,23 @@ type Tariff struct {
 	// Provider              string
 	// Provider_name         string
 	// Organization          string
-	Provider_balance_guid string    `db:"provider_balance_guid"`
-	Provider_balance_name string    `db:"provider_balance_name"`
-	DateStart             time.Time `db:"date_start"`
-	Merchant_name         string    `db:"merchant_name"`
-	Merchant_account_name string    `db:"merchant_account_name"`
-	Merchant_legal_entity int       `db:"merchant_legal_entity"`
-	Payment_method        string    `db:"payment_method"`
-	Payment_method_type   string    `db:"payment_method_type"`
-	Region                string    `db:"region"`
-	ChannelCurrency       currency.Currency
-	ChannelCurrency_str   string `db:"channel_currency"`
-	Project               string `db:"project_name"`
-	Business_type         string `db:"business_type"`
-	Operation_group       string `db:"operation_group"`
-	Traffic_type          string `db:"traffic_type"`
-	Account_bank_name     string `db:"account_bank_name"`
+	Provider_balance_guid      string    `db:"provider_balance_guid"`
+	Provider_balance_name      string    `db:"provider_balance_name"`
+	DateStart                  time.Time `db:"date_start"`
+	Merchant_name              string    `db:"merchant_name"`
+	Merchant_account_name      string    `db:"merchant_account_name"`
+	Merchant_legal_entity      int       `db:"merchant_legal_entity"`
+	Payment_method             string    `db:"payment_method"`
+	Payment_method_type        string    `db:"payment_method_type"`
+	Region                     string    `db:"region"`
+	ChannelCurrency            currency.Currency
+	ChannelCurrency_str        string `db:"channel_currency"`
+	Project                    string `db:"project_name"`
+	Business_type              string `db:"business_type"`
+	Operation_group            string `db:"operation_group"`
+	Traffic_type               string `db:"traffic_type"`
+	Account_bank_name          string `db:"account_bank_name"`
+	Use_transaction_created_at bool   `db:"use_transaction_created_at"`
 
 	Range_turnouver_min float64 `db:"tariff_range_turnouver_min"`
 	Range_turnouver_max float64 `db:"tariff_range_turnouver_max"`

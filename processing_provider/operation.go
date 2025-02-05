@@ -275,6 +275,8 @@ func (op *Operation) GetTime(name string) time.Time {
 		result = op.Operation_created_at
 	case "Transaction_completed_at":
 		result = op.Transaction_completed_at
+	case "Transaction_created_at":
+		result = op.Transaction_created_at
 	default:
 		logs.Add(logs.ERROR, "неизвестное поле time: ", name)
 	}

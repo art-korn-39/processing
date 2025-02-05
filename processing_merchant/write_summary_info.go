@@ -72,7 +72,8 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		"ДК тариф формула", "Компенсация BC", "Компенсация RC",
 		"real_amount / channel_amount", "real_amount, fee", "Сумма в валюте баланса",
 		"SR Balance Currency", "ChecFee", "Кол-во операций", "Сумма холда", "СуммаХолдаМ",
-		"К возврату на баланс, оборот", "К возврату на баланс, комиссия", "Surcharge amount", "BOF fee_amount"}
+		"К возврату на баланс, оборот", "К возврату на баланс, комиссия", "Surcharge amount", "BOF fee_amount",
+		"issuer country"}
 
 	style := xlsx.NewStyle()
 	style.Fill.FgColor = "5B9BD5"
@@ -219,6 +220,8 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		cell = row.AddCell() //36
 		cell.SetFloat(v.fee_amount)
 		cell.SetFormat("0.00")
+
+		row.AddCell().SetString(k.country)
 	}
 
 }

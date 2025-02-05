@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func readFile(filename string) (map_fileds map[string]int, setting Setting, err error) {
+func readFile(filename string) (err error) {
 
 	if filename == "" {
 		return
@@ -26,11 +26,11 @@ func readFile(filename string) (map_fileds map[string]int, setting Setting, err 
 
 	switch ext {
 	case ".csv":
-		map_fileds, setting, err = readCSV(filename)
+		err = readCSV(filename)
 	case ".xlsx":
-		map_fileds, setting, err = readXLSX(filename)
+		err = readXLSX(filename)
 	default:
-		return nil, Setting{}, fmt.Errorf("формат файла не поддерживается")
+		return fmt.Errorf("формат файла не поддерживается")
 	}
 
 	logs.Add(logs.INFO, fmt.Sprintf("Чтение операций провайдера: %v [%s строк]", time.Since(start_time), util.FormatInt(len(ext_registry))))
@@ -39,7 +39,7 @@ func readFile(filename string) (map_fileds map[string]int, setting Setting, err 
 
 }
 
-func readCSV(filename string) (map_fileds map[string]int, setting Setting, baseError error) {
+func readCSV(filename string) (baseError error) {
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
@@ -50,13 +50,11 @@ func readCSV(filename string) (map_fileds map[string]int, setting Setting, baseE
 	}
 	defer file.Close()
 
-	fileInfo, _ := file.Stat()
-
 	reader := csv.NewReader(file)
 	reader.LazyQuotes = true
 
 	var last_iteration bool
-	for _, setting = range all_settings {
+	for _, setting := range all_settings {
 
 		if setting.File_format != "CSV" {
 			continue
@@ -76,22 +74,18 @@ func readCSV(filename string) (map_fileds map[string]int, setting Setting, baseE
 			continue
 		}
 
-		map_fileds = validation.GetMapOfColumnNamesStrings(headers)
+		map_fileds := validation.GetMapOfColumnNamesStrings(headers)
 		err = checkFields(setting, map_fileds)
 		if err != nil {
 			logs.Add(logs.INFO, err)
 			continue
 		}
 
+		used_settings[setting.Guid] = setting
 		last_iteration = true
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-
-		// 150 000 records -> 43.500.000 bytes (~0.004)
-		capacity := fileInfo.Size() * 4 / 1000
-
-		ext_registry = make([]*raw_operation, 0, capacity)
 
 		channel_records := make(chan []string, 1000)
 
@@ -145,7 +139,7 @@ func readCSV(filename string) (map_fileds map[string]int, setting Setting, baseE
 	return
 }
 
-func checkFields(setting Setting, map_fileds map[string]int) error {
+func checkFields(setting *Setting, map_fileds map[string]int) error {
 
 	for _, val := range setting.values {
 

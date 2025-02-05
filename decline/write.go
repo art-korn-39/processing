@@ -13,7 +13,7 @@ import (
 	"github.com/lib/pq"
 )
 
-func InsertIntoDB(db *sqlx.DB, decline_operations map[int]Operation, files []*file.FileInfo) {
+func InsertIntoDB(db *sqlx.DB, decline_operations map[int]*Operation, files []*file.FileInfo) {
 
 	if db == nil {
 		return
@@ -21,7 +21,7 @@ func InsertIntoDB(db *sqlx.DB, decline_operations map[int]Operation, files []*fi
 
 	start_time := time.Now()
 
-	channel := make(chan []Operation, 1000)
+	channel := make(chan []*Operation, 1000)
 
 	const batch_len = 100
 
@@ -67,12 +67,12 @@ func InsertIntoDB(db *sqlx.DB, decline_operations map[int]Operation, files []*fi
 	}
 
 	var i int
-	batch := make([]Operation, 0, batch_len)
+	batch := make([]*Operation, 0, batch_len)
 	for _, v := range decline_operations {
 		batch = append(batch, v)
 		if (i+1)%batch_len == 0 {
 			channel <- batch
-			batch = make([]Operation, 0, batch_len)
+			batch = make([]*Operation, 0, batch_len)
 		}
 		i++
 	}

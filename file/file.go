@@ -40,7 +40,7 @@ func GetFiles(filenames []string, category string, extension string) []*FileInfo
 
 	for _, f := range filenames {
 
-		if strings.Contains(f, "~$") || filepath.Ext(f) != extension {
+		if strings.Contains(f, "~$") || (extension != "" && filepath.Ext(f) != extension) {
 			continue
 		}
 

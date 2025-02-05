@@ -48,6 +48,8 @@ func CheckMapOfColumnNames(map_fileds map[string]int, table string) error {
 		s = fields_holds()
 	case "crypto":
 		s = fields_crypto()
+	case "decline_csv":
+		s = fields_decline_csv()
 	case "dragonpay_csv":
 		s = fields_dragonpay_csv()
 	case "dragonpay_xlsx":
@@ -143,6 +145,19 @@ func fields_crypto() []string {
 		"transfer fee rate, usdt"}
 }
 
+func fields_decline_csv() []string {
+	return []string{
+		"id", "created_at",
+		"merchant_id", "merchant_title",
+		"provider_id", "provider_title",
+		"merchant_account_id", "merchant_account_title",
+		"operation_type",
+		"incoming_amount", "currency_incoming",
+		"coverted_amount", "currency_converted",
+		"proof_link",
+	}
+}
+
 func fields_dragonpay_csv() []string {
 	return []string{"merchant txn id", "create date", "refno",
 		"ccy", "amount", "proc", "fee"}
@@ -165,10 +180,9 @@ func fields_provider_registry() []string {
 		"id / operation_id", "transaction_completed_at",
 		"operation_type", "issuer_country",
 		"payment_type_id / payment_method_type",
-		"merchant_name", "real_currency / channel_currency", "real_amount / channel_amount",
-		"provider_currency", "курс", "provider_amount",
+		"merchant_name", "real_currency / channel_currency", "real_amount / channel_amount", "курс",
+		//"provider_currency",
 		"provider_name", "merchant_account_name", "acquirer_id / provider_payment_id",
-		//"project_url", "operation_status",
 	}
 }
 

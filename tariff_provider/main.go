@@ -158,7 +158,8 @@ func FindTariffForOperation(op Operation) *Tariff {
 	}
 
 	operation_balance_guid := op.GetString("Balance_guid")
-	operation_date := op.GetTime("Transaction_completed_at")
+	transaction_completed_at := op.GetTime("Transaction_completed_at")
+	transaction_created_at := op.GetTime("Transaction_created_at")
 
 	current_date_range := data[0].DateStart
 	selected_tariffs := []*Tariff{}
@@ -177,6 +178,13 @@ func FindTariffForOperation(op Operation) *Tariff {
 				current_date_range = t.DateStart
 				selected_tariffs = []*Tariff{}
 			}
+		}
+
+		var operation_date time.Time
+		if t.Use_transaction_created_at {
+			operation_date = transaction_created_at
+		} else {
+			operation_date = transaction_completed_at
 		}
 
 		if t.DateStart.Before(operation_date) &&

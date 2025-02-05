@@ -7,16 +7,18 @@ import (
 	pr "app/provider_registry"
 	"app/storage"
 	"fmt"
+	"path/filepath"
 	"time"
 )
 
 var (
 	final_registry map[int]*pr.Operation
-	ext_registry   []*raw_operation
+	ext_registry   []*base_operation
 	bof_registry   map[string]*Bof_operation
 
 	is_kgx_tradex bool
-	all_settings  map[string]Setting
+	all_settings  map[string]*Setting
+	used_settings map[string]*Setting
 	teams         map[string]string
 	providers     []provider_params
 	balances      map[Bof_operation]string
@@ -24,9 +26,11 @@ var (
 
 func init() {
 	final_registry = map[int]*pr.Operation{}
+	ext_registry = make([]*base_operation, 0, 100000)
 	bof_registry = map[string]*Bof_operation{}
 
-	all_settings = map[string]Setting{}
+	all_settings = map[string]*Setting{}
+	used_settings = map[string]*Setting{}
 	teams = map[string]string{}
 	providers = []provider_params{}
 	balances = map[Bof_operation]string{}
@@ -53,20 +57,35 @@ func Start() {
 
 	logs.Add(logs.INFO, "Выполняется чтение...")
 
-	// чтение файла реестра провайдера
-	map_fields, setting, err := readFile(filename)
+	if filepath.Ext(filename) == "" {
+		// чтение папки реестра провайдера
+		readFolder(filename)
+		if len(ext_registry) == 0 {
+			return
+		}
+	} else {
+		// чтение файла реестра провайдера
+		err = readFile(filename)
+		if err != nil {
+			logs.Add(logs.FATAL, err)
+		}
+	}
+
+	// проверить, что во всех настройках используется одна key_column
+	// + использование внешних источников
+	key_column, external_usage, err := checkUsedSettings()
 	if err != nil {
 		logs.Add(logs.FATAL, err)
 	}
 
 	// чтение операций БОФ
-	err = readBofOperations(cfg, storage.Clickhouse, setting.Key_column)
+	err = readBofOperations(cfg, storage.Clickhouse, key_column)
 	if err != nil {
 		logs.Add(logs.FATAL, err)
 	}
 
 	// чтение дополнительного маппинга
-	if setting.external_usage {
+	if external_usage {
 		if is_kgx_tradex {
 			err = readHandbook(cfg.Settings.Handbook)
 			if err != nil {
@@ -77,7 +96,7 @@ func Start() {
 	}
 
 	// сборка операции провайдера
-	err = handleRecords(map_fields, setting)
+	err = handleRecords()
 	if err != nil {
 		logs.Add(logs.FATAL, err)
 	}
@@ -86,18 +105,16 @@ func Start() {
 	writeResult(cfg, storage.Postgres)
 }
 
-func handleRecords(map_fields map[string]int, setting Setting) error {
+func handleRecords() error {
 
 	start_time := time.Now()
 
 	cntWithoutBof := 0
 
-	sliceCalculatedFields := setting.getCalculatedFields()
-
 	for _, v := range ext_registry {
 
 		var ok bool
-		switch setting.Key_column {
+		switch v.setting.Key_column {
 		case OPID:
 			v.bof_operation, ok = bof_registry[v.operation_id]
 		case PAYID:
@@ -108,10 +125,12 @@ func handleRecords(map_fields map[string]int, setting Setting) error {
 			//continue
 		}
 
-		provider_operation, err := v.createProviderOperation(map_fields, setting)
+		provider_operation, err := v.createProviderOperation()
 		if err != nil {
 			return fmt.Errorf("ошибка при парсинге полей: %s", err)
 		}
+
+		sliceCalculatedFields := v.setting.getCalculatedFields()
 
 		setCalculatedFields(provider_operation, sliceCalculatedFields)
 

@@ -219,7 +219,7 @@ func FindTariffForOperation(op Operation) *Tariff {
 
 				channel_currency := op.Get_Channel_currency()
 				if channel_currency != t.CurrencyBP && t.Convertation == "Без конверта" {
-					if !(channel_currency.Name == "USD" && t.CurrencyBP.Name == "USDT") {
+					if !(channel_currency.Name == "USD" && (t.CurrencyBP.Name == "USDT" || t.CurrencyBP.Name == "WMZ")) {
 						continue
 					}
 				}
