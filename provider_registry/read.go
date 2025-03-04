@@ -146,11 +146,11 @@ func Read_convert_sheet(sheet *xlsx.Sheet, filename string) (ops []Operation, er
 
 	idx_br := map_fileds["br в валюте пс *при необходимости"] - 1
 	if idx_br < 0 {
-		idx_br = map_fileds["br"] - 1
+		idx_br = map_fileds["br в валюте баланса"] - 1
 		if idx_br < 0 {
 			idx_br = map_fileds["br в валюте пс"] - 1
 			if idx_br < 0 {
-				idx_br = map_fileds["br в валюте баланса"] - 1
+				idx_br = map_fileds["br"] - 1
 			}
 		}
 	}
@@ -193,6 +193,8 @@ func Read_convert_sheet(sheet *xlsx.Sheet, filename string) (ops []Operation, er
 		operation.Id, _ = row.Cells[map_fileds["id / operation_id"]-1].Int()
 		operation.Transaction_completed_at, _ = row.Cells[map_fileds["transaction_completed_at"]-1].GetTime(false)
 		operation.Transaction_completed_at_day = operation.Transaction_completed_at.Truncate(24 * time.Hour)
+		operation.Transaction_created_at, _ = row.Cells[map_fileds["transaction_created_at"]-1].GetTime(false)
+
 		operation.Operation_type = row.Cells[map_fileds["operation_type"]-1].String()
 		operation.Country = row.Cells[map_fileds["issuer_country"]-1].String()
 		operation.Payment_type = row.Cells[map_fileds["payment_type_id / payment_method_type"]-1].String()

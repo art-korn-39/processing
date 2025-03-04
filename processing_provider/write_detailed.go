@@ -4,6 +4,7 @@ import (
 	"app/config"
 	"app/logs"
 	"app/querrys"
+	"app/util"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -46,6 +47,7 @@ func Write_CSV_Detailed() {
 	encoder := charmap.Windows1251.NewEncoder()
 	writer1251 := encoder.Writer(file)
 	writer := csv.NewWriter(writer1251)
+
 	writer.Comma = ';'
 	defer writer.Flush()
 
@@ -80,7 +82,10 @@ func Write_CSV_Detailed() {
 	}()
 
 	for row := range channel_rows {
-		writer.Write(row) // 90% of all time
+		err := writer.Write(row) // 90% of all time
+		if err != nil {
+			logs.Add(logs.ERROR, err)
+		}
 	}
 
 	logs.Add(logs.INFO, fmt.Sprintf("Сохранение детализированных данных в файл: %v", time.Since(start_time)))
@@ -112,7 +117,7 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		d.Provider_payment_id,
 		fmt.Sprint(d.Transaction_id),
 		d.RRN,
-		d.External_id,
+		d.Payment_id,
 		"", "",
 		d.Provider_name,
 		d.Merchant_account_name,
@@ -131,7 +136,7 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Surcharge_amount), ".", ","),
 		d.Surcharge_currency_str,
 		d.Endpoint_id,
-		d.Account_bank_name,
+		util.IsString1251(d.Account_bank_name),
 		d.Operation_created_at.Format(time.DateTime),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Balance_amount), ".", ","),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.BR_balance_currency), ".", ","),

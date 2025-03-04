@@ -5,6 +5,7 @@ import (
 	"app/currency"
 	"app/holds"
 	"app/logs"
+	"app/querrys"
 	"app/util"
 	"app/validation"
 	"errors"
@@ -15,15 +16,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/tealeg/xlsx"
 )
 
-var data []Tariff
+var data []*Tariff
 
-func Read_Sources() {
+func Read_Sources(db *sqlx.DB, registry_done chan querrys.Args) {
 
 	if config.Get().Tariffs.Storage == config.PSQL {
-		util.Unused()
+		Read_PSQL_Tariffs(db, registry_done)
 	} else {
 		Read_XLSX_Tariffs()
 	}
@@ -36,7 +38,7 @@ func Read_XLSX_Tariffs() {
 		return
 	}
 
-	data = make([]Tariff, 0, 1000)
+	data = make([]*Tariff, 0, 1000)
 
 	start_time := time.Now()
 
@@ -114,11 +116,10 @@ func Read_XLSX_Tariffs() {
 			tariff.RatedAccount = row.Cells[map_fileds["расчетный счет"]-1].String()
 
 			tariff.CurrencyBM = currency.New(row.Cells[map_fileds["валюта баланса мерчанта в боф"]-1].String())
-			tariff.CurrencyBP = currency.New(row.Cells[map_fileds["валюта учетная"]-1].String())
+			tariff.Balance_currency_str = row.Cells[map_fileds["валюта учетная"]-1].String()
 
 			percent_str := strings.ReplaceAll(row.Cells[map_fileds["%"]-1].String(), "%", "")
 			tariff.Percent, _ = strconv.ParseFloat(percent_str, 64)
-			tariff.Percent = tariff.Percent / 100
 
 			tariff.Fix = util.FloatFromCell(row.Cells[map_fileds["fix"]-1])
 			tariff.Min = util.FloatFromCell(row.Cells[map_fileds["min"]-1])
@@ -161,7 +162,7 @@ func Read_XLSX_Tariffs() {
 
 			tariff.StartingFill()
 
-			data = append(data, tariff)
+			data = append(data, &tariff)
 
 		}
 
@@ -218,8 +219,8 @@ func FindTariffForOperation(op Operation) *Tariff {
 				}
 
 				channel_currency := op.Get_Channel_currency()
-				if channel_currency != t.CurrencyBP && t.Convertation == "Без конверта" {
-					if !(channel_currency.Name == "USD" && (t.CurrencyBP.Name == "USDT" || t.CurrencyBP.Name == "WMZ")) {
+				if channel_currency != t.Balance_currency && t.Convertation == "Без конверта" {
+					if !(channel_currency.Name == "USD" && (t.Balance_currency.Name == "USDT" || t.Balance_currency.Name == "WMZ")) {
 						continue
 					}
 				}
@@ -235,11 +236,11 @@ func FindTariffForOperation(op Operation) *Tariff {
 					channel_amount := op.GetFloat("Channel_amount")
 					if channel_amount > t.RangeMIN &&
 						channel_amount <= t.RangeMAX {
-						return &t
+						return t
 					}
 
 				} else {
-					return &t
+					return t
 				}
 
 			}

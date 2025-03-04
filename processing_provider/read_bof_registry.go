@@ -165,7 +165,7 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		Account_bank_name:     record[map_fileds["account_bank_name"]-1],
 		Payment_method:        record[map_fileds["payment_method_name"]-1],
 		RRN:                   record[map_fileds["rrn"]-1],
-		External_id:           record[map_fileds["external_id / payment_id"]-1],
+		Payment_id:            record[map_fileds["external_id / payment_id"]-1],
 
 		Count_operations:      1,
 		Channel_currency_str:  record[map_fileds["real_currency / channel_currency"]-1],

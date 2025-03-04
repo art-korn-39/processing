@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	Version = "1.4.4"
+	Version = "1.5.0"
 )
 
 var (
@@ -72,7 +72,7 @@ func ReadSources() {
 
 	wg.Add(6)
 
-	registry_done := make(chan querrys.Args, 1)
+	registry_done := make(chan querrys.Args, 2)
 	go func() {
 		defer wg.Done()
 		Read_Registry(registry_done)
@@ -85,7 +85,7 @@ func ReadSources() {
 
 	go func() {
 		defer wg.Done()
-		tariff_merchant.Read_Sources()
+		tariff_merchant.Read_Sources(storage.Postgres, registry_done)
 	}()
 
 	go func() {

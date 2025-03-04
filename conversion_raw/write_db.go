@@ -45,7 +45,7 @@ func writeIntoDB(db *sqlx.DB) {
 	const batch_len = 10
 	var wg sync.WaitGroup
 
-	stat := querrys.Stat_Insert_provider_registry_test()
+	stat := querrys.Stat_Insert_provider_registry()
 	_, err := db.PrepareNamed(stat)
 	if err != nil {
 		logs.Add(logs.INFO, err)

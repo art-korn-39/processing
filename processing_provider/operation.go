@@ -46,7 +46,8 @@ type Operation struct {
 	Country_code2         string `db:"country"`
 	Region                string //`db:"region"`
 	RRN                   string
-	External_id           string
+	Payment_id            string
+	Balance_type          string
 
 	Project_name      string `db:"project_name"`
 	Project_id        int    `db:"project_id"`
@@ -121,6 +122,7 @@ func (o *Operation) StartingFill() {
 	o.Provider_amount = util.TR(o.Provider_currency.Exponent, o.Provider_amount, o.Provider_amount/100).(float64)
 	o.Channel_amount = util.TR(o.Channel_currency.Exponent, o.Channel_amount, o.Channel_amount/100).(float64)
 	o.Surcharge_amount = util.TR(o.Surcharge_currency.Exponent, o.Surcharge_amount, o.Surcharge_amount/100).(float64)
+	o.Operation_actual_amount = util.TR(o.Channel_currency.Exponent, o.Operation_actual_amount, o.Operation_actual_amount/100).(float64)
 	//o.Msc_amount = util.TR(o.Msc_currency.Exponent, o.Msc_amount, o.Msc_amount/100).(float64)
 	//o.Actual_amount = util.TR(o.Channel_currency.Exponent, o.Actual_amount, o.Actual_amount/100).(float64)
 	//o.Fee_amount = util.TR(o.Fee_currency.Exponent, o.Fee_amount, o.Fee_amount/100).(float64)
@@ -140,13 +142,19 @@ func (o *Operation) StartingFill() {
 	}
 
 	if o.Operation_group == "" && o.Operation_type != "" {
-		if o.Operation_type == "refund" {
-			o.Operation_group = "REFUND"
-		} else if o.Operation_type == "payout" {
+		if o.Operation_type == "payout" {
 			o.Operation_group = "OUT"
+		} else if o.Operation_type == "refund" {
+			o.Operation_group = "REFUND"
 		} else {
 			o.Operation_group = "IN"
 		}
+	}
+
+	if o.Operation_group == "OUT" {
+		o.Balance_type = "OUT"
+	} else {
+		o.Balance_type = "IN"
 	}
 
 }
@@ -165,7 +173,7 @@ func (o *Operation) SetBalanceCurrency() {
 
 func (o *Operation) SetBalanceAmount() {
 
-	if o.ProviderOperation != nil {
+	if o.ProviderOperation != nil && o.ProviderBalance != nil {
 
 		if o.ProviderBalance.Convertation == "Курс реестра" || o.Channel_currency != o.Balance_currency {
 			o.Balance_amount = o.ProviderOperation.Amount

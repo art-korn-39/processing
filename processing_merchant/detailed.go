@@ -15,6 +15,7 @@ type Detailed_row struct {
 	Project_id          int    `db:"project_id"`
 	Provider_id         int    `db:"provider_id"`
 	Provider_payment_id string `db:"provider_payment_id"`
+	Payment_id          string `db:"payment_id"`
 
 	Provider_name         string `db:"provider_name"`
 	Merchant_name         string `db:"merchant_name"`
@@ -92,6 +93,7 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.Project_name = o.Project_name
 	d.Payment_type = o.Payment_type
 	d.Operation_type = o.Operation_type
+	d.Payment_id = o.Payment_id
 
 	d.Region = o.Country.Region
 	if o.Country_code2 != "" {

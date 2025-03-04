@@ -219,7 +219,7 @@ func add_page_turnoverNew(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 	headers := []string{"Баланс провайдера", "Ключ", "Наименование баланса ПС", "ЮЛ", "Дата учета", "provider_name", "merchant_account",
 		"operation_type", "region", "payment_type", "merchant_name", "Валюта баланса", "Кол-во транз",
-		"Сумма в валюте баланса", "BR в валюте баланса", "Доп. BR в валюте баланса", "Surcharge amount",
+		"Сумма в валюте баланса", "BR в валюте баланса", "Surcharge amount", "Доп. BR в валюте баланса",
 		"Сумма в валюте канала", "Валюта канала", "Мерч 1С",
 	}
 
@@ -280,11 +280,11 @@ func add_page_turnoverNew(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		cell.SetFormat("0.00")
 
 		cell = row.AddCell()
-		cell.SetFloat(0)
+		cell.SetFloat(v.surcharge_amount)
 		cell.SetFormat("0.00")
 
 		cell = row.AddCell()
-		cell.SetFloat(v.surcharge_amount)
+		cell.SetFloat(0)
 		cell.SetFormat("0.00")
 
 		cell = row.AddCell()
@@ -303,10 +303,11 @@ func add_page_detailNew(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 	headers := []string{"Наименование баланса ПС", "ЮЛ", "Идентификатор сверки", "Дата",
 		"provider_name", "operation_type", "issuer_country",
-		"payment_type", "merchant_account", "merchant_name", "region", "account_bank_name",
+		"payment_type", "merchant_account", "merchant_name", "region", //"account_bank_name",
 		"real_currency / channel_currency", "Валюта баланса", "Кол-во операций",
 		"Сумма в валюте баланса", "BR Balance Currency", "Компенсация BR",
 		"Акт. тариф формула", "Проверка", "Старт тарифа", "Range", "Мерч 1С",
+		"project id", "project name",
 	}
 
 	style := xlsx.NewStyle()
@@ -346,7 +347,7 @@ func add_page_detailNew(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		row.AddCell().SetString(k.merchant_account_name)
 		row.AddCell().SetString(k.merchant_name)
 		row.AddCell().SetString(k.region)
-		row.AddCell().SetString(k.account_bank_name)
+		//row.AddCell().SetString(k.account_bank_name)
 		row.AddCell().SetString(k.channel_currency.Name)
 		row.AddCell().SetString(k.balance_currency.Name)
 		row.AddCell().SetInt(v.count_operations)
@@ -375,6 +376,9 @@ func add_page_detailNew(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		row.AddCell().SetString(k.tariff.Range) // Range
 
 		row.AddCell().SetString(k.contractor_merchant)
+
+		row.AddCell().SetInt(k.project_id)
+		row.AddCell().SetString(k.project_name)
 
 	}
 

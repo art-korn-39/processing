@@ -27,9 +27,9 @@ func main() {
 	var app string
 	var file_config string
 
-	// processing_merchant | processing_provider | conversion | decline
-	// crypto | dragonpay | aws | chargeback | crm_dictionary | conversion_raw
-	flag.StringVar(&app, "app", "decline", "")
+	// processing_merchant | processing_provider | conversion_raw
+	// conversion | decline crypto | dragonpay | aws | chargeback | crm_dictionary
+	flag.StringVar(&app, "app", "processing_provider", "")
 	flag.StringVar(&file_config, "file_config", "", "")
 	flag.Parse()
 

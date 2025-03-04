@@ -3,9 +3,10 @@ package querrys
 import "time"
 
 type Args struct {
-	Merhcant []string
-	DateFrom time.Time
-	DateTo   time.Time
+	Merhcant    []string
+	Merchant_id []int
+	DateFrom    time.Time
+	DateTo      time.Time
 }
 
 func Stat_Select_reports() string {
@@ -92,20 +93,35 @@ func Stat_Select_reports_by_id() string {
 }
 
 func Stat_Select_provider_registry() string {
-	return `SELECT operation_id, transaction_completed_at, operation_type, country, payment_method_type, 
-			merchant_name, rate, amount, channel_amount, channel_currency, provider_currency, br_amount, balance, provider1c,
-			team, project_url, project_id
+	return `SELECT 
+			operation_id, transaction_completed_at, operation_type, country, payment_method_type, 
+			merchant_name, rate, amount, channel_amount, channel_currency, provider_currency, br_amount, 
+			balance, provider1c, team, project_url, project_id
 		FROM provider_registry 
 		WHERE lower(merchant_name) = ANY($1) 
 		AND transaction_completed_at BETWEEN $2 AND $3`
 }
 
 func Stat_Select_provider_registry_period_only() string {
-	return `SELECT operation_id, transaction_completed_at, operation_type, country, payment_method_type, 
-			merchant_name, rate, amount, channel_amount, channel_currency, provider_currency, br_amount, balance, provider1c,
-			team, project_url, project_id
+	return `SELECT 
+			operation_id, transaction_completed_at, operation_type, country, payment_method_type, 
+			merchant_name, rate, amount, channel_amount, channel_currency, provider_currency, 
+			br_amount, balance, provider1c, team, project_url, project_id
 		FROM provider_registry 
 		WHERE transaction_completed_at BETWEEN $1 AND $2`
+}
+
+func Stat_Select_tariffs_merchant() string {
+	return `SELECT 
+				id,balance_id,balance_name,balance_code,merchant_account_id,
+				merchant_account_name,provider_name,schema,convertation,merchant_id, 
+				operation_type,rr_days,rr_percent,subdivision1c,provider1c, 
+				ratedaccount,balance_type,date_start_ps,balance_currency,
+				date_start,range_min,range_max,percent,fix,min,max,dk_percent,
+				dk_fix,dk_min,dk_max,currency_commission,network_type, 
+				payment_type,company
+			FROM tariffs_merchant
+			WHERE merchant_id = ANY($1)`
 }
 
 func Stat_Select_tariffs_provider() string {
@@ -122,8 +138,8 @@ func Stat_Select_tariffs_provider() string {
 func Stat_Select_provider_balances() string {
 	return `SELECT 
 				guid,provider_balance,contractor,provider_name,provider_id,balance_code,
-				legal_entity,merchant_account,merchant_account_id,date_start,
-				date_finish,convertation,convertation_id,key_record,balance_currency
+				legal_entity,merchant_account,merchant_account_id,date_start,nickname,
+				date_finish,convertation,convertation_id,key_record,balance_currency,type
 			FROM provider_balances
 			WHERE provider_id > 0 AND merchant_account_id > 0`
 }

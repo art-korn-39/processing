@@ -23,7 +23,9 @@ const DUR = 24
 func Read_Registry(registry_done chan querrys.Args) {
 
 	if config.Get().Registry.Storage == config.Clickhouse {
-		registry_done <- NewQuerryArgs(true)
+		args := NewQuerryArgs(true)
+		registry_done <- args
+		registry_done <- args
 		close(registry_done)
 
 		err := CH_ReadRegistry()
@@ -31,12 +33,6 @@ func Read_Registry(registry_done chan querrys.Args) {
 			logs.Add(logs.FATAL, err)
 		}
 
-		//CH_ReadRegistry_uno_querry_cap()
-		//CH_ReadRegistry_async()
-		//CH_ReadRegistry_async2()
-		//CH_ReadRegistry_async_querry()
-
-		//CH_ReadRegistry_async_querry_cap()
 	} else {
 		defer close(registry_done)
 		Read_CSV_Registry()
@@ -46,7 +42,9 @@ func Read_Registry(registry_done chan querrys.Args) {
 				return storage.Registry[i].Transaction_completed_at.Before(storage.Registry[j].Transaction_completed_at)
 			},
 		)
-		registry_done <- NewQuerryArgs(false)
+		args := NewQuerryArgs(false)
+		registry_done <- args
+		registry_done <- args
 	}
 
 }
@@ -59,6 +57,7 @@ func NewQuerryArgs(from_cfg bool) (args querrys.Args) {
 
 	if from_cfg { // clickhouse
 		args.Merhcant = bof_reg.Merchant_name
+		args.Merchant_id = bof_reg.Merchant_id
 		args.DateFrom = bof_reg.DateFrom.Add(-20 * 24 * time.Hour)
 		args.DateTo = bof_reg.DateTo.Add(4 * 24 * time.Hour)
 	} else { // file
@@ -66,6 +65,7 @@ func NewQuerryArgs(from_cfg bool) (args querrys.Args) {
 		if lenght > 0 {
 			row := storage.Registry[0]
 			args.Merhcant = append(args.Merhcant, strings.ToLower(row.Merchant_name))
+			args.Merchant_id = append(args.Merchant_id, row.Merchant_id)
 			args.DateFrom = storage.Registry[0].Transaction_completed_at.Add(-3 * 24 * time.Hour)
 			args.DateTo = storage.Registry[lenght-1].Transaction_completed_at.Add(1 * 24 * time.Hour)
 		}
@@ -169,6 +169,7 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		Provider_name:         record[map_fileds["provider_name"]-1],
 		Merchant_name:         record[map_fileds["merchant_name"]-1],
 		Merchant_account_name: record[map_fileds["merchant_account_name"]-1],
+		Payment_id:            record[map_fileds["external_id / payment_id"]-1],
 
 		Count_operations:      1,
 		Channel_currency_str:  record[map_fileds["real_currency / channel_currency"]-1],
@@ -179,7 +180,7 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		Fee_amount:            util.FR(strconv.ParseFloat(record[map_fileds["fee_amount"]-1], 64)).(float64),
 		Currency_str:          record[map_fileds["currency / currency"]-1],
 
-		Tariff_rate_percent: util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_percent"]-1], 64)).(float64) / 100,
+		Tariff_rate_percent: util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_percent"]-1], 64)).(float64),
 		Tariff_rate_fix:     util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_fix"]-1], 64)).(float64),
 		Tariff_rate_min:     util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_min"]-1], 64)).(float64),
 		Tariff_rate_max:     util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_max"]-1], 64)).(float64),

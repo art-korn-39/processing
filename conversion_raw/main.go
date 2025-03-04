@@ -19,7 +19,7 @@ var (
 	is_kgx_tradex bool
 	all_settings  map[string]*Setting
 	used_settings map[string]*Setting
-	teams         map[string]string
+	teams         map[string]team_line
 	providers     []provider_params
 	balances      map[Bof_operation]string
 )
@@ -31,7 +31,7 @@ func init() {
 
 	all_settings = map[string]*Setting{}
 	used_settings = map[string]*Setting{}
-	teams = map[string]string{}
+	teams = map[string]team_line{}
 	providers = []provider_params{}
 	balances = map[Bof_operation]string{}
 }

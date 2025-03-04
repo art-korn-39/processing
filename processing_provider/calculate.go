@@ -130,12 +130,12 @@ func SetBalanceInOperations() {
 
 	for _, operation := range storage.Registry {
 
-		var currency string
+		currency := operation.Channel_currency.Name
 		if operation.ProviderOperation != nil {
 			currency = operation.ProviderOperation.Provider_currency.Name
 		}
 
-		balance, ok := provider_balances.GetBalance(operation.Provider_id, operation.Merchant_account_id, currency)
+		balance, ok := provider_balances.GetBalance(operation.Provider_id, operation.Merchant_account_id, currency, operation.Balance_type)
 		if ok {
 			operation.ProviderBalance = balance
 		} else {

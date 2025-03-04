@@ -80,7 +80,10 @@ func Write_CSV_Detailed() {
 	}()
 
 	for row := range channel_rows {
-		writer.Write(row) // 90% of all time
+		err := writer.Write(row) // 90% of all time
+		if err != nil {
+			logs.Add(logs.ERROR, err)
+		}
 	}
 
 	logs.Add(logs.INFO, fmt.Sprintf("Сохранение детализированных данных в файл: %v", time.Since(start_time)))
@@ -90,9 +93,9 @@ func Write_CSV_Detailed() {
 func SetHeaders_detailed(writer *csv.Writer) {
 	headers := []string{
 		"merchant_id", "merchant_name",
-		"operation_id", "merchant_account_id",
+		"operation_id", "merchant_account_id", "payment_id",
 		"payment_method", "operation_type", "merchant_account_name", "issuer_country",
-		"Поставщик", "Подраззделение", "Расчетный счет",
+		"Поставщик", "Подразделение", "Расчетный счет",
 		"transaction_completed_at",
 		"provider_name", "provider_amount", "provider_currency",
 		"real_amount / channel_amount", "real_currency / channel_currency",
@@ -113,6 +116,7 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		d.Merchant_name,
 		fmt.Sprint(d.Operation_id),
 		fmt.Sprint(d.Merchant_account_id),
+		d.Payment_id,
 		d.Payment_type,
 		d.Operation_type,
 		d.Merchant_account_name,

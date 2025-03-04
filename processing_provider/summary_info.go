@@ -5,6 +5,7 @@ import (
 	"app/currency"
 	"app/logs"
 	"app/tariff_provider"
+	"app/util"
 	"fmt"
 	"time"
 )
@@ -25,6 +26,14 @@ func (sf *SumFileds) AddValues(o *Operation) {
 	sf.compensationBR = sf.compensationBR + o.CompensationBR
 	sf.channel_amount = sf.channel_amount + o.Channel_amount
 	sf.surcharge_amount = sf.surcharge_amount + o.Surcharge_amount
+}
+
+func (sf *SumFileds) RoundValues() {
+	sf.balance_amount = util.Round(sf.balance_amount, 2)
+	sf.BR_balance_currency = util.Round(sf.BR_balance_currency, 2)
+	sf.compensationBR = util.Round(sf.compensationBR, 2)
+	sf.channel_amount = util.Round(sf.channel_amount, 2)
+	sf.surcharge_amount = util.Round(sf.surcharge_amount, 2)
 }
 
 type KeyFields_SummaryInfo struct {
@@ -48,6 +57,8 @@ type KeyFields_SummaryInfo struct {
 	tariff                tariff_provider.Tariff
 	contractor_provider   string
 	contractor_merchant   string
+	project_name          string
+	project_id            int
 }
 
 func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
@@ -61,9 +72,9 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		merchant_name:         o.Merchant_name,
 		merchant_account_name: o.Merchant_account_name,
 		region:                o.Country.Region,
-		account_bank_name:     o.Account_bank_name,
-		channel_currency:      o.Channel_currency,
-		balance_currency:      o.Balance_currency,
+		//account_bank_name:     o.Account_bank_name,
+		channel_currency: o.Channel_currency,
+		balance_currency: o.Balance_currency,
 	}
 
 	if KF.country == "" {
@@ -79,12 +90,15 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		KF.id_revise = o.ProviderBalance.Balance_code
 		KF.balance = o.ProviderBalance.Name
 		KF.organization = o.ProviderBalance.Legal_entity
-		KF.contractor_provider = o.ProviderBalance.Contractor
+		KF.contractor_provider = util.TR(o.ProviderBalance.Nickname == "", o.ProviderBalance.Contractor, o.ProviderBalance.Nickname).(string)
 		//KF.balance_currency = o.ProviderBalance.Balance_currency
 	}
 
 	if o.Merchant != nil {
 		KF.contractor_merchant = o.Merchant.Contractor_name
+	} else { // если пустой мерчант 1С, то запишем данные по проекту, чтобы проще отследить было
+		KF.project_name = o.Project_name
+		KF.project_id = o.Project_id
 	}
 
 	return
@@ -104,6 +118,7 @@ func GroupRegistryToSummaryInfo() (group_data map[KeyFields_SummaryInfo]SumFiled
 		kf := NewKeyFields_SummaryInfo(operation) // получили структуру с полями группировки
 		sf := group_data[kf]                      // получили текущие агрегатные данные по ним
 		sf.AddValues(operation)                   // увеличили агрегатные данные на значения тек. операции
+		sf.RoundValues()                          // снова избавляемся от погрешностей
 		group_data[kf] = sf                       // положили обратно в мапу
 	}
 

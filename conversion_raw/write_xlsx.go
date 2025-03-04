@@ -39,7 +39,7 @@ func add_page_convertation(f *xlsx.File) {
 		"merchant_name", "project_id", "operation_type",
 		"account_number", "channel_amount", "channel_currency", "issuer_country",
 		"payment_method_type", "transaction_completed_at", "transaction_created_at", "provider_currency",
-		"курс", "provider_amount", "BR", "balance", "provider1c"}
+		"курс", "provider_amount", "BR", "balance", "provider1c", "team"}
 
 	style := xlsx.NewStyle()
 	style.Fill.FgColor = "5B9BD5"
@@ -113,6 +113,7 @@ func add_page_convertation(f *xlsx.File) {
 
 		row.AddCell().SetString(v.Balance)
 		row.AddCell().SetString(v.Provider1c)
+		row.AddCell().SetString(v.Team)
 	}
 
 }
@@ -208,7 +209,7 @@ func add_page_absentInProiderRegistry(f *xlsx.File) {
 	sheet, _ := f.AddSheet("Нет в реестре")
 
 	headers := []string{"operation_id", "provider_payment_id", "provider_name", "merchant_account_name",
-		"merchant_name", "project_id", "operation_type", "operation_status",
+		"merchant_name", "project_id", "operation_type",
 		"channel_amount", "channel_currency", "issuer_country",
 		"payment_method_type", "transaction_created_at", "transaction_completed_at",
 	}

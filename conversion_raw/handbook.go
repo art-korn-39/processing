@@ -46,6 +46,10 @@ func readHandbook(filename string) error {
 
 }
 
+type team_line struct {
+	team_id, team, balance string
+}
+
 func readCommandSheet(sheet *xlsx.Sheet, file_name string) error {
 
 	if len(sheet.Rows) < 2 || sheet.Rows[0].Cells[0].Value != "team_id" {
@@ -68,10 +72,13 @@ func readCommandSheet(sheet *xlsx.Sheet, file_name string) error {
 			break
 		}
 
-		team_id := row.Cells[map_fileds["team_id"]-1].String()
-		balance := row.Cells[map_fileds["balance"]-1].String()
+		v := team_line{
+			team_id: row.Cells[map_fileds["team_id"]-1].String(),
+			team:    row.Cells[map_fileds["team"]-1].String(),
+			balance: row.Cells[map_fileds["balance"]-1].String(),
+		}
 
-		teams[team_id] = balance
+		teams[v.team_id] = v
 
 	}
 
@@ -117,12 +124,24 @@ func readProviderSheet(sheet *xlsx.Sheet, file_name string) error {
 
 }
 
+func getTeamByTeamID(record []string, map_fields map[string]int) string {
+
+	idx := map_fields["partnerid"]
+	if idx > 0 {
+		partner_id := record[idx-1]
+		return teams[partner_id].team
+	}
+
+	return ""
+
+}
+
 func getBalanceByTeamID(record []string, map_fields map[string]int) string {
 
 	idx := map_fields["partnerid"]
 	if idx > 0 {
 		partner_id := record[idx-1]
-		return teams[partner_id]
+		return teams[partner_id].balance
 	}
 
 	return ""

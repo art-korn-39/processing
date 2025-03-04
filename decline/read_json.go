@@ -3,6 +3,7 @@ package decline
 import (
 	"app/file"
 	"app/util"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -45,11 +46,15 @@ func readJSON(db *sqlx.DB, filename string) ([]*Operation, *file.FileInfo, error
 		}
 
 		// берём элемент с ключом "plain" из text_entities
-		// у него находим элемент в котором type = plain
-		var text string
+		// в link может лежать merchant_name
+		var text, link string
 		for _, map_ := range message.Text {
 			if map_["type"] == "plain" {
 				text = text + map_["text"]
+			} else if map_["type"] == "link" {
+				if !strings.Contains(map_["text"], "https:") {
+					link = map_["text"]
+				}
 			}
 		}
 
@@ -93,6 +98,10 @@ func readJSON(db *sqlx.DB, filename string) ([]*Operation, *file.FileInfo, error
 				o.Comment = M["comment/proof link"]
 
 				o.Merchant_id, o.Merchant_name = GetIDandName(M["merchant"])
+				//if o.Merchant_name == "" {
+				o.Merchant_name = fmt.Sprint(link, o.Merchant_name)
+				//}
+
 				o.Provider_id, o.Provider_name = GetIDandName(M["provider"])
 				o.Merchant_account_id, o.Merchant_account_name = GetIDandName(M["merchant account"])
 
@@ -148,6 +157,11 @@ func GetIDandName(s string) (id int, name string) {
 
 	i := strings.Index(s, " ")
 	if i == -1 {
+		if strings.Contains(s, "[") {
+			id_str := strings.Trim(s, "[]")
+			id, _ = strconv.Atoi(id_str)
+			return
+		}
 		return
 	}
 

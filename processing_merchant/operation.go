@@ -51,6 +51,7 @@ type Operation struct {
 	Payment_method_id int    `db:"payment_method_id"`
 	Payment_method    string `db:"payment_method"` //visa,humo,mastercard
 	Payment_type      string `db:"payment_type"`   //sbp-p2p,card-p2p,pix,crypto,bank-transfer
+	Payment_id        string `db:"payment_id"`
 
 	Operation_type    string `db:"operation_type"`
 	Operation_type_id int    `db:"operation_type_id"`
@@ -198,7 +199,7 @@ func (o *Operation) SetCountry() {
 func (o *Operation) SetBalanceAmount() {
 
 	t := o.Tariff
-	o.Balance_currency = t.CurrencyBP
+	o.Balance_currency = t.Balance_currency
 
 	rate := float64(1)
 	balance_amount := float64(0)
@@ -212,6 +213,7 @@ func (o *Operation) SetBalanceAmount() {
 		balance_amount = o.Channel_amount
 	} else if t.Convertation == "Колбек" {
 		balance_amount = o.Provider_amount
+		rate = util.TR(o.Provider_amount == 0, float64(1), o.Channel_amount/o.Provider_amount).(float64)
 	} else if t.Convertation == "Реестр" || t.Convertation == "KGX" {
 
 		// Поиск в мапе операций провайдера по ID
@@ -267,7 +269,9 @@ func (o *Operation) SetSRAmount() {
 
 	// SR В ВАЛЮТЕ КАНАЛА
 	var SR_channel_currency float64
-	if t.Convertation == "Реестр" || t.Convertation == "KGX" {
+	if t.Convertation == "Реестр" ||
+		t.Convertation == "Колбек" ||
+		t.Convertation == "KGX" {
 		if t.AmountInChannelCurrency {
 			SR_channel_currency = commission
 		} else { // тариф в валюте баланса и комса тоже, поэтому умножаем на курс
@@ -279,7 +283,9 @@ func (o *Operation) SetSRAmount() {
 
 	// SR В ВАЛЮТЕ БАЛАНСА
 	var SR_balance_currency float64
-	if (t.Convertation == "Реестр" || t.Convertation == "KGX") && t.AmountInChannelCurrency {
+	if (t.Convertation == "Реестр" ||
+		t.Convertation == "Колбек" ||
+		t.Convertation == "KGX") && t.AmountInChannelCurrency {
 		SR_balance_currency = commission / o.Rate
 	} else {
 		SR_balance_currency = commission
@@ -342,11 +348,11 @@ func (o *Operation) SetCheckFee() {
 func (o *Operation) SetVerification() {
 
 	var Converation string
-	var CurrencyBP currency.Currency
+	var Balance_currency currency.Currency
 
 	if o.Tariff != nil {
 		Converation = o.Tariff.Convertation
-		CurrencyBP = o.Tariff.CurrencyBP
+		Balance_currency = o.Tariff.Balance_currency
 		if o.Tariff_bof != nil {
 			s1 := (o.Tariff.Percent + o.Tariff.Fix + o.Tariff.Min + o.Tariff.Max) //* 100
 			s2 := o.Tariff_bof.Percent + o.Tariff_bof.Fix + o.Tariff_bof.Min + o.Tariff_bof.Max
@@ -373,7 +379,7 @@ func (o *Operation) SetVerification() {
 		o.Verification = VRF_OK
 	} else if o.CheckRates != 0 {
 		o.Verification = VRF_CHECK_TARIFF
-	} else if o.Channel_currency != CurrencyBP && Converation != "Колбек" {
+	} else if o.Channel_currency != Balance_currency && Converation != "Колбек" {
 		o.Verification = VRF_CHECK_CURRENCY
 	} else if Converation == "Частичные выплаты" && o.Channel_amount != o.Actual_amount {
 		o.Verification = VRF_PARTIAL_PAYMENTS
@@ -497,8 +503,8 @@ func (op *Operation) Get_Channel_currency() currency.Currency {
 	return op.Channel_currency
 }
 
-func (op *Operation) Get_Tariff_currencyBP() currency.Currency {
-	return op.Tariff.CurrencyBP
+func (op *Operation) Get_Tariff_balance_currency() currency.Currency {
+	return op.Tariff.Balance_currency
 }
 
 func (op *Operation) GetBool(name string) bool {

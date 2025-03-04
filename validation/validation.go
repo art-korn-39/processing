@@ -86,7 +86,7 @@ func fields_bof_registry_merchant() []string {
 		"provider_name", "merchant_name", "merchant_account_name",
 		"acquirer_id / provider_payment_id", "issuer_country",
 		"operation_type", "balance_id", "payment_type_id / payment_method_type",
-		"contract_id", "tariff_condition_id",
+		"contract_id", "tariff_condition_id", "external_id / payment_id",
 		"currency / currency",
 		"real_currency / channel_currency", "real_amount / channel_amount",
 		"fee_currency", "fee_amount",
@@ -168,7 +168,7 @@ func fields_dragonpay_xlsx() []string {
 }
 
 func fields_kgx_teams_xlsx() []string {
-	return []string{"team_id", "balance"}
+	return []string{"team_id", "balance", "team"}
 }
 
 func fields_kgx_providers_xlsx() []string {
@@ -177,7 +177,7 @@ func fields_kgx_providers_xlsx() []string {
 
 func fields_provider_registry() []string {
 	return []string{
-		"id / operation_id", "transaction_completed_at",
+		"id / operation_id", "transaction_completed_at", "transaction_created_at",
 		"operation_type", "issuer_country",
 		"payment_type_id / payment_method_type",
 		"merchant_name", "real_currency / channel_currency", "real_amount / channel_amount", "курс",

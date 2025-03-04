@@ -77,7 +77,7 @@ func SetHeaders_detailed(writer *csv.Writer) {
 		"merchant_name", "project_id", "operation_type", "operation_status",
 		"account_number", "channel_amount", "channel_currency", "issuer_country",
 		"payment_method_type", "transaction_completed_at", "transaction_created_at", "provider_currency",
-		"курс", "provider_amount", "BR", "balance", "provider1c",
+		"курс", "provider_amount", "BR", "balance", "provider1c", "team",
 	}
 
 	writer.Write(headers)
@@ -107,6 +107,7 @@ func makeDetailedRow(op *pr.Operation) []string {
 		strings.ReplaceAll(fmt.Sprintf("%.2f", op.BR_amount), ".", ","),
 		op.Balance,
 		op.Provider1c,
+		op.Team,
 	}
 
 	return result

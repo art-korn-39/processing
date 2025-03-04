@@ -46,6 +46,7 @@ func createRawOperation(record []string, map_fields map[string]int, setting *Set
 func (ext_op *base_operation) createProviderOperation() (op *pg.Operation, err error) {
 
 	op = &pg.Operation{}
+	ext_op.provider_operation = op
 
 	if ext_op.operation_id != "" {
 		op.Id, err = strconv.Atoi(ext_op.operation_id)
@@ -77,6 +78,11 @@ func (ext_op *base_operation) createProviderOperation() (op *pg.Operation, err e
 		return nil, err
 	}
 
+	op.Rate, err = util.ParseFloat(ext_op.getValue("rate"))
+	if err != nil {
+		return nil, err
+	}
+
 	op.Amount, err = util.ParseFloat(ext_op.getValue("amount"))
 	if err != nil {
 		return nil, err
@@ -99,15 +105,9 @@ func (ext_op *base_operation) createProviderOperation() (op *pg.Operation, err e
 	op.Balance = ext_op.getValue("balance")
 	op.Provider1c = ext_op.getValue("provider1c")
 	op.Project_id, _ = strconv.Atoi(ext_op.getValue("project_id"))
-
-	op.Rate, err = util.ParseFloat(ext_op.getValue("rate"))
-	if err != nil {
-		return nil, err
-	}
+	op.Team = ext_op.getValue("team (kgx/tradex)")
 
 	op.StartingFill(false)
-
-	ext_op.provider_operation = op
 
 	return op, nil
 
@@ -162,23 +162,38 @@ func (base_op *base_operation) getValue(reg_name string) (result string) {
 			result = getBalance(base_op.record, base_op.map_fields, bof_op)
 			balances[bof_op] = result
 		case "provider1c":
-			result = getProvider1c(bof_op)
+			result = getProvider1c(bof_op, base_op.provider_operation.Provider_currency_str)
 		case "provider_currency":
 			result = getProviderCurrency(bof_op)
+		case "team (kgx/tradex)":
+			result = getTeamByTeamID(base_op.record, base_op.map_fields)
 		}
 	} else if mapping.Calculated {
 		switch reg_name {
 		case "rate":
 			result = "0"
+		case "amount":
+			if base_op.provider_operation.Rate == 0 {
+				result = "0"
+			} else {
+				result = strconv.FormatFloat(base_op.provider_operation.Channel_amount/base_op.provider_operation.Rate, 'f', -1, 64)
+			}
 		}
 	} else {
+		// из файла реестра провайдера
 		idx := base_op.map_fields[mapping.Table_column] - 1
 		if mapping.Date_format != "" {
 			date_str := base_op.record[idx]
 			t, _ := time.Parse(mapping.Date_format, date_str)
 			result = t.Format(time.DateTime)
 		} else {
-			result = base_op.record[idx]
+			if slices.Contains(float_names, reg_name) && reg_name != "rate" {
+				str := base_op.record[idx]
+				number, _ := util.ParseFloat(str)
+				result = strconv.FormatFloat(number, 'f', -1, 64)
+			} else {
+				result = base_op.record[idx]
+			}
 		}
 	}
 
@@ -198,10 +213,10 @@ func getBalance(record []string, map_fields map[string]int, bof_op Bof_operation
 	return balance_name
 }
 
-func getProvider1c(bof_op Bof_operation) (provider1c string) {
+func getProvider1c(bof_op Bof_operation, provider_currency string) (provider1c string) {
 
 	balance := balances[bof_op]
-	provider_currency := getProviderCurrency(bof_op)
+	//provider_currency := getProviderCurrency(bof_op)
 
 	if is_kgx_tradex {
 

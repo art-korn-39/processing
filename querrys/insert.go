@@ -4,13 +4,13 @@ func Stat_Insert_provider_registry() string {
 	return `
 	INSERT INTO provider_registry (
 		operation_id, transaction_completed_at, provider_name, merchant_name, merchant_account_name,
-		project_url, payment_method_type, country, rate, operation_type, amount,
+		project_url, payment_method_type, country, rate, operation_type, amount, transaction_created_at,
 		provider_payment_id, operation_status, account_number, channel_currency, provider_currency, br_amount,
 		transaction_completed_at_day, channel_amount, balance, provider1c, project_id, team
 	)
 	VALUES (
 		:operation_id, :transaction_completed_at, :provider_name, :merchant_name, :merchant_account_name,
-		:project_url, :payment_method_type, :country, :rate, :operation_type, :amount,
+		:project_url, :payment_method_type, :country, :rate, :operation_type, :amount, :transaction_created_at,
 		:provider_payment_id, :operation_status, :account_number, :channel_currency, :provider_currency, :br_amount,
 		:transaction_completed_at_day, :channel_amount, :balance, :provider1c, :project_id, :team
 	)
@@ -23,7 +23,7 @@ func Stat_Insert_provider_registry() string {
 		transaction_completed_at_day = EXCLUDED.transaction_completed_at_day, 
 		operation_status = EXCLUDED.operation_status, balance = EXCLUDED.balance,
 		project_id = EXCLUDED.project_id, team = EXCLUDED.team, 
-		provider1c = EXCLUDED.provider1c;`
+		transaction_created_at = EXCLUDED.transaction_created_at, provider1c = EXCLUDED.provider1c;`
 }
 
 func Stat_Insert_provider_registry_test() string {
@@ -32,13 +32,15 @@ func Stat_Insert_provider_registry_test() string {
 		operation_id, transaction_completed_at, provider_name, merchant_name, merchant_account_name,
 		payment_method_type, country, rate, operation_type, amount,
 		provider_payment_id, account_number, channel_currency, provider_currency, br_amount,
-		transaction_completed_at_day, channel_amount, balance, provider1c, transaction_created_at, project_id
+		transaction_completed_at_day, channel_amount, balance, provider1c, transaction_created_at, 
+		project_id, team
 	)
 	VALUES (
 		:operation_id, :transaction_completed_at, :provider_name, :merchant_name, :merchant_account_name,
 		:payment_method_type, :country, :rate, :operation_type, :amount,
 		:provider_payment_id, :account_number, :channel_currency, :provider_currency, :br_amount,
-		:transaction_completed_at_day, :channel_amount, :balance, :provider1c, :transaction_created_at, :project_id
+		:transaction_completed_at_day, :channel_amount, :balance, :provider1c, :transaction_created_at, 
+		:project_id, :team
 	)
 	
 	ON CONFLICT ON CONSTRAINT pk_provider_registry_test_id DO UPDATE
@@ -50,7 +52,7 @@ func Stat_Insert_provider_registry_test() string {
 		balance = EXCLUDED.balance, 
 		provider1c = EXCLUDED.provider1c, provider_name = EXCLUDED.provider_name, 
 		merchant_name = EXCLUDED.merchant_name, merchant_account_name = EXCLUDED.merchant_account_name,
-		payment_method_type = EXCLUDED.payment_method_type,
+		payment_method_type = EXCLUDED.payment_method_type, team = EXCLUDED.team,
 		country = EXCLUDED.country, operation_type = EXCLUDED.operation_type, 
 		provider_payment_id = EXCLUDED.provider_payment_id, account_number = EXCLUDED.account_number,
 		transaction_created_at = EXCLUDED.transaction_created_at, project_id = EXCLUDED.project_id,
@@ -60,7 +62,8 @@ func Stat_Insert_provider_registry_test() string {
 func Stat_Insert_detailed() string {
 	return `INSERT INTO detailed (
 		document_id, operation_id, transaction_completed_at, merchant_id, merchant_account_id, balance_id, company_id,
-		contract_id, project_id, provider_id, provider_payment_id, provider_name, merchant_name, merchant_account_name,
+		contract_id, project_id, provider_id, provider_payment_id, provider_name, payment_id,
+		merchant_name, merchant_account_name,
 		account_bank_name, project_name, payment_type, country, region, operation_type, provider_amount,
 		provider_currency, msc_amount, msc_currency, channel_amount, channel_currency, fee_amount, fee_currency,
 		balance_amount, balance_currency, rate, sr_channel_currency, sr_balance_currency, check_fee, provider_registry_amount,
@@ -70,7 +73,8 @@ func Stat_Insert_detailed() string {
 	)
 	VALUES (
 		:document_id, :operation_id, :transaction_completed_at, :merchant_id, :merchant_account_id, :balance_id, :company_id,
-		:contract_id, :project_id, :provider_id, :provider_payment_id, :provider_name, :merchant_name, :merchant_account_name,
+		:contract_id, :project_id, :provider_id, :provider_payment_id, :provider_name, :payment_id,
+		:merchant_name, :merchant_account_name,
 		:account_bank_name, :project_name, :payment_type, :country, :region, :operation_type, :provider_amount,
 		:provider_currency, :msc_amount, :msc_currency, :channel_amount, :channel_currency, :fee_amount, :fee_currency,
 		:balance_amount, :balance_currency, :rate, :sr_channel_currency, :sr_balance_currency, :check_fee, :provider_registry_amount,

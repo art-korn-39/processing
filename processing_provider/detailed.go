@@ -7,7 +7,7 @@ type Detailed_row struct {
 	Provider_payment_id      string    `db:"provider_payment_id"`
 	Transaction_id           int       `db:"transaction_id"`
 	RRN                      string    `db:"rrn"`
-	External_id              string    `db:"payment_id"`
+	Payment_id               string    `db:"payment_id"`
 	Provider_name            string    `db:"provider_name"`
 	Merchant_account_name    string    `db:"merchant_account_name"`
 	Merchant_name            string    `db:"merchant_name"`
@@ -91,7 +91,7 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.Provider_payment_id = o.Provider_payment_id
 	d.Transaction_id = o.Transaction_id
 	d.RRN = o.RRN
-	d.External_id = o.External_id
+	d.Payment_id = o.Payment_id
 	d.Provider_name = o.Provider_name
 	d.Merchant_name = o.Merchant_name
 	d.Merchant_account_name = o.Merchant_account_name

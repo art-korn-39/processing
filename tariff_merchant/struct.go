@@ -21,51 +21,54 @@ type Operation interface {
 }
 
 type Tariff struct {
-	Balance_name          string //`xlsx:"1"`
-	Merchant              string //`xlsx:"5"`
-	Merchant_account_name string //`xlsx:"6"`
-	Merchant_account_id   int    //`xlsx:"7"`
-	Balance_code          string //`xlsx:"8"`
-	Provider              string //`xlsx:"9"`
-	Company               string
+	Balance_name          string `db:"balance_name"`
+	Merchant_id           int    `db:"merchant_id"`
+	Merchant              string `db:"merchant_name"`
+	Merchant_account_name string `db:"merchant_account_name"`
+	Merchant_account_id   int    `db:"merchant_account_id"`
+	Balance_code          string `db:"balance_code"`
+	Provider              string `db:"provider_name"`
+	Company               string `db:"company"`
 
-	Schema         string //`xlsx:"18"`
+	Schema         string `db:"schema"`
 	IsCrypto       bool
-	Convertation   string //`xlsx:"19"`
-	Operation_type string //`xlsx:"22"`
-	NetworkType    string
-	Payment_type   string
+	Convertation   string `db:"convertation"`
+	Operation_type string `db:"operation_type"`
+	NetworkType    string `db:"network_type"`
+	Payment_type   string `db:"payment_type"`
 
-	RR_days    int     //`xlsx:"32"`
-	RR_percent float64 //`xlsx:"33"`
+	RR_days    int     `db:"rr_days"`
+	RR_percent float64 `db:"rr_percent"`
 
-	Subdivision1C string //`xlsx:"36"`
-	Provider1C    string //`xlsx:"37"`
-	RatedAccount  string //`xlsx:"38"`
-	Balance_id    int    //`xlsx:"39"`
-	Balance_type  string //`xlsx:"40"`
-	Id            int    //`xlsx:"46"`
+	Subdivision1C string `db:"subdivision1c"`
+	Provider1C    string `db:"provider1c"`
+	RatedAccount  string `db:"ratedaccount"`
+	Balance_id    int    `db:"balance_id"`
+	Balance_type  string `db:"balance_type"`
+	Id            int    `db:"id"`
 
-	DateStartPS time.Time         //`xlsx:"12"`
-	CurrencyBM  currency.Currency //`xlsx:"15"`
-	CurrencyBP  currency.Currency //`xlsx:"16"`
+	DateStartPS time.Time         `db:"date_start_ps"`
+	CurrencyBM  currency.Currency // не используется
 
-	DateStart time.Time //`xlsx:"17"`
-	RangeMIN  float64   //`xlsx:"20"`
-	RangeMAX  float64   //`xlsx:"21"`
-	Percent   float64   //`xlsx:"23"`
-	Fix       float64   //`xlsx:"24"`
-	Min       float64   //`xlsx:"25"`
-	Max       float64   //`xlsx:"26"`
+	Balance_currency_str string `db:"balance_currency"`
+	Balance_currency     currency.Currency
 
-	CurrencyCommission      string
+	DateStart time.Time `db:"date_start"`
+	RangeMIN  float64   `db:"range_min"`
+	RangeMAX  float64   `db:"range_max"`
+	Percent   float64   `db:"percent"`
+	Fix       float64   `db:"fix"`
+	Min       float64   `db:"min"`
+	Max       float64   `db:"max"`
+
+	CurrencyCommission      string `db:"currency_commission"`
 	AmountInChannelCurrency bool
 
 	DK_is_zero bool
-	DK_percent float64
-	DK_fix     float64
-	DK_min     float64
-	DK_max     float64
+	DK_percent float64 `db:"dk_percent"`
+	DK_fix     float64 `db:"dk_fix"`
+	DK_min     float64 `db:"dk_min"`
+	DK_max     float64 `db:"dk_max"`
 
 	Formula    string
 	DK_formula string
@@ -76,6 +79,8 @@ type Tariff struct {
 
 func (t *Tariff) StartingFill() {
 
+	t.Balance_currency = currency.New(t.Balance_currency_str)
+
 	if t.Schema == "Crypto" {
 		t.IsCrypto = true
 	}
@@ -84,6 +89,7 @@ func (t *Tariff) StartingFill() {
 		t.AmountInChannelCurrency = true
 	}
 
+	t.Percent = t.Percent / 100
 	t.RangeMAX = util.TR(t.RangeMAX == 0, RANGE_MAX, t.RangeMAX).(float64) // ставим в конце, чтобы формуле не мешал
 
 	// FORMULA

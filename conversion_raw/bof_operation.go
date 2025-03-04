@@ -33,8 +33,6 @@ type Bof_operation struct {
 	Operation_type           string
 	Payment_type             string `db:"payment_type"`
 	Country_code2            string `db:"country"`
-	//Status                   string `db:"status"`
-	//Project_url              string
 
 	Channel_amount       float64 `db:"channel_amount"`
 	Channel_currency_str string  `db:"channel_currency"`
@@ -44,6 +42,7 @@ type Bof_operation struct {
 func (op *Bof_operation) fill() {
 
 	op.Channel_currency = currency.New(op.Channel_currency_str)
+	op.Channel_amount = util.TR(op.Channel_currency.Exponent, op.Channel_amount, op.Channel_amount/100).(float64)
 
 	if op.Operation_type_id == 3 {
 		op.Operation_type = "sale"
@@ -90,8 +89,6 @@ func readBofFile(filename string, key_column string) error {
 		return err
 	}
 	defer file.Close()
-
-	//fileInfo, _ := file.Stat()
 
 	reader := csv.NewReader(file)
 	reader.Comma = ';'

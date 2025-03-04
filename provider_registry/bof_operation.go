@@ -7,7 +7,7 @@ import (
 
 type bof_operation interface {
 	Get_Channel_currency() currency.Currency
-	Get_Tariff_currencyBP() currency.Currency
+	Get_Tariff_balance_currency() currency.Currency
 	GetBool(string) bool
 	GetTime(string) time.Time
 	GetInt(string) int
@@ -25,7 +25,7 @@ func FindRateForOperation(o bof_operation) float64 {
 			r.Payment_type == o.GetString("Payment_type") &&
 			r.Merchant_name == o.GetString("Merchant_name") &&
 			r.Channel_currency == o.Get_Channel_currency() &&
-			r.Provider_currency == o.Get_Tariff_currencyBP() {
+			r.Provider_currency == o.Get_Tariff_balance_currency() {
 			return r.Rate
 		}
 	}
