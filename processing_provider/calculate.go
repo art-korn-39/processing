@@ -30,10 +30,13 @@ func SelectTariffsInRegistry() {
 			defer wg.Done()
 			for index := range channel_indexes {
 				operation := storage.Registry[index]
-				operation.Tariff = tariff_provider.FindTariffForOperation(operation)
+
+				operation.Tariff = tariff_provider.FindTariffForOperation(operation, "Balance_guid")
 				if operation.Tariff == nil {
 					atomic.AddInt64(&countWithoutTariff, 1)
 				}
+
+				operation.Extra_tariff = tariff_provider.FindTariffForOperation(operation, "Extra_balance_guid")
 			}
 		}()
 	}
@@ -70,10 +73,9 @@ func CalculateCommission() {
 
 				operation.SetCountry()
 
-				//operation.SetBalanceCurrency()
-
 				operation.SetBalanceAmount()
-				operation.SetSRAmount()
+				operation.SetBRAmount()
+				operation.SetExtraBRAmount()
 
 				operation.SetCheckFee()
 				operation.SetVerification()
@@ -135,7 +137,7 @@ func SetBalanceInOperations() {
 			currency = operation.ProviderOperation.Provider_currency.Name
 		}
 
-		balance, ok := provider_balances.GetBalance(operation.Provider_id, operation.Merchant_account_id, currency, operation.Balance_type)
+		balance, ok := provider_balances.GetBalance(operation, currency)
 		if ok {
 			operation.ProviderBalance = balance
 		} else {

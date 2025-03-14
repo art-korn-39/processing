@@ -74,10 +74,10 @@ func writeIntoCSV(filename string) {
 func SetHeaders_detailed(writer *csv.Writer) {
 	headers := []string{
 		"operation_id", "provider_payment_id", "provider_name", "merchant_account_name",
-		"merchant_name", "project_id", "operation_type", "operation_status",
+		"merchant_name", "project_id", "operation_type",
 		"account_number", "channel_amount", "channel_currency", "issuer_country",
 		"payment_method_type", "transaction_completed_at", "transaction_created_at", "provider_currency",
-		"курс", "provider_amount", "BR", "balance", "provider1c", "team",
+		"курс", "provider_amount", "BR", "balance", "provider1c", "team", "operation_status",
 	}
 
 	writer.Write(headers)
@@ -93,7 +93,6 @@ func makeDetailedRow(op *pr.Operation) []string {
 		op.Merchant_name,
 		fmt.Sprint(op.Project_id),
 		op.Operation_type,
-		op.Operation_status,
 		op.Account_number,
 		strings.ReplaceAll(fmt.Sprintf("%.2f", op.Channel_amount), ".", ","),
 		op.Channel_currency.Name,
@@ -108,6 +107,7 @@ func makeDetailedRow(op *pr.Operation) []string {
 		op.Balance,
 		op.Provider1c,
 		op.Team,
+		op.Operation_status,
 	}
 
 	return result

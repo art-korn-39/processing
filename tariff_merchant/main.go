@@ -102,7 +102,7 @@ func Read_XLSX_Tariffs() {
 			tariff.Merchant_account_id, _ = row.Cells[map_fileds["merchant account id"]-1].Int()
 			tariff.Balance_code = row.Cells[map_fileds["код баланса по справочнику"]-1].String()
 
-			tariff.Provider = row.Cells[map_fileds["provider"]-1].String()
+			tariff.Provider_name = row.Cells[map_fileds["provider"]-1].String()
 			tariff.Schema = row.Cells[map_fileds["схема"]-1].String()
 			tariff.Convertation = row.Cells[map_fileds["конверт"]-1].String()
 			tariff.Operation_type = row.Cells[map_fileds["operation_type"]-1].String()
@@ -199,7 +199,7 @@ func FindTariffForOperation(op Operation) *Tariff {
 
 		isDragonPay := op.GetBool("IsDragonPay") && !op.GetBool("ClassicTariffDragonPay")
 		if (!isDragonPay && t.Merchant_account_id == op.GetInt("Merchant_account_id")) ||
-			(isDragonPay && t.Schema == "Dragonpay") {
+			(isDragonPay && t.Provider_name == "DragonPay") {
 
 			if isDragonPay && op.GetString("Provider1c") != t.Provider1C {
 				continue

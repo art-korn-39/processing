@@ -11,18 +11,20 @@ import (
 )
 
 type SumFileds struct {
-	count_operations    int
-	balance_amount      float64
-	BR_balance_currency float64
-	compensationBR      float64
-	channel_amount      float64
-	surcharge_amount    float64
+	count_operations          int
+	balance_amount            float64
+	BR_balance_currency       float64
+	Extra_BR_balance_currency float64
+	compensationBR            float64
+	channel_amount            float64
+	surcharge_amount          float64
 }
 
 func (sf *SumFileds) AddValues(o *Operation) {
 	sf.count_operations = sf.count_operations + o.Count_operations
 	sf.balance_amount = sf.balance_amount + o.Balance_amount
 	sf.BR_balance_currency = sf.BR_balance_currency + o.BR_balance_currency
+	sf.Extra_BR_balance_currency = sf.Extra_BR_balance_currency + o.Extra_BR_balance_currency
 	sf.compensationBR = sf.compensationBR + o.CompensationBR
 	sf.channel_amount = sf.channel_amount + o.Channel_amount
 	sf.surcharge_amount = sf.surcharge_amount + o.Surcharge_amount
@@ -31,6 +33,7 @@ func (sf *SumFileds) AddValues(o *Operation) {
 func (sf *SumFileds) RoundValues() {
 	sf.balance_amount = util.Round(sf.balance_amount, 2)
 	sf.BR_balance_currency = util.Round(sf.BR_balance_currency, 2)
+	sf.Extra_BR_balance_currency = util.Round(sf.Extra_BR_balance_currency, 2)
 	sf.compensationBR = util.Round(sf.compensationBR, 2)
 	sf.channel_amount = util.Round(sf.channel_amount, 2)
 	sf.surcharge_amount = util.Round(sf.surcharge_amount, 2)
@@ -63,11 +66,11 @@ type KeyFields_SummaryInfo struct {
 
 func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 	KF = KeyFields_SummaryInfo{
-		document_date:         o.Document_date,
-		provider_name:         o.Provider_name,
-		verification:          o.Verification,
-		operation_type:        o.Operation_type,
-		country:               o.Country_code2,
+		document_date:  o.Document_date,
+		provider_name:  o.Provider_name,
+		verification:   o.Verification,
+		operation_type: o.Operation_type,
+		//country:               o.Country_code2,
 		payment_type:          o.Payment_type,
 		merchant_name:         o.Merchant_name,
 		merchant_account_name: o.Merchant_account_name,

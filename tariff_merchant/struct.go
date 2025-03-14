@@ -27,7 +27,7 @@ type Tariff struct {
 	Merchant_account_name string `db:"merchant_account_name"`
 	Merchant_account_id   int    `db:"merchant_account_id"`
 	Balance_code          string `db:"balance_code"`
-	Provider              string `db:"provider_name"`
+	Provider_name         string `db:"provider_name"`
 	Company               string `db:"company"`
 
 	Schema         string `db:"schema"`

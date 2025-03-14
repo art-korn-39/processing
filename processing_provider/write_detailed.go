@@ -140,7 +140,7 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		d.Operation_created_at.Format(time.DateTime),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Balance_amount), ".", ","),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.BR_balance_currency), ".", ","),
-		"",
+		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Extra_BR_balance_currency), ".", ","),
 		d.Balance_currency_str,
 		strings.ReplaceAll(fmt.Sprintf("%.4f", d.Rate), ".", ","),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.CompensationBR), ".", ","),

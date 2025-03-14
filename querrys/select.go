@@ -139,7 +139,8 @@ func Stat_Select_provider_balances() string {
 	return `SELECT 
 				guid,provider_balance,contractor,provider_name,provider_id,balance_code,
 				legal_entity,merchant_account,merchant_account_id,date_start,nickname,
-				date_finish,convertation,convertation_id,key_record,balance_currency,type
+				date_finish,convertation,convertation_id,key_record,balance_currency,type,
+				extra_balance_guid
 			FROM provider_balances
 			WHERE provider_id > 0 AND merchant_account_id > 0`
 }

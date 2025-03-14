@@ -11,12 +11,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-var (
-	data_maid map[string]*Balance
-)
-
 func init() {
-	data_maid = map[string]*Balance{}
+	data_maid = data{}
 }
 
 func Read(db *sqlx.DB) {
@@ -41,18 +37,19 @@ func Read(db *sqlx.DB) {
 
 		balance.Balance_currency = currency.New(balance.Balance_currency_str)
 
-		if balance.Type == "IN-OUT" {
-			hash := fmt.Sprint(balance.Provider_id, balance.Merchant_account_id, balance.Balance_currency.Name, "IN")
-			data_maid[hash] = &balance
-			hash = fmt.Sprint(balance.Provider_id, balance.Merchant_account_id, balance.Balance_currency.Name, "OUT")
-			data_maid[hash] = &balance
-		} else {
-			hash := fmt.Sprint(balance.Provider_id, balance.Merchant_account_id, balance.Balance_currency.Name, balance.Type)
-			data_maid[hash] = &balance
-		}
+		data_maid.Set(balance)
 
-		hash2 := fmt.Sprint(balance.Provider_id, balance.Merchant_account_id)
-		data_maid[hash2] = &balance
+		// if balance.Type == "IN-OUT" {
+		// 	hash := fmt.Sprint(balance.Provider_id, balance.Merchant_account_id, balance.Balance_currency.Name, "IN")
+		// 	data_maid[hash] = &balance
+		// 	hash = fmt.Sprint(balance.Provider_id, balance.Merchant_account_id, balance.Balance_currency.Name, "OUT")
+		// 	data_maid[hash] = &balance
+		// } else {
+		// 	hash := fmt.Sprint(balance.Provider_id, balance.Merchant_account_id, balance.Balance_currency.Name, balance.Type)
+		// 	data_maid[hash] = &balance
+		//}
+		// hash2 := fmt.Sprint(balance.Provider_id, balance.Merchant_account_id)
+		// data_maid[hash2] = &balance
 
 	}
 
@@ -60,14 +57,14 @@ func Read(db *sqlx.DB) {
 
 }
 
-func GetBalance(provider_id, ma_id int, balance_currency, balance_type string) (*Balance, bool) {
-	hash := fmt.Sprint(provider_id, ma_id, balance_currency, balance_type)
-	b, ok := data_maid[hash]
-	return b, ok
-}
+// func GetBalance(provider_id, ma_id int, balance_currency, balance_type string) (*Balance, bool) {
+// 	hash := fmt.Sprint(provider_id, ma_id, balance_currency, balance_type)
+// 	b, ok := data_maid[hash]
+// 	return b, ok
+// }
 
-func GetByProvierAndMA(provider_id, ma_id int) (*Balance, bool) {
-	hash := fmt.Sprint(provider_id, ma_id)
-	b, ok := data_maid[hash]
-	return b, ok
-}
+// func GetByProvierAndMA(provider_id, ma_id int) (*Balance, bool) {
+// 	hash := fmt.Sprint(provider_id, ma_id)
+// 	b, ok := data_maid[hash]
+// 	return b, ok
+// }

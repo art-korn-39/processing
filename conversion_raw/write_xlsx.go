@@ -39,7 +39,7 @@ func add_page_convertation(f *xlsx.File) {
 		"merchant_name", "project_id", "operation_type",
 		"account_number", "channel_amount", "channel_currency", "issuer_country",
 		"payment_method_type", "transaction_completed_at", "transaction_created_at", "provider_currency",
-		"курс", "provider_amount", "BR", "balance", "provider1c", "team"}
+		"курс", "provider_amount", "BR", "balance", "provider1c", "team", "operation_status"}
 
 	style := xlsx.NewStyle()
 	style.Fill.FgColor = "5B9BD5"
@@ -114,6 +114,7 @@ func add_page_convertation(f *xlsx.File) {
 		row.AddCell().SetString(v.Balance)
 		row.AddCell().SetString(v.Provider1c)
 		row.AddCell().SetString(v.Team)
+		row.AddCell().SetString(v.Operation_status)
 	}
 
 }
@@ -122,11 +123,15 @@ func add_page_absentInBof(f *xlsx.File) {
 
 	sheet, _ := f.AddSheet("Нет в БОФ")
 
-	headers := []string{"operation_id", "provider_payment_id", "provider_name", "merchant_account_name",
-		"merchant_name", "project_url", "operation_type", "operation_status",
-		"account_number", "channel_amount", "channel_currency", "issuer_country",
-		"payment_method_type", "transaction_completed_at", "provider_currency",
-		"курс", "provider_amount", "BR", "balance"}
+	headers := []string{"operation_id",
+		//"provider_payment_id", "provider_name", "merchant_account_name",
+		//"merchant_name", "project_url", "operation_type",
+		"operation_status",
+		//"account_number",
+		"channel_amount", "channel_currency",
+		//"issuer_country", "payment_method_type", "transaction_completed_at",
+		"provider_currency",
+		"курс", "provider_amount", "BR", "balance", "operation_status"}
 
 	style := xlsx.NewStyle()
 	style.Fill.FgColor = "5B9BD5"
@@ -162,28 +167,28 @@ func add_page_absentInBof(f *xlsx.File) {
 		row := sheet.AddRow()
 
 		row.AddCell().SetInt(v.Id)
-		row.AddCell().SetString(v.Provider_payment_id)
-		row.AddCell().SetString(v.Provider_name)
-		row.AddCell().SetString(v.Merchant_account_name)
-		row.AddCell().SetString(v.Merchant_name)
-		row.AddCell().SetString(v.Project_url)
-		row.AddCell().SetString(v.Operation_type)
+		// row.AddCell().SetString(v.Provider_payment_id)
+		// row.AddCell().SetString(v.Provider_name)
+		// row.AddCell().SetString(v.Merchant_account_name)
+		// row.AddCell().SetString(v.Merchant_name)
+		// row.AddCell().SetString(v.Project_url)
+		//row.AddCell().SetString(v.Operation_type)
 		row.AddCell().SetString(v.Operation_status)
-		row.AddCell().SetString(v.Account_number)
+		//row.AddCell().SetString(v.Account_number)
 
 		cell = row.AddCell()
 		cell.SetFloat(v.Channel_amount)
 		cell.SetFormat("0.00")
 
 		row.AddCell().SetString(v.Channel_currency.Name)
-		row.AddCell().SetString(v.Country)
-		row.AddCell().SetString(v.Payment_type)
+		//row.AddCell().SetString(v.Country)
+		//row.AddCell().SetString(v.Payment_type)
 
-		if v.Transaction_completed_at.IsZero() { //16
-			row.AddCell().SetString("")
-		} else {
-			row.AddCell().SetDate(v.Transaction_completed_at)
-		}
+		// if v.Transaction_completed_at.IsZero() { //16
+		// 	row.AddCell().SetString("")
+		// } else {
+		// 	row.AddCell().SetDate(v.Transaction_completed_at)
+		// }
 
 		row.AddCell().SetString(v.Provider_currency.Name)
 
@@ -200,13 +205,14 @@ func add_page_absentInBof(f *xlsx.File) {
 		cell.SetFormat("0.00")
 
 		row.AddCell().SetString(v.Balance)
+		row.AddCell().SetString(v.Operation_status)
 	}
 
 }
 
 func add_page_absentInProiderRegistry(f *xlsx.File) {
 
-	sheet, _ := f.AddSheet("Нет в реестре")
+	sheet, _ := f.AddSheet("Нет в ПС")
 
 	headers := []string{"operation_id", "provider_payment_id", "provider_name", "merchant_account_name",
 		"merchant_name", "project_id", "operation_type",

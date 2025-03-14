@@ -139,7 +139,7 @@ func SortTariffs() {
 	)
 }
 
-func FindTariffForOperation(op Operation) *Tariff {
+func FindTariffForOperation(op Operation, field_balance_guid string) *Tariff {
 
 	if len(data) == 0 {
 		return nil
@@ -157,9 +157,13 @@ func FindTariffForOperation(op Operation) *Tariff {
 		return nil
 	}
 
-	operation_balance_guid := op.GetString("Balance_guid")
+	operation_balance_guid := op.GetString(field_balance_guid)
 	transaction_completed_at := op.GetTime("Transaction_completed_at")
 	transaction_created_at := op.GetTime("Transaction_created_at")
+
+	if operation_balance_guid == "" {
+		return nil
+	}
 
 	current_date_range := data[0].DateStart
 	selected_tariffs := []*Tariff{}

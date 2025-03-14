@@ -135,7 +135,7 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 				if o.IsPerevodix {
 					KF.balance_name = o.Provider_name // тут уже лежит баланс из реестра провайдера
 				} else {
-					KF.balance_name = fmt.Sprintf("%s_%s_%s", o.Tariff.Provider, o.Tariff.Company, o.ProviderOperation.Provider_currency.Name)
+					KF.balance_name = fmt.Sprintf("%s_%s_%s", o.Tariff.Provider_name, o.Tariff.Company, o.ProviderOperation.Provider_currency.Name)
 				}
 			}
 		} else {

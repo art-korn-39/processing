@@ -80,8 +80,9 @@ type Operation struct {
 	Balance_amount   float64           // сумма в валюте баланса
 	Balance_currency currency.Currency // валюта баланса
 
-	BR_balance_currency     float64
-	Operation_actual_amount float64
+	BR_balance_currency       float64
+	Extra_BR_balance_currency float64
+	Operation_actual_amount   float64
 
 	Verification   string
 	IsDragonPay    bool
@@ -93,6 +94,7 @@ type Operation struct {
 
 	ProviderOperation *provider_registry.Operation
 	Tariff            *tariff_provider.Tariff
+	Extra_tariff      *tariff_provider.Tariff
 	Hold              *holds.Hold
 	Country           countries.Country
 	ProviderBalance   *provider_balances.Balance
@@ -203,7 +205,7 @@ func (o *Operation) SetBalanceAmount() {
 
 }
 
-func (o *Operation) SetSRAmount() {
+func (o *Operation) SetBRAmount() {
 
 	t := o.Tariff
 
@@ -225,6 +227,32 @@ func (o *Operation) SetSRAmount() {
 		o.BR_balance_currency = util.Round(commission, 0)
 	} else {
 		o.BR_balance_currency = util.Round(commission, 2)
+	}
+
+}
+
+func (o *Operation) SetExtraBRAmount() {
+
+	t := o.Extra_tariff
+
+	if t == nil {
+		return
+	}
+
+	// BR
+	commission := o.Balance_amount*t.Percent + t.Fix
+
+	if t.Min != 0 && commission < t.Min {
+		commission = t.Min
+	} else if t.Max != 0 && commission > t.Max {
+		commission = t.Max
+	}
+
+	// ОКРУГЛЕНИЕ
+	if o.Channel_currency.Exponent {
+		o.Extra_BR_balance_currency = util.Round(commission, 0)
+	} else {
+		o.Extra_BR_balance_currency = util.Round(commission, 2)
 	}
 
 }
@@ -293,6 +321,10 @@ func (op *Operation) GetTime(name string) time.Time {
 func (op *Operation) GetInt(name string) int {
 	var result int
 	switch name {
+	case "Merchant_account_id":
+		result = op.Merchant_account_id
+	case "Provider_id":
+		result = op.Provider_id
 	case "Legal_entity_id":
 		result = op.Legal_entity_id
 	default:
@@ -319,6 +351,12 @@ func (op *Operation) GetString(name string) string {
 		if op.ProviderBalance != nil {
 			result = op.ProviderBalance.GUID
 		}
+	case "Extra_balance_guid":
+		if op.ProviderBalance != nil {
+			result = op.ProviderBalance.Extra_balance_guid
+		}
+	case "Balance_type":
+		result = op.Balance_type
 	case "Merchant_name":
 		result = op.Merchant_name
 	case "Merchant_account_name":

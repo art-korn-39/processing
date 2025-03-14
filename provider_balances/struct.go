@@ -5,11 +5,104 @@ import (
 	"time"
 )
 
+type data map[int]*LinkedBalance
+
+var (
+	data_maid data
+)
+
+type LinkedBalance struct {
+	Balance *Balance
+	Next    *LinkedBalance
+}
+
+type Operation interface {
+	GetTime(string) time.Time
+	GetInt(string) int
+	GetString(string) string
+}
+
+func (r data) Set(b Balance) {
+
+	val, ok := r[b.Merchant_account_id]
+	if ok {
+		for {
+			if val.Next == nil { // дошли до последнего
+				val.Next = &LinkedBalance{
+					Balance: &b,
+					Next:    nil,
+				}
+				break
+			}
+			val = val.Next
+		}
+	} else {
+		r[b.Merchant_account_id] = &LinkedBalance{
+			Balance: &b,
+			Next:    nil,
+		}
+	}
+
+}
+
+func GetBalance(op Operation, balance_currency string) (*Balance, bool) {
+
+	ma_id := op.GetInt("Merchant_account_id")
+	provider_id := op.GetInt("Provider_id")
+	balance_type := op.GetString("Balance_type")
+	date := op.GetTime("Operation_created_at")
+
+	val, ok := data_maid[ma_id]
+	if ok {
+		for {
+			b := val.Balance
+			if b.Provider_id == provider_id &&
+				b.Balance_currency.Name == balance_currency &&
+				(b.Type == balance_type || b.Type == "IN-OUT") {
+
+				if b.Date_start.Before(date) && (b.Date_finish.IsZero() || b.Date_finish.After(date)) {
+					return b, true
+				}
+			}
+
+			if val.Next == nil {
+				break
+			}
+			val = val.Next
+		}
+	}
+
+	return nil, false
+
+}
+
+func GetBalanceByProviderAndMA(ma_id, provider_id int) (*Balance, bool) {
+
+	val, ok := data_maid[ma_id]
+	if ok {
+		for {
+			b := val.Balance
+			if b.Provider_id == provider_id {
+				return b, true
+			}
+
+			if val.Next == nil {
+				break
+			}
+			val = val.Next
+		}
+	}
+
+	return nil, false
+
+}
+
 type Balance struct {
 	Name                string    `db:"provider_balance"`
 	Nickname            string    `db:"nickname"`
 	GUID                string    `db:"guid"`
-	Type                string    `db:"type"`
+	Extra_balance_guid  string    `db:"extra_balance_guid"`
+	Type                string    `db:"type"` //IN, OUT, IN-OUT
 	Contractor          string    `db:"contractor"`
 	Provider_name       string    `db:"provider_name"`
 	Provider_id         int       `db:"provider_id"`

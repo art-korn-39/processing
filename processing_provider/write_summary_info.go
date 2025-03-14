@@ -284,7 +284,7 @@ func add_page_turnoverNew(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		cell.SetFormat("0.00")
 
 		cell = row.AddCell()
-		cell.SetFloat(0)
+		cell.SetFloat(v.Extra_BR_balance_currency)
 		cell.SetFormat("0.00")
 
 		cell = row.AddCell()
@@ -302,7 +302,7 @@ func add_page_detailNew(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 	sheet, _ := f.AddSheet("Детализация")
 
 	headers := []string{"Наименование баланса ПС", "ЮЛ", "Идентификатор сверки", "Дата",
-		"provider_name", "operation_type", "issuer_country",
+		"provider_name", "operation_type", //"issuer_country",
 		"payment_type", "merchant_account", "merchant_name", "region", //"account_bank_name",
 		"real_currency / channel_currency", "Валюта баланса", "Кол-во операций",
 		"Сумма в валюте баланса", "BR Balance Currency", "Компенсация BR",
@@ -342,7 +342,7 @@ func add_page_detailNew(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		row.AddCell().SetDate(k.document_date)
 		row.AddCell().SetString(k.provider_name)
 		row.AddCell().SetString(k.operation_type)
-		row.AddCell().SetString(k.country)
+		//row.AddCell().SetString(k.country)
 		row.AddCell().SetString(k.payment_type)
 		row.AddCell().SetString(k.merchant_account_name)
 		row.AddCell().SetString(k.merchant_name)

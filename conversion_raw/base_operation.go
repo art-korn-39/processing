@@ -106,6 +106,7 @@ func (ext_op *base_operation) createProviderOperation() (op *pg.Operation, err e
 	op.Provider1c = ext_op.getValue("provider1c")
 	op.Project_id, _ = strconv.Atoi(ext_op.getValue("project_id"))
 	op.Team = ext_op.getValue("team (kgx/tradex)")
+	op.Operation_status = ext_op.getValue("operation_status")
 
 	op.StartingFill(false)
 
@@ -205,7 +206,7 @@ func getBalance(record []string, map_fields map[string]int, bof_op Bof_operation
 	if is_kgx_tradex {
 		balance_name = getBalanceByTeamID(record, map_fields)
 	} else {
-		balance, ok := provider_balances.GetByProvierAndMA(bof_op.Provider_id, bof_op.Merchant_account_id)
+		balance, ok := provider_balances.GetBalanceByProviderAndMA(bof_op.Merchant_account_id, bof_op.Provider_id)
 		if ok {
 			balance_name = balance.Name
 		}
@@ -249,7 +250,7 @@ func getProvider1c(bof_op Bof_operation, provider_currency string) (provider1c s
 
 func getProviderCurrency(op Bof_operation) (currency string) {
 
-	balance, ok := provider_balances.GetByProvierAndMA(op.Provider_id, op.Merchant_account_id)
+	balance, ok := provider_balances.GetBalanceByProviderAndMA(op.Merchant_account_id, op.Provider_id)
 	if ok {
 		currency = balance.Balance_currency.Name
 	}
