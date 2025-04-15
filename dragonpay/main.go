@@ -65,3 +65,9 @@ func GetOperation(id int, endpoint_id string) (*Operation, string) {
 	}
 	return nil, ""
 }
+
+func GetProvider1C(endpoint_id string) string {
+
+	return handbook[endpoint_id]
+
+}

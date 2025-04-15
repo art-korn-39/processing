@@ -3,6 +3,7 @@ package dragonpay
 import (
 	"app/currency"
 	"app/logs"
+	"app/querrys"
 	"app/util"
 	"fmt"
 	"time"
@@ -18,8 +19,8 @@ func PSQL_read_registry(db *sqlx.DB) {
 
 	start_time := time.Now()
 
-	stat := `SELECT * FROM dragonpay_handbook`
-	slice_rows := []Row{}
+	stat := querrys.Stat_Select_dragonpay_handbook()
+	slice_rows := []Accord{}
 	err := db.Select(&slice_rows, stat)
 	if err != nil {
 		logs.Add(logs.INFO, err)
@@ -30,7 +31,7 @@ func PSQL_read_registry(db *sqlx.DB) {
 		handbook[row.Endpoint_id] = row.Provider1c
 	}
 
-	stat = `SELECT * FROM dragonpay`
+	stat = querrys.Stat_Select_dragonpay()
 	slice_operations := []Operation{}
 	err = db.Select(&slice_operations, stat)
 	if err != nil {

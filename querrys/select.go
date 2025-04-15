@@ -126,12 +126,12 @@ func Stat_Select_tariffs_merchant() string {
 
 func Stat_Select_tariffs_provider() string {
 	return `SELECT 
-				provider_balance_guid,provider_balance_name,
+				guid,provider_balance_guid,provider_balance_name,
 				date_start,merchant_name,merchant_account_name,merchant_legal_entity,
 				payment_method,payment_method_type,region,channel_currency,project_name,
 				business_type,operation_group,traffic_type,account_bank_name, use_transaction_created_at,
 				tariff_range_turnouver_min,tariff_range_turnouver_max,tariff_range_amount_min,
-				tariff_range_amount_max,percent,fix,min,max
+				tariff_range_amount_max,percent,fix,min,max,search_string_ma,endpoint_id
 			FROM tariffs_provider`
 }
 
@@ -182,8 +182,21 @@ func Stat_Select_conversion() string {
 				T2.skip 
 			FROM conversion_settings AS T1
 				JOIN public.conversion_mapping AS T2
-				ON T1.guid = T2.parent
+				ON T1.guid = T2.parent_guid
 			WHERE 
 				T1.provider_guid = ANY($1)
 			ORDER BY guid	`
+}
+
+func Stat_Select_dragonpay() string {
+	return `SELECT 
+				operation_id,provider,create_date,settle_date,refno,
+				currency,amount,endpoint_id,fee_amount,description,message
+			FROM dragonpay`
+}
+
+func Stat_Select_dragonpay_handbook() string {
+	return `SELECT 
+				endpoint_id,provider1c,payment_type
+			FROM dragonpay_handbook`
 }

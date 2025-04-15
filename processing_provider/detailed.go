@@ -118,6 +118,7 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.Operation_created_at = o.Operation_created_at
 	d.Balance_amount = o.Balance_amount
 	d.BR_balance_currency = o.BR_balance_currency
+	d.Extra_BR_balance_currency = o.Extra_BR_balance_currency
 	if o.Channel_currency.Name == o.Balance_currency.Name {
 		d.Rate = 1
 	} else if o.ProviderOperation != nil {

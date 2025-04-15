@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	Version = "1.2.1"
+	Version = "1.3.0"
 )
 
 var (
@@ -109,6 +109,9 @@ func PrepareData() {
 	// Сортировка
 	tariff_provider.SortTariffs()
 
+	// Заполнение стран
+	SetCountriesInOperations()
+
 	// Подбор операций из реестра провайдера
 	SetProviderOperations()
 
@@ -134,19 +137,24 @@ func SaveResult() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(1)
+	wg.Add(2)
 
 	// Итоговые данные
 	// Делаем сначала, т.к. они id документа проставляют
-	// summary := GroupRegistryToSummaryProvider()
-
-	summaryInfo := GroupRegistryToSummaryInfo()
-	Write_SummaryInfo(summaryInfo)
+	summary := GroupRegistryToSummaryMerchant()
+	Write_Summary(summary)
 
 	// Детализированные записи
 	go func() {
 		defer wg.Done()
 		Write_Detailed()
+	}()
+
+	// Выгрузка в эксель
+	go func() {
+		defer wg.Done()
+		summaryInfo := GroupRegistryToSummaryInfo()
+		Write_SummaryInfo(summaryInfo)
 	}()
 
 	wg.Wait()

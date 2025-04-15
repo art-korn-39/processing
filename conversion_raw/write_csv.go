@@ -38,17 +38,31 @@ func writeIntoCSV(filename string) {
 
 	channel_rows := make(chan []string, 1000)
 	channel_indexes := make(chan int, 1000)
+	channel_indexes_bof := make(chan string, 1000)
 
 	wg.Add(config.NumCPU)
 	for i := 1; i <= config.NumCPU; i++ {
-		go func() {
-			defer wg.Done()
-			for i := range channel_indexes {
-				op := final_registry[i]
-				row := makeDetailedRow(op)
-				channel_rows <- row
-			}
-		}()
+		if i%2 == 0 {
+			go func() {
+				defer wg.Done()
+				for i := range channel_indexes {
+					op := final_registry[i]
+					row := makeDetailedRow(op)
+					channel_rows <- row
+				}
+			}()
+		} else {
+			go func() {
+				defer wg.Done()
+				for i := range channel_indexes_bof {
+					op := bof_registry[i]
+					row := makeDetailedRowBof(op)
+					if row != nil {
+						channel_rows <- row
+					}
+				}
+			}()
+		}
 	}
 
 	go func() {
@@ -61,6 +75,13 @@ func writeIntoCSV(filename string) {
 			channel_indexes <- i
 		}
 		close(channel_indexes)
+	}()
+
+	go func() {
+		for i := range bof_registry {
+			channel_indexes_bof <- i
+		}
+		close(channel_indexes_bof)
 	}()
 
 	for row := range channel_rows {
@@ -77,7 +98,7 @@ func SetHeaders_detailed(writer *csv.Writer) {
 		"merchant_name", "project_id", "operation_type",
 		"account_number", "channel_amount", "channel_currency", "issuer_country",
 		"payment_method_type", "transaction_completed_at", "transaction_created_at", "provider_currency",
-		"курс", "provider_amount", "BR", "balance", "provider1c", "team", "operation_status",
+		"курс", "provider_amount", "BR", "balance", "provider1c", "team", "operation_status", "Проверка",
 	}
 
 	writer.Write(headers)
@@ -85,8 +106,17 @@ func SetHeaders_detailed(writer *csv.Writer) {
 
 func makeDetailedRow(op *pr.Operation) []string {
 
+	operation_id := strconv.Itoa(op.Id)
+	_, ok := bof_registry[operation_id]
+	var verification string
+	if ok {
+		verification = "ОК"
+	} else {
+		verification = "Не найдено"
+	}
+
 	result := []string{
-		strconv.Itoa(op.Id),
+		operation_id,
 		op.Provider_payment_id,
 		op.Provider_name,
 		op.Merchant_account_name,
@@ -108,6 +138,45 @@ func makeDetailedRow(op *pr.Operation) []string {
 		op.Provider1c,
 		op.Team,
 		op.Operation_status,
+		verification,
+	}
+
+	return result
+
+}
+
+func makeDetailedRowBof(op *Bof_operation) []string {
+
+	id, _ := strconv.Atoi(op.Operation_id)
+	_, ok := final_registry[id]
+	if ok {
+		return nil
+	}
+
+	result := []string{
+		op.Operation_id,
+		op.Provider_payment_id,
+		op.Provider_name,
+		op.Merchant_account_name,
+		op.Merchant_name,
+		fmt.Sprint(op.Project_id),
+		op.Operation_type,
+		"", //op.Account_number,
+		strings.ReplaceAll(fmt.Sprintf("%.2f", op.Channel_amount), ".", ","),
+		op.Channel_currency.Name,
+		op.Country_code2,
+		op.Payment_type,
+		op.Transaction_completed_at.Format(time.DateTime),
+		op.Transaction_created_at.Format(time.DateTime),
+		"", //op.Provider_currency.Name,
+		"", //strings.ReplaceAll(fmt.Sprintf("%.2f", op.Rate), ".", ","),
+		"", //strings.ReplaceAll(fmt.Sprintf("%.2f", op.Amount), ".", ","),
+		"", //strings.ReplaceAll(fmt.Sprintf("%.2f", op.BR_amount), ".", ","),
+		"", //op.Balance,
+		"", //op.Provider1c,
+		"", //op.Team,
+		"", //op.Operation_status,
+		"Не найдено",
 	}
 
 	return result

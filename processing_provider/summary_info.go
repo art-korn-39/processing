@@ -3,6 +3,7 @@ package processing_provider
 import (
 	"app/config"
 	"app/currency"
+	"app/dragonpay"
 	"app/logs"
 	"app/tariff_provider"
 	"app/util"
@@ -32,8 +33,8 @@ func (sf *SumFileds) AddValues(o *Operation) {
 
 func (sf *SumFileds) RoundValues() {
 	sf.balance_amount = util.Round(sf.balance_amount, 2)
-	sf.BR_balance_currency = util.Round(sf.BR_balance_currency, 2)
-	sf.Extra_BR_balance_currency = util.Round(sf.Extra_BR_balance_currency, 2)
+	sf.BR_balance_currency = util.Round(sf.BR_balance_currency, 3)
+	sf.Extra_BR_balance_currency = util.Round(sf.Extra_BR_balance_currency, 3)
 	sf.compensationBR = util.Round(sf.compensationBR, 2)
 	sf.channel_amount = util.Round(sf.channel_amount, 2)
 	sf.surcharge_amount = util.Round(sf.surcharge_amount, 2)
@@ -44,12 +45,12 @@ type KeyFields_SummaryInfo struct {
 	organization string
 	id_revise    string
 
-	document_date         time.Time
-	provider              string
-	provider_name         string
-	verification          string
-	operation_type        string
-	country               string
+	document_date  time.Time
+	provider       string
+	provider_name  string
+	verification   string
+	operation_type string
+	//country               string
 	payment_type          string
 	merchant_account_name string
 	merchant_name         string
@@ -62,6 +63,8 @@ type KeyFields_SummaryInfo struct {
 	contractor_merchant   string
 	project_name          string
 	project_id            int
+	provider1c            string
+	isDragonpay           bool
 }
 
 func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
@@ -78,11 +81,12 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		//account_bank_name:     o.Account_bank_name,
 		channel_currency: o.Channel_currency,
 		balance_currency: o.Balance_currency,
+		isDragonpay:      o.IsDragonPay,
 	}
 
-	if KF.country == "" {
-		KF.country = o.Country.Code2
-	}
+	// if KF.country == "" {
+	// 	KF.country = o.Country.Code2
+	// }
 
 	if o.Tariff != nil {
 		KF.tariff = *o.Tariff
@@ -102,6 +106,10 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 	} else { // если пустой мерчант 1С, то запишем данные по проекту, чтобы проще отследить было
 		KF.project_name = o.Project_name
 		KF.project_id = o.Project_id
+	}
+
+	if o.IsDragonPay {
+		KF.provider1c = dragonpay.GetProvider1C(o.Endpoint_id)
 	}
 
 	return

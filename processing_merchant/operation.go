@@ -116,6 +116,7 @@ type Operation struct {
 	Hold                 *holds.Hold
 	DragonpayOperation   *dragonpay.Operation
 	Country              countries.Country
+	Detailed_provider    *detailed_provider
 
 	Tariff_rate_fix     float64 `db:"billing__tariff_rate_fix"`
 	Tariff_rate_percent float64 `db:"billing__tariff_rate_percent"`
@@ -228,6 +229,15 @@ func (o *Operation) SetBalanceAmount() {
 				o.Balance_currency = ProviderOperation.Provider_currency
 			}
 
+			// Поиск в детализированных провайдера для тарифов не реестр/KGX
+		} else if !(t.Convertation == "Реестр" || t.Convertation == "KGX") &&
+			(o.IsPerevodix || o.IsMonetix || o.IsQafpay) {
+
+			o.Detailed_provider, ok = data_detailed_provider[o.Operation_id]
+			if ok {
+				balance_amount = o.Detailed_provider.Balance_amount
+			}
+
 		} else {
 			// если не нашли операцию провайдера по ID, то подбираем курс и считаем через него
 			rate = provider_registry.FindRateForOperation(o)
@@ -302,6 +312,11 @@ func (o *Operation) SetSRAmount() {
 			SR_balance_currency = o.ProviderOperation.BR_amount
 			SR_channel_currency = SR_balance_currency * o.Rate
 		}
+	} else if o.Detailed_provider != nil && (o.IsMonetix || o.IsPerevodix || o.IsQafpay) {
+
+		SR_channel_currency = o.Detailed_provider.BR_amount
+		SR_balance_currency = o.Detailed_provider.BR_amount
+
 	}
 
 	// ОКРУГЛЕНИЕ

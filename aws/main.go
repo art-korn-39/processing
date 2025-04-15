@@ -8,15 +8,16 @@ import (
 	"app/storage"
 	"app/util"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-// bo_report_2024-03-13T03:00:00+00:00_2024-03-14T03:00:00+00:00.csv
-const REG_EXP = `^bo_report_\d{4}-\d{2}-\d{2}T03:00:00\+00:00_\d{4}-\d{2}-\d{2}T03:00:00\+00:00.csv`
+// bo_report_2024-03-13T03:00:00+00:00_2024-03-14T03:00:00+00:00.csv (до 22.01.2025)
+// bo_report_2025-01-23T21:00:00+00:00_2025-01-24T21:00:00+00:00.csv
+// bo_report_2025-01-24T00:00:00+03:00_2025-01-25T00:00:00+03:00.csv
+const REG_EXP = `^bo_report_\d{4}-\d{2}-\d{2}T(03|21|00):00:00\+(00|03):00_\d{4}-\d{2}-\d{2}T(03|21|00):00:00\+(00|03):00.csv`
 
 func Start() {
 
@@ -151,11 +152,12 @@ func loadIntoClickhouse(cfg config.Config, storage *storage.Storage, files []*fi
 
 func fileBefore250624(file *file.FileInfo) bool {
 
-	date := util.SubString(file.Filename, 15, 20)
-	day, _ := strconv.Atoi(util.SubString(date, 3, 5))
-	month, _ := strconv.Atoi(util.SubString(date, 0, 2))
+	border := time.Date(2024, 6, 25, 0, 0, 0, 0, time.UTC)
 
-	num := month*50 + day
-	return num < 325
+	date_str := util.SubString(file.Filename, 10, 20)
+
+	date, _ := time.Parse(time.DateOnly, date_str)
+
+	return date.Before(border)
 
 }

@@ -1,6 +1,7 @@
 package conversion_raw
 
 import (
+	"app/logs"
 	"app/provider_balances"
 	pg "app/provider_registry"
 	"app/util"
@@ -116,7 +117,12 @@ func (ext_op *base_operation) createProviderOperation() (op *pg.Operation, err e
 
 func (base_op *base_operation) getValue(reg_name string) (result string) {
 
-	mapping := base_op.setting.values[reg_name]
+	mapping, ok := base_op.setting.values[reg_name]
+	if !ok {
+		logs.Add(logs.FATAL, fmt.Errorf(`в настройке "%s" не указано поле "%s"`, base_op.setting.Name, reg_name))
+		return
+	}
+
 	float_names := []string{"amount", "channel_amount", "br_amount", "rate"}
 
 	bof_op := Bof_operation{Operation_id: "0"}
@@ -250,7 +256,8 @@ func getProvider1c(bof_op Bof_operation, provider_currency string) (provider1c s
 
 func getProviderCurrency(op Bof_operation) (currency string) {
 
-	balance, ok := provider_balances.GetBalanceByProviderAndMA(op.Merchant_account_id, op.Provider_id)
+	//balance, ok := provider_balances.GetBalanceByProviderAndMA(op.Merchant_account_id, op.Provider_id)
+	balance, ok := provider_balances.GetBalance(&op, "")
 	if ok {
 		currency = balance.Balance_currency.Name
 	}

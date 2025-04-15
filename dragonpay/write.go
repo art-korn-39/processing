@@ -13,7 +13,7 @@ import (
 func insertIntoDB(db *sqlx.DB) error {
 
 	if db == nil {
-		return fmt.Errorf("Не подключена БД")
+		return fmt.Errorf("не подключена БД")
 	}
 
 	start_time := time.Now()

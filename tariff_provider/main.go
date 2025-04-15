@@ -264,6 +264,10 @@ func (t *Tariff) IsValidForOperation(op Operation) bool {
 		return false
 	}
 
+	if t.Endpoint_id != "" && t.Endpoint_id != op.GetString("Endpoint_id") && op.GetBool("IsDragonPay") {
+		return false
+	}
+
 	return true
 
 }

@@ -57,22 +57,21 @@ func Start() {
 
 	logs.Add(logs.INFO, "Выполняется чтение...")
 
+	// чтение файла/папки реестра провайдера
 	if filepath.Ext(filename) == "" {
-		// чтение папки реестра провайдера
 		readFolder(filename)
 		if len(ext_registry) == 0 {
 			return
 		}
 	} else {
-		// чтение файла реестра провайдера
 		err = readFile(filename)
 		if err != nil {
 			logs.Add(logs.FATAL, err)
 		}
 	}
 
-	// проверить, что во всех настройках используется одна key_column
-	// + использование внешних источников
+	// проверить, что во всех настройках используется одна key_column для поиска в БОФ
+	// + определить необходимость использования внешних источников
 	key_column, external_usage, err := checkUsedSettings()
 	if err != nil {
 		logs.Add(logs.FATAL, err)
@@ -122,7 +121,6 @@ func handleRecords() error {
 		}
 		if !ok {
 			cntWithoutBof++
-			//continue
 		}
 
 		provider_operation, err := v.createProviderOperation()

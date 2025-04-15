@@ -21,7 +21,8 @@ type Operation struct {
 	Currency currency.Currency
 }
 
-type Row struct {
-	Endpoint_id string `db:"endpoint_id"`
-	Provider1c  string `db:"provider1c"`
+type Accord struct {
+	Endpoint_id  string `db:"endpoint_id"`
+	Provider1c   string `db:"provider1c"`
+	Payment_type string `db:"payment_type"`
 }

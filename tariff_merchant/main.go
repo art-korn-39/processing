@@ -181,7 +181,6 @@ func SortTariffs() {
 	)
 }
 
-// у dragonpay должно быть соответствие provider1c и
 func FindTariffForOperation(op Operation) *Tariff {
 
 	var operation_date time.Time
@@ -197,7 +196,11 @@ func FindTariffForOperation(op Operation) *Tariff {
 			continue
 		}
 
+		// для dragonpay ищем тариф два раза
+		// первый раз по отдельной схеме - через Provider1C и без MAID [ClassicTariffDragonPay = false]
+		// второй раз по общей схеме, как и остальные тарифы [ClassicTariffDragonPay = true]
 		isDragonPay := op.GetBool("IsDragonPay") && !op.GetBool("ClassicTariffDragonPay")
+
 		if (!isDragonPay && t.Merchant_account_id == op.GetInt("Merchant_account_id")) ||
 			(isDragonPay && t.Provider_name == "DragonPay") {
 

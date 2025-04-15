@@ -9,6 +9,7 @@ type data map[int]*LinkedBalance
 
 var (
 	data_maid data
+	data_guid map[string]*Balance
 )
 
 type LinkedBalance struct {
@@ -57,8 +58,8 @@ func GetBalance(op Operation, balance_currency string) (*Balance, bool) {
 		for {
 			b := val.Balance
 			if b.Provider_id == provider_id &&
-				b.Balance_currency.Name == balance_currency &&
-				(b.Type == balance_type || b.Type == "IN-OUT") {
+				(b.Balance_currency.Name == balance_currency || balance_currency == "") &&
+				(b.Type == balance_type || b.Type == "IN-OUT" || balance_type == "NULL") {
 
 				if b.Date_start.Before(date) && (b.Date_finish.IsZero() || b.Date_finish.After(date)) {
 					return b, true
@@ -94,6 +95,13 @@ func GetBalanceByProviderAndMA(ma_id, provider_id int) (*Balance, bool) {
 	}
 
 	return nil, false
+
+}
+
+func GetbalanceByGUID(guid string) (*Balance, bool) {
+
+	val, ok := data_guid[guid]
+	return val, ok
 
 }
 

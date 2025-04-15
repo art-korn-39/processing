@@ -108,6 +108,26 @@ func readSettings(db *sqlx.DB, provider_guid []string) {
 
 }
 
+// проверка, что каждому полю настройки соответствует колонка в таблице файла
+// не сработает, если в настройке не хватает поля, которое будет использоваться дальше в методе getValue()
+func checkFields(setting *Setting, map_fileds map[string]int) error {
+
+	for _, val := range setting.values {
+
+		if val.Calculated || val.Skip || val.From_bof || val.External_source {
+			continue
+		}
+
+		_, ok := map_fileds[val.Table_column]
+		if !ok {
+			return fmt.Errorf("в маппинге \"%s\" неверно указано поле стыковки для колонки %s", setting.Name, val.Registry_column)
+		}
+
+	}
+
+	return nil
+}
+
 func checkUsedSettings() (key_column string, external_usage bool, err error) {
 
 	for _, v := range used_settings {

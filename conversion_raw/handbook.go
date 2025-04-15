@@ -73,7 +73,7 @@ func readCommandSheet(sheet *xlsx.Sheet, file_name string) error {
 		}
 
 		v := team_line{
-			team_id: row.Cells[map_fileds["team_id"]-1].String(),
+			team_id: strings.ToLower(row.Cells[map_fileds["team_id"]-1].String()),
 			team:    row.Cells[map_fileds["team"]-1].String(),
 			balance: row.Cells[map_fileds["balance"]-1].String(),
 		}
@@ -128,7 +128,7 @@ func getTeamByTeamID(record []string, map_fields map[string]int) string {
 
 	idx := map_fields["partnerid"]
 	if idx > 0 {
-		partner_id := record[idx-1]
+		partner_id := strings.ToLower(record[idx-1])
 		return teams[partner_id].team
 	}
 
@@ -140,7 +140,7 @@ func getBalanceByTeamID(record []string, map_fields map[string]int) string {
 
 	idx := map_fields["partnerid"]
 	if idx > 0 {
-		partner_id := record[idx-1]
+		partner_id := strings.ToLower(record[idx-1])
 		return teams[partner_id].balance
 	}
 

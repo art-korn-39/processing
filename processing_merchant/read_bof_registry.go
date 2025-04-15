@@ -26,6 +26,7 @@ func Read_Registry(registry_done chan querrys.Args) {
 		args := NewQuerryArgs(true)
 		registry_done <- args
 		registry_done <- args
+		registry_done <- args
 		close(registry_done)
 
 		err := CH_ReadRegistry()
@@ -43,6 +44,7 @@ func Read_Registry(registry_done chan querrys.Args) {
 			},
 		)
 		args := NewQuerryArgs(false)
+		registry_done <- args
 		registry_done <- args
 		registry_done <- args
 	}

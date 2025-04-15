@@ -3,7 +3,7 @@ package processing_provider
 import (
 	"app/countries"
 	"app/currency"
-	"app/holds"
+	"app/dragonpay"
 	"app/logs"
 	"app/merchants"
 	"app/provider_balances"
@@ -37,7 +37,7 @@ type Operation struct {
 	Endpoint_id         string `db:"endpoint_id"`
 	Contract_id         int    `db:"contract_id"`
 
-	Provider_base_name    string
+	//Provider_base_name    string
 	Provider_name         string `db:"provider_name"`
 	Merchant_name         string `db:"merchant_name"`
 	Merchant_account_name string `db:"merchant_account_name"`
@@ -84,21 +84,23 @@ type Operation struct {
 	Extra_BR_balance_currency float64
 	Operation_actual_amount   float64
 
-	Verification   string
-	IsDragonPay    bool
-	IsPerevodix    bool
-	Crypto_network string
-	Provider1c     string
+	Verification string
+	IsDragonPay  bool
+	IsKessPay    bool
+	//IsPerevodix    bool
+	//Crypto_network string
+	//Provider1c     string
 
 	CompensationBR float64
 
-	ProviderOperation *provider_registry.Operation
-	Tariff            *tariff_provider.Tariff
-	Extra_tariff      *tariff_provider.Tariff
-	Hold              *holds.Hold
-	Country           countries.Country
-	ProviderBalance   *provider_balances.Balance
-	Merchant          *merchants.Merchant
+	ProviderOperation  *provider_registry.Operation
+	Tariff             *tariff_provider.Tariff
+	Extra_tariff       *tariff_provider.Tariff
+	DragonpayOperation *dragonpay.Operation
+	//Hold              *holds.Hold
+	Country         countries.Country
+	ProviderBalance *provider_balances.Balance
+	Merchant        *merchants.Merchant
 
 	Legal_entity_id int `db:"legal_entity_id"`
 }
@@ -112,7 +114,8 @@ func (o *Operation) StartingFill() {
 	o.Document_date = util.TruncateToDay(o.Transaction_completed_at)
 
 	o.IsDragonPay = strings.Contains(strings.ToLower(o.Provider_name), "dragonpay")
-	o.IsPerevodix = o.Merchant_id == 73162
+	o.IsKessPay = strings.Contains(strings.ToLower(o.Provider_name), "kesspay")
+	//o.IsPerevodix = o.Merchant_id == 73162
 
 	o.Provider_currency = currency.New(o.Provider_currency_str)
 	o.Channel_currency = currency.New(o.Channel_currency_str)
@@ -165,43 +168,47 @@ func (o *Operation) SetCountry() {
 	o.Country = countries.GetCountry(o.Country_code2, o.Currency.Name)
 }
 
-func (o *Operation) SetBalanceCurrency() {
-	if o.ProviderOperation != nil {
-		o.Balance_currency = o.ProviderOperation.Provider_currency
-	} else {
-		o.Balance_currency = o.Channel_currency
-	}
-}
+// func (o *Operation) SetBalanceCurrency() {
+
+// 	if o.ProviderOperation != nil {
+// 		o.Balance_currency = o.ProviderOperation.Provider_currency
+// 	} else if o.ProviderBalance != nil && o.ProviderBalance.Convertation == "Курс наш (в колбэках)" {
+// 		o.Balance_currency = o.ProviderBalance.Balance_currency
+// 	} else {
+// 		o.Balance_currency = o.Channel_currency
+// 	}
+
+// }
+
+const (
+	CNV_NO_CONVERT int = 1
+	CNV_REESTR     int = 2
+	CNV_CALLBACK   int = 3
+)
 
 func (o *Operation) SetBalanceAmount() {
 
 	if o.ProviderOperation != nil && o.ProviderBalance != nil {
 
-		if o.ProviderBalance.Convertation == "Курс реестра" || o.Channel_currency != o.Balance_currency {
+		if o.ProviderBalance.Convertation_id == CNV_REESTR || o.Channel_currency != o.Balance_currency {
 			o.Balance_amount = o.ProviderOperation.Amount
 		} else {
 			o.Balance_amount = o.Channel_amount
 		}
 
+	} else if o.ProviderBalance != nil && o.ProviderBalance.Convertation_id == CNV_CALLBACK {
+
+		if o.Provider_amount != 0 {
+			o.Balance_amount = o.Provider_amount
+		} else {
+			o.Balance_amount = o.Channel_amount
+		}
+
 	} else {
+
 		o.Balance_amount = o.Channel_amount
+
 	}
-
-	// // у KGX может быть RUB-RUB, но комсу надо брать из операции провайдера
-	// if o.Channel_currency == o.Balance_currency && t.Convertation != "KGX" {
-	// 	balance_amount = o.Channel_amount
-	// } else
-	// } else if t.Convertation == "Частичные выплаты" {
-	// 	balance_amount = o.Channel_amount
-	// } else if t.Convertation == "Колбек" {
-	// 	balance_amount = o.Provider_amount
-	// } else if t.Convertation == "Реестр" || t.Convertation == "KGX" {
-
-	// } else { // крипта скорее всего
-	//balance_amount = o.Channel_amount
-	//}
-
-	//o.Rate = util.TR(rate == 0, float64(1), rate).(float64)
 
 }
 
@@ -226,7 +233,7 @@ func (o *Operation) SetBRAmount() {
 	if o.Channel_currency.Exponent {
 		o.BR_balance_currency = util.Round(commission, 0)
 	} else {
-		o.BR_balance_currency = util.Round(commission, 2)
+		o.BR_balance_currency = util.Round(commission, 3)
 	}
 
 }
@@ -241,6 +248,9 @@ func (o *Operation) SetExtraBRAmount() {
 
 	// BR
 	commission := o.Balance_amount*t.Percent + t.Fix
+	if o.IsKessPay {
+		commission = (o.Balance_amount-o.BR_balance_currency)*t.Percent + t.Fix
+	}
 
 	if t.Min != 0 && commission < t.Min {
 		commission = t.Min
@@ -252,18 +262,8 @@ func (o *Operation) SetExtraBRAmount() {
 	if o.Channel_currency.Exponent {
 		o.Extra_BR_balance_currency = util.Round(commission, 0)
 	} else {
-		o.Extra_BR_balance_currency = util.Round(commission, 2)
+		o.Extra_BR_balance_currency = util.Round(commission, 3)
 	}
-
-}
-
-func (o *Operation) SetCheckFee() {
-
-	// if o.Fee_currency == o.Balance_currency {
-	// 	o.CheckFee = util.BaseRound(o.Fee_amount - o.SR_balance_currency)
-	// } else {
-	// 	o.CheckFee = util.BaseRound(o.Fee_amount - o.SR_channel_currency)
-	// }
 
 }
 
@@ -271,10 +271,10 @@ func (o *Operation) SetVerification() {
 
 	if o.ProviderBalance == nil {
 		o.Verification = VRF_NO_BALANCE
+	} else if o.ProviderBalance.Convertation_id == CNV_REESTR && o.ProviderOperation == nil {
+		o.Verification = VRF_NO_IN_REG
 	} else if o.Tariff == nil {
 		o.Verification = VRF_NO_TARIFF
-	} else if o.ProviderBalance.Convertation == "Курс реестра" && o.ProviderOperation == nil {
-		o.Verification = VRF_NO_IN_REG
 	} else {
 		o.Verification = VRF_OK
 	}
@@ -299,6 +299,8 @@ func (op *Operation) Get_Balance_currency() currency.Currency {
 func (op *Operation) GetBool(name string) bool {
 	var result bool
 	switch name {
+	case "IsDragonPay":
+		result = op.IsDragonPay
 	default:
 		logs.Add(logs.ERROR, "неизвестное поле bool: ", name)
 	}
@@ -354,6 +356,14 @@ func (op *Operation) GetString(name string) string {
 	case "Extra_balance_guid":
 		if op.ProviderBalance != nil {
 			result = op.ProviderBalance.Extra_balance_guid
+		}
+	case "Endpoint_id":
+		if op.Endpoint_id != "" {
+			result = op.Endpoint_id
+		} else if op.DragonpayOperation != nil {
+			result = op.DragonpayOperation.Endpoint_id
+		} else {
+			result = ""
 		}
 	case "Balance_type":
 		result = op.Balance_type

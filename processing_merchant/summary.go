@@ -51,6 +51,8 @@ type SummaryRowMerchant struct {
 
 	RR_amount float64   `db:"rr_amount"`
 	RR_date   time.Time `db:"rr_date"`
+
+	HasProviderOperation bool
 }
 
 func (row *SummaryRowMerchant) AddValues(o *Operation) {
@@ -79,8 +81,14 @@ func (row *SummaryRowMerchant) SetRate() {
 }
 
 func (row *SummaryRowMerchant) SetConvertationID() {
-	if row.Convertation == "Реестр" || row.Schema == "KGX" {
-		row.Convertation_id = 2
+	if row.Convertation == "Колбек" {
+		row.Convertation_id = 3
+	} else if row.Convertation == "Реестр" || row.Schema == "KGX" {
+		if row.HasProviderOperation {
+			row.Convertation_id = 2
+		} else {
+			row.Convertation_id = 4
+		}
 	} else if row.Convertation == "Без конверта" || row.Schema == "Crypto" {
 		row.Convertation_id = 1
 	}
@@ -146,6 +154,8 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 		} else if o.Tariff != nil {
 			k.Tariff_id = o.Tariff.Id
 		}
+
+		k.HasProviderOperation = o.ProviderOperation != nil
 
 		k.SetConvertationID()
 		k.SetID()

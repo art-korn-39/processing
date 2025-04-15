@@ -49,7 +49,13 @@ func GetCountry(code2, currency string) (country Country) {
 	if code2 != "" {
 		country = data_code2[code2]
 	} else {
-		country = data_currency[currency]
+		if currency == "USD" {
+			country = data_code2["US"]
+		} else if currency == "EUR" {
+			country = data_code2["DE"]
+		} else {
+			country = data_currency[currency]
+		}
 	}
 	return
 }

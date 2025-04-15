@@ -18,6 +18,7 @@ type Operation interface {
 	GetInt(string) int
 	GetFloat(string) float64
 	GetString(string) string
+	GetBool(string) bool
 }
 
 type Tariff struct {
@@ -25,6 +26,7 @@ type Tariff struct {
 	// Provider              string
 	// Provider_name         string
 	// Organization          string
+	GUID                       string    `db:"guid"`
 	Provider_balance_guid      string    `db:"provider_balance_guid"`
 	Provider_balance_name      string    `db:"provider_balance_name"`
 	DateStart                  time.Time `db:"date_start"`
@@ -42,6 +44,8 @@ type Tariff struct {
 	Traffic_type               string `db:"traffic_type"`
 	Account_bank_name          string `db:"account_bank_name"`
 	Use_transaction_created_at bool   `db:"use_transaction_created_at"`
+	Search_string_ma           string `db:"search_string_ma"`
+	Endpoint_id                string `db:"endpoint_id"`
 
 	Range_turnouver_min float64 `db:"tariff_range_turnouver_min"`
 	Range_turnouver_max float64 `db:"tariff_range_turnouver_max"`
@@ -137,6 +141,9 @@ func (t *Tariff) SetCountUsefulFields() {
 		t.CountUsefulFields++
 	}
 	if t.Account_bank_name != "" {
+		t.CountUsefulFields++
+	}
+	if t.Endpoint_id != "" {
 		t.CountUsefulFields++
 	}
 }

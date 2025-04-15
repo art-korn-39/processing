@@ -264,6 +264,24 @@ func Stat_Insert_summary_merchant() string {
 		)`
 }
 
+func Stat_Insert_summary_provider() string {
+	return `INSERT INTO summary_provider (
+		document_id, document_date, operation_type, operation_group, 
+		merchant_id, merchant_account_id, business_type,
+		provider_id, country, region, payment_type, channel_currency, 
+		balance_currency, convertation, tariff_date_start, tariff_guid, formula, channel_amount, balance_amount, 
+		br_channel_currency, br_balance_currency, count_operations, rate,
+		payment_type_id,  project_id, rr_amount, rr_date, convertation_id, extra_br_balance_currency
+	)
+	VALUES (
+		:document_id, :document_date, :operation_type, :operation_group, :merchant_id, :merchant_account_id, 
+		:business_type, :provider_id, :country, :region, :payment_type, :channel_currency, :balance_currency, 
+		:convertation, :tariff_date_start, :tariff_guid, :formula, :channel_amount, :balance_amount, 
+		:br_channel_currency, :br_balance_currency, :count_operations, :rate,
+		:payment_type_id,  :project_id, :rr_amount, :rr_date, :convertation_id, :extra_br_balance_currency
+		)`
+}
+
 func Stat_Insert_source_files() string {
 	return `INSERT INTO source_files (
 		filename, category, size, size_mb, modified, rows, last_upload

@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	Version = "1.5.0"
+	Version = "1.5.1"
 )
 
 var (
@@ -70,9 +70,9 @@ func ReadSources() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(6)
+	wg.Add(7)
 
-	registry_done := make(chan querrys.Args, 2)
+	registry_done := make(chan querrys.Args, 3)
 	go func() {
 		defer wg.Done()
 		Read_Registry(registry_done)
@@ -86,6 +86,11 @@ func ReadSources() {
 	go func() {
 		defer wg.Done()
 		tariff_merchant.Read_Sources(storage.Postgres, registry_done)
+	}()
+
+	go func() {
+		defer wg.Done()
+		PSQL_read_detailed_provider(storage.Postgres, registry_done)
 	}()
 
 	go func() {

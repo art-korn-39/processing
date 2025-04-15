@@ -13,6 +13,7 @@ import (
 
 func init() {
 	data_maid = data{}
+	data_guid = map[string]*Balance{}
 }
 
 func Read(db *sqlx.DB) {
@@ -38,6 +39,8 @@ func Read(db *sqlx.DB) {
 		balance.Balance_currency = currency.New(balance.Balance_currency_str)
 
 		data_maid.Set(balance)
+
+		data_guid[balance.GUID] = &balance
 
 		// if balance.Type == "IN-OUT" {
 		// 	hash := fmt.Sprint(balance.Provider_id, balance.Merchant_account_id, balance.Balance_currency.Name, "IN")

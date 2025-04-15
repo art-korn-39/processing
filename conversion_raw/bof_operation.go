@@ -39,6 +39,44 @@ type Bof_operation struct {
 	Channel_currency     currency.Currency
 }
 
+func (op *Bof_operation) GetTime(name string) time.Time {
+	var result time.Time
+	switch name {
+	case "Operation_created_at":
+		result = op.Transaction_completed_at
+	case "Transaction_completed_at":
+		result = op.Transaction_completed_at
+	case "Transaction_created_at":
+		result = op.Transaction_created_at
+	default:
+		logs.Add(logs.ERROR, "неизвестное поле time: ", name)
+	}
+	return result
+}
+func (op *Bof_operation) GetInt(name string) int {
+	var result int
+	switch name {
+	case "Merchant_account_id":
+		result = op.Merchant_account_id
+	case "Provider_id":
+		result = op.Provider_id
+	default:
+		logs.Add(logs.ERROR, "неизвестное поле int: ", name)
+	}
+	return result
+}
+
+func (op *Bof_operation) GetString(name string) string {
+	var result string
+	switch name {
+	case "Balance_type":
+		result = "NULL"
+	default:
+		logs.Add(logs.ERROR, "неизвестное поле string: ", name)
+	}
+	return result
+}
+
 func (op *Bof_operation) fill() {
 
 	op.Channel_currency = currency.New(op.Channel_currency_str)
