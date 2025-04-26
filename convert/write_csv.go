@@ -1,4 +1,4 @@
-package conversion_raw
+package convert
 
 import (
 	"app/config"
@@ -106,10 +106,15 @@ func SetHeaders_detailed(writer *csv.Writer) {
 
 func makeDetailedRow(op *pr.Operation) []string {
 
-	operation_id := strconv.Itoa(op.Id)
-	_, ok := bof_registry[operation_id]
 	var verification string
-	if ok {
+
+	operation_id := strconv.Itoa(op.Id)
+	payment_id := op.Provider_payment_id
+
+	_, ok1 := bof_registry[operation_id]
+	_, ok2 := bof_registry[payment_id]
+
+	if ok1 || ok2 {
 		verification = "ОК"
 	} else {
 		verification = "Не найдено"
@@ -131,7 +136,7 @@ func makeDetailedRow(op *pr.Operation) []string {
 		op.Transaction_completed_at.Format(time.DateTime),
 		op.Transaction_created_at.Format(time.DateTime),
 		op.Provider_currency.Name,
-		strings.ReplaceAll(fmt.Sprintf("%.2f", op.Rate), ".", ","),
+		strings.ReplaceAll(fmt.Sprintf("%.8f", op.Rate), ".", ","),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", op.Amount), ".", ","),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", op.BR_amount), ".", ","),
 		op.Balance,

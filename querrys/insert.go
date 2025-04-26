@@ -92,7 +92,7 @@ func Stat_Insert_detailed_provider() string {
 		provider_amount, provider_currency, operation_actual_amount, surcharge_amount, surcharge_currency,
 		endpoint_id, account_bank_name, operation_created_at, balance_amount, br_balance_currency,
 		balance_currency, rate, compensation_br, verification,
-		tariff_date_start, act_percent, act_fix, act_min, act_max, range_min, range_max, region
+		tariff_date_start, act_percent, act_fix, act_min, act_max, range_min, range_max, region, provider_dragonpay
 	)
 	VALUES (
 		:document_id, :operation_id,  :provider_payment_id, :transaction_id, :rrn, :payment_id,
@@ -101,7 +101,8 @@ func Stat_Insert_detailed_provider() string {
 		:provider_amount, :provider_currency, :operation_actual_amount, :surcharge_amount, :surcharge_currency,
 		:endpoint_id, :account_bank_name, :operation_created_at, :balance_amount, :br_balance_currency,
 		:balance_currency, :rate, :compensation_br, :verification,
-		:tariff_date_start, :act_percent, :act_fix, :act_min, :act_max, :range_min, :range_max, :region
+		:tariff_date_start, :act_percent, :act_fix, :act_min, :act_max, 
+		:range_min, :range_max, :region, :provider_dragonpay
 		)`
 }
 

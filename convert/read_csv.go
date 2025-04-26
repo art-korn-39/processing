@@ -1,4 +1,4 @@
-package conversion_raw
+package convert
 
 import (
 	"app/config"
@@ -71,6 +71,11 @@ func readCSV(filename string) (baseError error) {
 		headers, err := reader.Read()
 		if err != nil {
 			logs.Add(logs.INFO, fmt.Errorf("в настройке \"%s\" ошибка при чтении заголовка: %v", setting.Name, err))
+			continue
+		}
+
+		if len(headers) < 2 {
+			logs.Add(logs.INFO, fmt.Errorf("в настройке \"%s\" неправильно указан разделитель: %v", setting.Name, err))
 			continue
 		}
 

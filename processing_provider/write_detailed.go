@@ -105,7 +105,7 @@ func SetHeaders_detailed(writer *csv.Writer) {
 		"Компенсация BR", "Проверка", "Старт тарифа",
 		"Акт. тариф", "Акт. фикс", "Акт. Мин", "Акт. Макс",
 		"Range min", "Range max",
-		"region",
+		"region", "Поставщик Dragonpay",
 	}
 	writer.Write(headers)
 }
@@ -153,6 +153,7 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Range_min), ".", ","),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Range_max), ".", ","),
 		d.Region,
+		d.Provider_dragonpay,
 	}
 
 	return

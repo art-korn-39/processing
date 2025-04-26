@@ -2,6 +2,7 @@ package processing_provider
 
 import (
 	"app/countries"
+	"app/dragonpay"
 	"app/logs"
 	"app/merchants"
 	"app/provider_balances"
@@ -68,7 +69,7 @@ func ReadSources() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(6)
+	wg.Add(7)
 
 	registry_done := make(chan querrys.Args, 1)
 	go func() {
@@ -99,6 +100,11 @@ func ReadSources() {
 	go func() {
 		defer wg.Done()
 		merchants.Read(storage.Postgres)
+	}()
+
+	go func() {
+		defer wg.Done()
+		dragonpay.Read_Registry(storage.Postgres)
 	}()
 
 	wg.Wait()

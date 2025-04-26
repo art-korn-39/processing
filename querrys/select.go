@@ -119,7 +119,7 @@ func Stat_Select_tariffs_merchant() string {
 				ratedaccount,balance_type,date_start_ps,balance_currency,
 				date_start,range_min,range_max,percent,fix,min,max,dk_percent,
 				dk_fix,dk_min,dk_max,currency_commission,network_type, 
-				payment_type,company
+				payment_type,company,date_start_ma,date_finish_ma
 			FROM tariffs_merchant
 			WHERE merchant_id = ANY($1)`
 }
@@ -179,6 +179,7 @@ func Stat_Select_conversion() string {
 				T2.from_bof,
 				T2.external_source,
 				T2.date_format,
+				T2.calculation_format,
 				T2.skip 
 			FROM conversion_settings AS T1
 				JOIN public.conversion_mapping AS T2

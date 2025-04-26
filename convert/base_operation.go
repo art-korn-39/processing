@@ -1,4 +1,4 @@
-package conversion_raw
+package convert
 
 import (
 	"app/logs"
@@ -182,6 +182,8 @@ func (base_op *base_operation) getValue(reg_name string) (result string) {
 		case "amount":
 			if base_op.provider_operation.Rate == 0 {
 				result = "0"
+			} else if mapping.Calculation_format == "прямой" {
+				result = strconv.FormatFloat(base_op.provider_operation.Channel_amount*base_op.provider_operation.Rate, 'f', -1, 64)
 			} else {
 				result = strconv.FormatFloat(base_op.provider_operation.Channel_amount/base_op.provider_operation.Rate, 'f', -1, 64)
 			}

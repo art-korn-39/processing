@@ -53,6 +53,9 @@ type Tariff struct {
 	Balance_currency_str string `db:"balance_currency"`
 	Balance_currency     currency.Currency
 
+	DateStartMA  time.Time `db:"date_start_ma"`
+	DateFinishMA time.Time `db:"date_finish_ma"`
+
 	DateStart time.Time `db:"date_start"`
 	RangeMIN  float64   `db:"range_min"`
 	RangeMAX  float64   `db:"range_max"`

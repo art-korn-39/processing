@@ -1,4 +1,4 @@
-package conversion_raw
+package convert
 
 import (
 	"app/logs"
@@ -24,13 +24,14 @@ type Setting struct {
 }
 
 type Mapping struct {
-	Registry_column string
-	Table_column    string
-	Calculated      bool
-	From_bof        bool
-	External_source bool
-	Skip            bool
-	Date_format     string
+	Registry_column    string
+	Table_column       string
+	Calculated         bool
+	From_bof           bool
+	External_source    bool
+	Skip               bool
+	Date_format        string
+	Calculation_format string
 }
 
 func (s *Setting) getCalculatedFields() []string {
@@ -54,19 +55,20 @@ func readSettings(db *sqlx.DB, provider_guid []string) {
 	}
 
 	type Row struct {
-		Guid            string `db:"guid"`
-		Name            string `db:"name"`
-		Key_column      string `db:"key_column"`
-		File_format     string `db:"file_format"`
-		Sheet_name      string `db:"sheet_name"`
-		Comma           string `db:"comma"`
-		Registry_column string `db:"registry_column"`
-		Table_column    string `db:"table_column"`
-		Date_format     string `db:"date_format"`
-		Calculated      bool   `db:"calculated"`
-		From_bof        bool   `db:"from_bof"`
-		Skip            bool   `db:"skip"`
-		External_source bool   `db:"external_source"`
+		Guid               string `db:"guid"`
+		Name               string `db:"name"`
+		Key_column         string `db:"key_column"`
+		File_format        string `db:"file_format"`
+		Sheet_name         string `db:"sheet_name"`
+		Comma              string `db:"comma"`
+		Registry_column    string `db:"registry_column"`
+		Table_column       string `db:"table_column"`
+		Date_format        string `db:"date_format"`
+		Calculation_format string `db:"calculation_format"`
+		Calculated         bool   `db:"calculated"`
+		From_bof           bool   `db:"from_bof"`
+		Skip               bool   `db:"skip"`
+		External_source    bool   `db:"external_source"`
 	}
 
 	start_time := time.Now()
@@ -86,6 +88,7 @@ func readSettings(db *sqlx.DB, provider_guid []string) {
 		mapping := Mapping{
 			Registry_column: row.Registry_column, Table_column: row.Table_column, External_source: row.External_source,
 			Date_format: row.Date_format, Calculated: row.Calculated, From_bof: row.From_bof, Skip: row.Skip,
+			Calculation_format: row.Calculation_format,
 		}
 
 		var setting *Setting

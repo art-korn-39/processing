@@ -212,7 +212,9 @@ func FindTariffForOperation(op Operation) *Tariff {
 				continue
 			}
 
-			if t.DateStart.Before(operation_date) &&
+			if t.DateStartMA.Before(operation_date) &&
+				t.DateFinishMA.After(operation_date) &&
+				t.DateStart.Before(operation_date) &&
 				t.Operation_type == op.GetString("Operation_type") {
 
 				// тип сети будет колонка в тарифе и проверять на неё

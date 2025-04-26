@@ -50,6 +50,7 @@ func SetBalanceInOperations() {
 
 	for _, operation := range storage.Registry {
 
+		// для операции с конвертом = "реестр" должна быть операция в "Provider_registry"
 		currency := operation.Channel_currency.Name
 		if operation.ProviderOperation != nil {
 			currency = operation.ProviderOperation.Provider_currency.Name
@@ -61,6 +62,7 @@ func SetBalanceInOperations() {
 		if ok {
 			operation.ProviderBalance = balance
 		} else {
+			// для колбэка условие
 			if operation.Provider_amount == 0 {
 				balance, ok = provider_balances.GetBalance(operation, "")
 				if ok && balance.Convertation_id == CNV_CALLBACK {

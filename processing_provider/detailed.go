@@ -43,6 +43,7 @@ type Detailed_row struct {
 	Range_max                 float64   `db:"range_max"`
 	Region                    string    `db:"region"`
 	Document_id               int       `db:"document_id"`
+	Provider_dragonpay        string    `db:"provider_dragonpay"`
 
 	// Merchant_id         int    `db:"merchant_id"`
 	// Merchant_account_id int    `db:"merchant_account_id"`
@@ -128,6 +129,10 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.CompensationBR = o.CompensationBR
 	d.Verification = o.Verification
 	d.Region = o.Country.Region
+
+	if o.DragonpayOperation != nil {
+		d.Provider_dragonpay = o.DragonpayOperation.Provider1c
+	}
 
 	if o.Tariff != nil {
 		t := o.Tariff

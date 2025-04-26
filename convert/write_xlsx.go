@@ -1,4 +1,4 @@
-package conversion_raw
+package convert
 
 import (
 	"app/logs"
@@ -123,8 +123,8 @@ func add_page_absentInBof(f *xlsx.File) {
 
 	sheet, _ := f.AddSheet("Нет в БОФ")
 
-	headers := []string{"operation_id",
-		//"provider_payment_id", "provider_name", "merchant_account_name",
+	headers := []string{"operation_id", "provider_payment_id",
+		//"provider_name", "merchant_account_name",
 		//"merchant_name", "project_url", "operation_type",
 		"operation_status",
 		//"account_number",
@@ -167,7 +167,7 @@ func add_page_absentInBof(f *xlsx.File) {
 		row := sheet.AddRow()
 
 		row.AddCell().SetInt(v.Id)
-		// row.AddCell().SetString(v.Provider_payment_id)
+		row.AddCell().SetString(v.Provider_payment_id)
 		// row.AddCell().SetString(v.Provider_name)
 		// row.AddCell().SetString(v.Merchant_account_name)
 		// row.AddCell().SetString(v.Merchant_name)
