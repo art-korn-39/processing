@@ -106,7 +106,7 @@ func readCSV(filename string) (baseError error) {
 						if !ok {
 							return
 						}
-						op, err := createRawOperation(record, map_fileds, setting)
+						op, err := createBaseOperation(record, map_fileds, setting)
 						if err != nil {
 							baseError = err
 							cancel()

@@ -96,7 +96,7 @@ func (op *Bof_operation) fill() {
 
 }
 
-func readBofOperations(cfg config.Config, db *sqlx.DB, key_column string) (err error) {
+func readBofOperations(cfg *config.Config, db *sqlx.DB, key_column string) (err error) {
 
 	start_time := time.Now()
 

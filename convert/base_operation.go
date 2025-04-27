@@ -16,20 +16,22 @@ const (
 	PAYID = "provider_payment_id"
 )
 
-type base_operation struct {
-	operation_id       string
-	payment_id         string
-	bof_operation      *Bof_operation
-	provider_operation *pg.Operation
+type Base_operation struct {
+	// поля для поиска БОФ операции, заполнено только одно в зав-ти от настройки
+	operation_id string
+	payment_id   string
+
+	Bof_operation      *Bof_operation
+	Provider_operation *pg.Operation
 	record             []string
 
 	map_fields map[string]int
-	setting    *Setting
+	Setting    *Setting
 }
 
-func createRawOperation(record []string, map_fields map[string]int, setting *Setting) (base_op *base_operation, err error) {
+func createBaseOperation(record []string, map_fields map[string]int, setting *Setting) (base_op *Base_operation, err error) {
 
-	base_op = &base_operation{record: record, map_fields: map_fields, setting: setting}
+	base_op = &Base_operation{record: record, map_fields: map_fields, Setting: setting}
 
 	switch setting.Key_column {
 	case OPID:
@@ -44,10 +46,10 @@ func createRawOperation(record []string, map_fields map[string]int, setting *Set
 
 }
 
-func (ext_op *base_operation) createProviderOperation() (op *pg.Operation, err error) {
+func (ext_op *Base_operation) createProviderOperation() (op *pg.Operation, err error) {
 
 	op = &pg.Operation{}
-	ext_op.provider_operation = op
+	ext_op.Provider_operation = op
 
 	if ext_op.operation_id != "" {
 		op.Id, err = strconv.Atoi(ext_op.operation_id)
@@ -115,19 +117,19 @@ func (ext_op *base_operation) createProviderOperation() (op *pg.Operation, err e
 
 }
 
-func (base_op *base_operation) getValue(reg_name string) (result string) {
+func (base_op *Base_operation) getValue(reg_name string) (result string) {
 
-	mapping, ok := base_op.setting.values[reg_name]
+	mapping, ok := base_op.Setting.values[reg_name]
 	if !ok {
-		logs.Add(logs.FATAL, fmt.Errorf(`в настройке "%s" не указано поле "%s"`, base_op.setting.Name, reg_name))
+		logs.Add(logs.FATAL, fmt.Errorf(`в настройке "%s" не указано поле "%s"`, base_op.Setting.Name, reg_name))
 		return
 	}
 
 	float_names := []string{"amount", "channel_amount", "br_amount", "rate"}
 
 	bof_op := Bof_operation{Operation_id: "0"}
-	if base_op.bof_operation != nil {
-		bof_op = *base_op.bof_operation
+	if base_op.Bof_operation != nil {
+		bof_op = *base_op.Bof_operation
 	}
 
 	if mapping.Skip {
@@ -169,7 +171,7 @@ func (base_op *base_operation) getValue(reg_name string) (result string) {
 			result = getBalance(base_op.record, base_op.map_fields, bof_op)
 			balances[bof_op] = result
 		case "provider1c":
-			result = getProvider1c(bof_op, base_op.provider_operation.Provider_currency_str)
+			result = getProvider1c(bof_op, base_op.Provider_operation.Provider_currency_str)
 		case "provider_currency":
 			result = getProviderCurrency(bof_op)
 		case "team (kgx/tradex)":
@@ -180,12 +182,12 @@ func (base_op *base_operation) getValue(reg_name string) (result string) {
 		case "rate":
 			result = "0"
 		case "amount":
-			if base_op.provider_operation.Rate == 0 {
+			if base_op.Provider_operation.Rate == 0 {
 				result = "0"
 			} else if mapping.Calculation_format == "прямой" {
-				result = strconv.FormatFloat(base_op.provider_operation.Channel_amount*base_op.provider_operation.Rate, 'f', -1, 64)
+				result = strconv.FormatFloat(base_op.Provider_operation.Channel_amount*base_op.Provider_operation.Rate, 'f', -1, 64)
 			} else {
-				result = strconv.FormatFloat(base_op.provider_operation.Channel_amount/base_op.provider_operation.Rate, 'f', -1, 64)
+				result = strconv.FormatFloat(base_op.Provider_operation.Channel_amount/base_op.Provider_operation.Rate, 'f', -1, 64)
 			}
 		}
 	} else {

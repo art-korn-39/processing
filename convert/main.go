@@ -13,7 +13,7 @@ import (
 
 var (
 	final_registry map[int]*pr.Operation
-	ext_registry   []*base_operation
+	ext_registry   []*Base_operation
 	bof_registry   map[string]*Bof_operation
 
 	is_kgx_tradex bool
@@ -26,7 +26,7 @@ var (
 
 func init() {
 	final_registry = map[int]*pr.Operation{}
-	ext_registry = make([]*base_operation, 0, 100000)
+	ext_registry = make([]*Base_operation, 0, 100000)
 	bof_registry = map[string]*Bof_operation{}
 
 	all_settings = map[string]*Setting{}
@@ -46,6 +46,17 @@ func Start() {
 	}
 	defer storage.Close()
 
+	// найти подходящие настройки маппинга, прочитать реестр провайдера
+	ReadAndConvert(&cfg, storage)
+
+	// запись результата
+	writeResult(cfg, storage.Postgres)
+}
+
+func ReadAndConvert(cfg *config.Config, storage *storage.Storage) []*Base_operation {
+
+	var err error
+
 	// чтение настроек маппинга
 	readSettings(storage.Postgres, cfg.Settings.Guid)
 	if len(all_settings) == 0 {
@@ -61,7 +72,7 @@ func Start() {
 	if filepath.Ext(filename) == "" {
 		readFolder(filename)
 		if len(ext_registry) == 0 {
-			return
+			return nil
 		}
 	} else {
 		err = readFile(filename)
@@ -100,8 +111,8 @@ func Start() {
 		logs.Add(logs.FATAL, err)
 	}
 
-	// запись результата
-	writeResult(cfg, storage.Postgres)
+	return ext_registry
+
 }
 
 func handleRecords() error {
@@ -110,25 +121,25 @@ func handleRecords() error {
 
 	cntWithoutBof := 0
 
-	for _, v := range ext_registry {
+	for _, base_operation := range ext_registry {
 
 		var ok bool
-		switch v.setting.Key_column {
+		switch base_operation.Setting.Key_column {
 		case OPID:
-			v.bof_operation, ok = bof_registry[v.operation_id]
+			base_operation.Bof_operation, ok = bof_registry[base_operation.operation_id]
 		case PAYID:
-			v.bof_operation, ok = bof_registry[v.payment_id]
+			base_operation.Bof_operation, ok = bof_registry[base_operation.payment_id]
 		}
 		if !ok {
 			cntWithoutBof++
 		}
 
-		provider_operation, err := v.createProviderOperation()
+		provider_operation, err := base_operation.createProviderOperation()
 		if err != nil {
 			return fmt.Errorf("ошибка при парсинге полей: %s", err)
 		}
 
-		sliceCalculatedFields := v.setting.getCalculatedFields()
+		sliceCalculatedFields := base_operation.Setting.getCalculatedFields()
 
 		setCalculatedFields(provider_operation, sliceCalculatedFields)
 

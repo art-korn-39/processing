@@ -13,6 +13,7 @@ import (
 	"app/logs"
 	"app/processing_merchant"
 	"app/processing_provider"
+	"app/sverka"
 	"flag"
 	"fmt"
 	"time"
@@ -27,7 +28,7 @@ func main() {
 	var app string
 	var file_config string
 
-	// processing_merchant | processing_provider | conversion_raw
+	// processing_merchant | processing_provider | conversion_raw | sverka
 	// conversion | decline crypto | dragonpay | aws | chargeback | crm_dictionary
 	flag.StringVar(&app, "app", "conversion_raw", "")
 	flag.StringVar(&file_config, "file_config", "", "")
@@ -61,6 +62,8 @@ func main() {
 		crm_dictionary.Start()
 	case "conversion_raw":
 		convert.Start()
+	case "sverka":
+		sverka.Start()
 	}
 
 	logs.Add(logs.MAIN, fmt.Sprintf("Общее время выполнения: %v", time.Since(start_time)))

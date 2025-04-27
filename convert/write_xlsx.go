@@ -158,11 +158,11 @@ func add_page_absentInBof(f *xlsx.File) {
 
 	for _, raw_op := range ext_registry {
 
-		if raw_op.bof_operation != nil {
+		if raw_op.Bof_operation != nil {
 			continue
 		}
 
-		v := raw_op.provider_operation
+		v := raw_op.Provider_operation
 
 		row := sheet.AddRow()
 

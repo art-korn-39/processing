@@ -77,7 +77,7 @@ func readXLSX(filename string) (baseError error) {
 						break
 					}
 					record := getRecordFromCells(row.Cells)
-					op, err := createRawOperation(record, map_fileds, setting)
+					op, err := createBaseOperation(record, map_fileds, setting)
 					if err != nil {
 						baseError = err
 						//cancel()

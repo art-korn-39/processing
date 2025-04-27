@@ -201,3 +201,20 @@ func Stat_Select_dragonpay_handbook() string {
 				endpoint_id,provider1c,payment_type
 			FROM dragonpay_handbook`
 }
+
+func Stat_Select_detailed_provider() string {
+
+	return `SELECT
+				document_id, operation_id, provider_payment_id, transaction_id, rrn, payment_id,
+				provider_name, merchant_name, merchant_account_name, project_id, operation_type,
+				payment_type, transaction_created_at, transaction_completed_at, channel_amount, channel_currency,
+				provider_amount, provider_currency, operation_actual_amount, surcharge_amount, surcharge_currency,
+				endpoint_id, account_bank_name, operation_created_at, balance_amount, br_balance_currency,
+				balance_currency, rate, compensation_br, verification,
+				tariff_date_start, act_percent, act_fix, act_min, act_max, 
+				range_min, range_max, region, provider_dragonpay
+	FROM detailed_provider
+	WHERE lower(provider_name) = ANY($1) 
+	AND transaction_completed_at BETWEEN $2 AND $3`
+
+}
