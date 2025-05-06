@@ -69,7 +69,7 @@ func ReadSources() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(7)
+	wg.Add(8)
 
 	registry_done := make(chan querrys.Args, 1)
 	go func() {
@@ -105,6 +105,11 @@ func ReadSources() {
 	go func() {
 		defer wg.Done()
 		dragonpay.Read_Registry(storage.Postgres)
+	}()
+
+	go func() {
+		defer wg.Done()
+		Read_Detailed(storage.Postgres, registry_done)
 	}()
 
 	wg.Wait()

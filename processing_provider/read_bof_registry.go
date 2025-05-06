@@ -24,6 +24,7 @@ func Read_Registry(registry_done chan querrys.Args) {
 
 	if config.Get().Registry.Storage == config.Clickhouse {
 		registry_done <- NewQuerryArgs(true)
+		registry_done <- NewQuerryArgs(true)
 		close(registry_done)
 
 		err := CH_ReadRegistry()
@@ -40,6 +41,7 @@ func Read_Registry(registry_done chan querrys.Args) {
 				return storage.Registry[i].Transaction_completed_at.Before(storage.Registry[j].Transaction_completed_at)
 			},
 		)
+		registry_done <- NewQuerryArgs(false)
 		registry_done <- NewQuerryArgs(false)
 	}
 

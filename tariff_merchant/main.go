@@ -213,7 +213,7 @@ func FindTariffForOperation(op Operation) *Tariff {
 			}
 
 			if t.DateStartMA.Before(operation_date) &&
-				t.DateFinishMA.After(operation_date) &&
+				(t.DateFinishMA.After(operation_date) || t.DateFinishMA.IsZero()) &&
 				t.DateStart.Before(operation_date) &&
 				t.Operation_type == op.GetString("Operation_type") {
 

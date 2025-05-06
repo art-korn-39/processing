@@ -116,6 +116,10 @@ func SelectTariffsInRegistry() {
 			for index := range channel_indexes {
 				operation := storage.Registry[index]
 
+				if operation.IsPerevodix {
+					continue
+				}
+
 				if operation.IsDragonPay {
 					operation.DragonpayOperation, _ = dragonpay.GetOperation(operation.Operation_id, operation.Endpoint_id)
 				}

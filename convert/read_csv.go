@@ -44,15 +44,6 @@ func readCSV(filename string) (baseError error) {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
-	file, err := os.Open(filename)
-	if err != nil {
-		logs.Add(logs.FATAL, err)
-	}
-	defer file.Close()
-
-	reader := csv.NewReader(file)
-	reader.LazyQuotes = true
-
 	var last_iteration bool
 	for _, setting := range all_settings {
 
@@ -65,6 +56,15 @@ func readCSV(filename string) (baseError error) {
 			logs.Add(logs.INFO, fmt.Errorf("в настройке \"%s\" не указан разделитель", setting.Name))
 			continue
 		}
+
+		file, err := os.Open(filename)
+		if err != nil {
+			logs.Add(logs.FATAL, err)
+		}
+		defer file.Close()
+
+		reader := csv.NewReader(file)
+		reader.LazyQuotes = true
 		reader.Comma = runes[0]
 
 		// строка с названиями колонок

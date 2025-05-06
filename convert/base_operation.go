@@ -201,6 +201,9 @@ func (base_op *Base_operation) getValue(reg_name string) (result string) {
 			if slices.Contains(float_names, reg_name) && reg_name != "rate" {
 				str := base_op.record[idx]
 				number, _ := util.ParseFloat(str)
+				if is_kgx_tradex {
+					number = number / 100
+				}
 				result = strconv.FormatFloat(number, 'f', -1, 64)
 			} else {
 				result = base_op.record[idx]

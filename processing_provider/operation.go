@@ -10,6 +10,7 @@ import (
 	"app/provider_registry"
 	"app/tariff_provider"
 	"app/util"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -87,7 +88,7 @@ type Operation struct {
 	Verification string
 	IsDragonPay  bool
 	IsKessPay    bool
-	//IsPerevodix    bool
+	IsPerevodix  bool
 	//Crypto_network string
 	//Provider1c     string
 
@@ -115,7 +116,7 @@ func (o *Operation) StartingFill() {
 
 	o.IsDragonPay = strings.Contains(strings.ToLower(o.Provider_name), "dragonpay")
 	o.IsKessPay = strings.Contains(strings.ToLower(o.Provider_name), "kesspay")
-	//o.IsPerevodix = o.Merchant_id == 73162
+	o.IsPerevodix = strings.Contains(strings.ToLower(o.Provider_name), "perevodix")
 
 	o.Provider_currency = currency.New(o.Provider_currency_str)
 	o.Channel_currency = currency.New(o.Channel_currency_str)
@@ -213,6 +214,14 @@ func (o *Operation) SetBalanceAmount() {
 }
 
 func (o *Operation) SetBRAmount() {
+
+	if o.IsPerevodix {
+		detailed, ok := storage.Detailed[strconv.Itoa(o.Operation_id)]
+		if ok {
+			o.BR_balance_currency = detailed.BR_balance_currency
+		}
+		return
+	}
 
 	t := o.Tariff
 

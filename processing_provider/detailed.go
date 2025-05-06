@@ -1,6 +1,14 @@
 package processing_provider
 
-import "time"
+import (
+	"app/logs"
+	"app/querrys"
+	"app/util"
+	"fmt"
+	"time"
+
+	"github.com/jmoiron/sqlx"
+)
 
 type Detailed_row struct {
 	Operation_id              int       `db:"operation_id"`
@@ -162,4 +170,35 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	// d.Crypto_network = o.Crypto_network
 
 	return d
+}
+
+func Read_Detailed(db *sqlx.DB, registry_done chan querrys.Args) {
+
+	if db == nil {
+		return
+	}
+
+	// MERCHANT_NAME + DATE
+	Args := <-registry_done
+
+	start_time := time.Now()
+
+	stat := `select payment_id,br_balance_currency 
+				from detailed_provider 
+				where transaction_completed_at between $1 and $2`
+
+	var result []*Detailed_row
+	err := db.Select(&result, stat, Args.DateFrom, Args.DateTo)
+	if err != nil {
+		logs.Add(logs.INFO, err)
+		return
+	}
+
+	storage.Detailed = map[string]*Detailed_row{}
+	for _, v := range result {
+		storage.Detailed[v.Payment_id] = v
+	}
+
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение detailed_provider из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Detailed))))
+
 }

@@ -136,7 +136,9 @@ func handleRecords() error {
 
 		provider_operation, err := base_operation.createProviderOperation()
 		if err != nil {
-			return fmt.Errorf("ошибка при парсинге полей: %s", err)
+			//return fmt.Errorf("ошибка при парсинге полей: %s", err)
+			logs.Add(logs.INFO, err)
+			continue
 		}
 
 		sliceCalculatedFields := base_operation.Setting.getCalculatedFields()

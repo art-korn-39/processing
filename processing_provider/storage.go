@@ -13,6 +13,7 @@ type Storage struct {
 	Postgres   *sqlx.DB
 	Clickhouse *sqlx.DB
 	Registry   []*Operation
+	Detailed   map[string]*Detailed_row
 }
 
 func (s *Storage) Close() {
