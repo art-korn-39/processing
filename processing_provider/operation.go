@@ -242,7 +242,7 @@ func (o *Operation) SetBRAmount() {
 	if o.Channel_currency.Exponent {
 		o.BR_balance_currency = util.Round(commission, 0)
 	} else {
-		o.BR_balance_currency = util.Round(commission, 3)
+		o.BR_balance_currency = util.Round(commission, 4)
 	}
 
 }
@@ -271,7 +271,7 @@ func (o *Operation) SetExtraBRAmount() {
 	if o.Channel_currency.Exponent {
 		o.Extra_BR_balance_currency = util.Round(commission, 0)
 	} else {
-		o.Extra_BR_balance_currency = util.Round(commission, 3)
+		o.Extra_BR_balance_currency = util.Round(commission, 4)
 	}
 
 }

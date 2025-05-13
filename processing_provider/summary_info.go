@@ -33,8 +33,8 @@ func (sf *SumFileds) AddValues(o *Operation) {
 
 func (sf *SumFileds) RoundValues() {
 	sf.balance_amount = util.Round(sf.balance_amount, 2)
-	sf.BR_balance_currency = util.Round(sf.BR_balance_currency, 3)
-	sf.Extra_BR_balance_currency = util.Round(sf.Extra_BR_balance_currency, 3)
+	sf.BR_balance_currency = util.Round(sf.BR_balance_currency, 4)
+	sf.Extra_BR_balance_currency = util.Round(sf.Extra_BR_balance_currency, 4)
 	sf.compensationBR = util.Round(sf.compensationBR, 2)
 	sf.channel_amount = util.Round(sf.channel_amount, 2)
 	sf.surcharge_amount = util.Round(sf.surcharge_amount, 2)

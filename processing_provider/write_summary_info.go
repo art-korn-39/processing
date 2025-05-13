@@ -115,7 +115,7 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 		cell = row.AddCell()
 		cell.SetFloat(v.BR_balance_currency)
-		cell.SetFormat("0.000")
+		cell.SetFormat("0.0000")
 
 		cell = row.AddCell()
 		cell.SetFloat(v.surcharge_amount)
@@ -123,7 +123,7 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 		cell = row.AddCell()
 		cell.SetFloat(v.Extra_BR_balance_currency)
-		cell.SetFormat("0.000")
+		cell.SetFormat("0.0000")
 
 		cell = row.AddCell()
 		cell.SetFloat(v.channel_amount)
@@ -196,7 +196,7 @@ func add_page_detail(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 		cell = row.AddCell()
 		cell.SetFloat(v.BR_balance_currency)
-		cell.SetFormat("0.00")
+		cell.SetFormat("0.0000")
 
 		cell = row.AddCell()
 		cell.SetFloat(v.compensationBR)
@@ -291,7 +291,7 @@ func add_page_turnover_dragonpay(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFi
 
 		cell = row.AddCell()
 		cell.SetFloat(v.BR_balance_currency)
-		cell.SetFormat("0.000")
+		cell.SetFormat("0.0000")
 
 		cell = row.AddCell()
 		cell.SetFloat(v.surcharge_amount)
@@ -299,7 +299,7 @@ func add_page_turnover_dragonpay(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFi
 
 		cell = row.AddCell()
 		cell.SetFloat(v.Extra_BR_balance_currency)
-		cell.SetFormat("0.000")
+		cell.SetFormat("0.0000")
 
 		cell = row.AddCell()
 		cell.SetFloat(v.channel_amount)
