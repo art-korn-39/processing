@@ -194,7 +194,7 @@ func PSQL_Insert_Detailed() {
 					sliceID = append(sliceID, row.Operation_id)
 				}
 
-				_, err = tx.Exec("delete from detailed where operation_id = ANY($1);", pq.Array(sliceID))
+				_, err = tx.Exec("delete from detailed_provider where operation_id = ANY($1);", pq.Array(sliceID))
 				if err != nil {
 					once.Do(func() { logs.Add(logs.INFO, err) })
 					tx.Rollback()
