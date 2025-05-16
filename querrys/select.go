@@ -86,7 +86,9 @@ func Stat_Select_reports_by_id() string {
 		IFNULL(operation__merchant_account_name, '') AS merchant_account_name,
 		IFNULL(billing__operation_type_id, 0) AS operation_type_id,
 		IFNULL(operation__payment_method_type, '') AS payment_type,
-		IFNULL(operation__issuer_country, '') AS country	
+		IFNULL(operation__issuer_country, '') AS country,
+		IFNULL(operation__channel_amount, 0) AS channel_amount,
+		IFNULL(operation__channel_currency, '') AS channel_currency		
 	FROM reports
 	WHERE 
 		toString(operation__$2) IN ('$1')`

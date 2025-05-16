@@ -2,6 +2,7 @@ package provider_registry
 
 import (
 	"app/currency"
+	"app/util"
 	"time"
 )
 
@@ -41,6 +42,7 @@ type Operation struct {
 
 func (o *Operation) StartingFill(from_file bool) {
 
+	// чтение файлов РЗ
 	if from_file {
 
 		if o.Provider_currency.Name == "EUR" && o.Rate != 0 {
@@ -50,9 +52,10 @@ func (o *Operation) StartingFill(from_file bool) {
 		o.Channel_currency_str = o.Channel_currency.Name
 		o.Provider_currency_str = o.Provider_currency.Name
 
-	} else {
+	} else { // при конвертации
 		o.Channel_currency = currency.New(o.Channel_currency_str)
 		o.Provider_currency = currency.New(o.Provider_currency_str)
+		o.BR_amount = util.Round(o.BR_amount, 4)
 	}
 
 	o.Transaction_completed_at_day = o.Transaction_completed_at.Truncate(24 * time.Hour)

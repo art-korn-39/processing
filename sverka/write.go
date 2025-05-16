@@ -37,7 +37,7 @@ func add_page_sverka(f *xlsx.File, differ_table []differ_struct) {
 	headers := []string{"operation_id", "provider_payment_id",
 		"transaction_created_at (provider)", "transaction_created_at (detailed)", "transaction_created_at (bof)",
 		"channel_amount (provider)", "channel_amount (detailed)", "channel_amount (bof)",
-		"br amount (provider)", "br amount (detailed)",
+		"br amount (provider)", "br amount (detailed)", "Delta BR",
 	}
 
 	style := xlsx.NewStyle()
@@ -60,6 +60,9 @@ func add_page_sverka(f *xlsx.File, differ_table []differ_struct) {
 	}
 
 	sheet.SetColWidth(0, 20, 14)
+	sheet.SetColWidth(0, 0, 18)
+	sheet.SetColWidth(1, 1, 35)
+	sheet.SetColWidth(2, 4, 20)
 
 	var cell *xlsx.Cell
 
@@ -78,19 +81,19 @@ func add_page_sverka(f *xlsx.File, differ_table []differ_struct) {
 		if prov_op.Transaction_created_at.IsZero() {
 			row.AddCell().SetString("")
 		} else {
-			row.AddCell().SetDate(prov_op.Transaction_created_at)
+			row.AddCell().SetDateTime(prov_op.Transaction_created_at)
 		}
 
 		if det_op.Transaction_created_at.IsZero() {
 			row.AddCell().SetString("")
 		} else {
-			row.AddCell().SetDate(det_op.Transaction_created_at)
+			row.AddCell().SetDateTime(det_op.Transaction_created_at)
 		}
 
 		if bof_op.Transaction_created_at.IsZero() {
 			row.AddCell().SetString("")
 		} else {
-			row.AddCell().SetDate(bof_op.Transaction_created_at)
+			row.AddCell().SetDateTime(bof_op.Transaction_created_at)
 		}
 
 		// CHANNEL AMOUNT
@@ -109,11 +112,15 @@ func add_page_sverka(f *xlsx.File, differ_table []differ_struct) {
 		// BR AMOUNT
 		cell = row.AddCell()
 		cell.SetFloat(prov_op.BR_amount)
-		cell.SetFormat("0.00")
+		cell.SetFormat("0.0000")
 
 		cell = row.AddCell()
 		cell.SetFloat(det_op.BR_balance_currency)
-		cell.SetFormat("0.00")
+		cell.SetFormat("0.0000")
+
+		cell = row.AddCell()
+		cell.SetFloat(det_op.BR_balance_currency - prov_op.BR_amount)
+		cell.SetFormat("0.0000")
 
 	}
 

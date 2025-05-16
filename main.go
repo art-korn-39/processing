@@ -30,7 +30,7 @@ func main() {
 
 	// processing_merchant | processing_provider | conversion_raw | sverka
 	// conversion | decline crypto | dragonpay | aws | chargeback | crm_dictionary
-	flag.StringVar(&app, "app", "processing_provider", "")
+	flag.StringVar(&app, "app", "sverka", "")
 	flag.StringVar(&file_config, "file_config", "", "")
 	flag.Parse()
 

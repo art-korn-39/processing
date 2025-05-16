@@ -52,27 +52,33 @@ func compare(full_registry []*convert.Base_operation, detailed detailed_struct) 
 			continue
 		}
 
-		if prov_op.Channel_amount != bof_op.Channel_amount || prov_op.Channel_amount != det_op.Channel_amount {
-			result = append(result, differ)
-			cntDifferent++
-			continue
+		if prov_op.Channel_amount != 0 && bof_op.Channel_amount != 0 && det_op.Channel_amount != 0 {
+
+			if prov_op.Channel_amount != bof_op.Channel_amount || prov_op.Channel_amount != det_op.Channel_amount {
+				result = append(result, differ)
+				cntDifferent++
+				continue
+			}
 		}
 
-		if !prov_op.Transaction_created_at.Equal(bof_op.Transaction_created_at) || !prov_op.Transaction_created_at.Equal(det_op.Transaction_created_at) {
-			result = append(result, differ)
-			cntDifferent++
-			continue
-		}
+		// if !prov_op.Transaction_created_at.Equal(bof_op.Transaction_created_at) || !prov_op.Transaction_created_at.Equal(det_op.Transaction_created_at) {
+		// 	result = append(result, differ)
+		// 	cntDifferent++
+		// 	continue
+		// }
 
-		if prov_op.BR_amount != det_op.BR_balance_currency {
-			result = append(result, differ)
-			cntDifferent++
-			continue
+		if prov_op.BR_amount != 0 && det_op.BR_balance_currency != 0 {
+
+			if prov_op.BR_amount != det_op.BR_balance_currency {
+				result = append(result, differ)
+				cntDifferent++
+				continue
+			}
 		}
 
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Сверка по основным полям: %v [отличаются: %d, не найдено detailed: %d]", time.Since(start_time), cntDifferent, cntWithoutDetailed))
+	logs.Add(logs.INFO, fmt.Sprintf("Сверка по основным полям: %v [отличаются: %d, без detailed: %d]", time.Since(start_time), cntDifferent, cntWithoutDetailed))
 
 	return
 

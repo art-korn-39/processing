@@ -41,14 +41,16 @@ func PSQL_read_registry(db *sqlx.DB, provider []string, dateFrom, dateTo time.Ti
 		logs.Add(logs.FATAL, err)
 	}
 
-	result := detailed_struct{}
+	result := detailed_struct{
+		opid_map:  map[string]*processing_provider.Detailed_row{},
+		payid_map: map[string]*processing_provider.Detailed_row{},
+	}
 
 	for i := range table {
 		row := &table[i]
 
 		result.opid_map[strconv.Itoa(row.Operation_id)] = row
 		result.payid_map[row.Provider_payment_id] = row
-
 	}
 
 	logs.Add(logs.INFO, fmt.Sprintf("Чтение таблицы detailed provider из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(table))))
