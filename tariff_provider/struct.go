@@ -32,6 +32,7 @@ type Tariff struct {
 	DateStart                  time.Time `db:"date_start"`
 	Merchant_name              string    `db:"merchant_name"`
 	Merchant_account_name      string    `db:"merchant_account_name"`
+	Merchant_account_id        int       `db:"merchant_account_id"`
 	Merchant_legal_entity      int       `db:"merchant_legal_entity"`
 	Payment_method             string    `db:"payment_method"`
 	Payment_method_type        string    `db:"payment_method_type"`
@@ -113,7 +114,10 @@ func (t *Tariff) SetCountUsefulFields() {
 	if t.Merchant_name != "" {
 		t.CountUsefulFields++
 	}
-	if t.Merchant_account_name != "" {
+	// if t.Merchant_account_name != "" {
+	// 	t.CountUsefulFields++
+	// }
+	if t.Merchant_account_id != 0 {
 		t.CountUsefulFields++
 	}
 	if t.Merchant_legal_entity != 0 {

@@ -128,7 +128,7 @@ func Stat_Select_tariffs_merchant() string {
 
 func Stat_Select_tariffs_provider() string {
 	return `SELECT 
-				guid,provider_balance_guid,provider_balance_name,
+				guid,provider_balance_guid,provider_balance_name,merchant_account_id,
 				date_start,merchant_name,merchant_account_name,merchant_legal_entity,
 				payment_method,payment_method_type,region,channel_currency,project_name,
 				business_type,operation_group,traffic_type,account_bank_name, use_transaction_created_at,

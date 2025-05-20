@@ -28,7 +28,7 @@ func main() {
 	var app string
 	var file_config string
 
-	// processing_merchant | processing_provider | conversion_raw | sverka
+	// processing_merchant | processing_provider | convert | sverka
 	// conversion | decline crypto | dragonpay | aws | chargeback | crm_dictionary
 	flag.StringVar(&app, "app", "sverka", "")
 	flag.StringVar(&file_config, "file_config", "", "")
@@ -60,8 +60,6 @@ func main() {
 		chargeback.Start()
 	case "crm_dictionary":
 		crm_dictionary.Start()
-	case "conversion_raw":
-		convert.Start()
 	case "convert":
 		convert.Start()
 	case "sverka":
