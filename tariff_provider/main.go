@@ -224,7 +224,11 @@ func (t *Tariff) IsValidForOperation(op Operation) bool {
 		return false
 	}
 
-	if t.Merchant_account_name != "" && t.Merchant_account_name != op.GetString("Merchant_account_name") {
+	// if t.Merchant_account_name != "" && t.Merchant_account_name != op.GetString("Merchant_account_name") {
+	// 	return false
+	// }
+
+	if t.Merchant_account_id != 0 && t.Merchant_account_id != op.GetInt("Merchant_account_id") {
 		return false
 	}
 
