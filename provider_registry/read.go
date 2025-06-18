@@ -205,8 +205,8 @@ func Read_convert_sheet(sheet *xlsx.Sheet, filename string) (ops []Operation, er
 			operation.Provider_currency = currency.New(row.Cells[idx_provider_currency].String())
 		}
 
-		operation.Rate, _ = row.Cells[map_fileds["курс"]-1].Float()
-		operation.Rate = util.TR(math.IsNaN(operation.Rate), float64(0), operation.Rate).(float64)
+		//operation.Rate, _ = row.Cells[map_fileds["курс"]-1].Float()
+		//operation.Rate = util.TR(math.IsNaN(operation.Rate), float64(0), operation.Rate).(float64)
 
 		if idx_amount > 0 {
 			operation.Amount, _ = row.Cells[idx_amount].Float()

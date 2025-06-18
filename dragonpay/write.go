@@ -18,22 +18,21 @@ func insertIntoDB(db *sqlx.DB) error {
 
 	start_time := time.Now()
 
-	stat := querrys.Stat_Insert_dragonpay_handbook()
+	// stat := querrys.Stat_Insert_dragonpay_handbook()
+	// _, err := db.PrepareNamed(stat)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// for k, v := range handbook {
+	// 	_, err := db.Exec(stat, k, v)
+	// 	if err != nil {
+	// 		return fmt.Errorf("не удалось записать в БД (dragonpay handbook): %v", err)
+	// 	}
+	// }
+
+	stat := querrys.Stat_Insert_dragonpay()
 	_, err := db.PrepareNamed(stat)
-	if err != nil {
-		return err
-	}
-
-	for k, v := range handbook {
-		_, err := db.Exec(stat, k, v)
-		if err != nil {
-			return fmt.Errorf("не удалось записать в БД (dragonpay handbook): %v", err)
-			//logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД (dragonpay handbook): ", err))
-		}
-	}
-
-	stat = querrys.Stat_Insert_dragonpay()
-	_, err = db.PrepareNamed(stat)
 	if err != nil {
 		return err
 	}

@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-var exponent = []string{"JPY", "KRW", "UGX", "VND", "CLP", "XAF", "RWF", "XOF", "GNF"}
+var exponent = []string{"JPY", "KRW", "UGX", "VND", "CLP", "XAF", "RWF", "XOF", "GNF", "PYG"}
 
 type Currency struct {
 	Name     string

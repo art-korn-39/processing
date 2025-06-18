@@ -121,7 +121,8 @@ func SelectTariffsInRegistry() {
 				}
 
 				if operation.IsDragonPay {
-					operation.DragonpayOperation, _ = dragonpay.GetOperation(operation.Operation_id, operation.Endpoint_id)
+					operation.DragonpayOperation = dragonpay.GetOperation(operation.Operation_id)
+					operation.Payment_type, operation.Payment_type_id = dragonpay.GetPaymentType(operation.Endpoint_id)
 				}
 
 				operation.Tariff = tariff_provider.FindTariffForOperation(operation, "Balance_guid")

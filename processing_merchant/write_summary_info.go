@@ -188,7 +188,7 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 		cell = row.AddCell() //27 Сумма в валюте баланса
 		cell.SetFloat(v.balance_amount)
-		cell.SetFormat("0.00")
+		cell.SetFormat("0.000")
 
 		cell = row.AddCell() //28
 		cell.SetFloat(v.SR_balance_currency)
@@ -353,7 +353,7 @@ func add_page_detailed_nu(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 		cell = row.AddCell() //27 Сумма в валюте баланса
 		cell.SetFloat(v.balance_amount)
-		cell.SetFormat("0.00")
+		cell.SetFormat("0.000")
 
 		cell = row.AddCell() //28
 		cell.SetFloat(v.SR_balance_currency)
@@ -725,7 +725,7 @@ func add_page_2_checkBilling(f *xlsx.File) {
 
 		cell = row.AddCell() //15 Сумма в валюте баланса
 		cell.SetFloat(op.Balance_amount)
-		cell.SetFormat("0.00")
+		cell.SetFormat("0.000")
 
 		cell = row.AddCell() //16
 		cell.SetFloat(op.SR_balance_currency)
@@ -832,7 +832,7 @@ func add_page_4_noProviderReg(f *xlsx.File) {
 
 			cell = row.AddCell() //14
 			cell.SetFloat(o.Balance_amount)
-			cell.SetFormat("0.00")
+			cell.SetFormat("0.000")
 
 			cell = row.AddCell() //15
 			cell.SetFloat(o.SR_balance_currency)
@@ -943,7 +943,7 @@ func add_page_all_fails(f *xlsx.File) {
 
 		cell = row.AddCell() // Сумма в валюте баланса
 		cell.SetFloat(op.Balance_amount)
-		cell.SetFormat("0.00")
+		cell.SetFormat("0.000")
 
 		cell = row.AddCell() //17
 		cell.SetFloat(op.SR_balance_currency)
@@ -1242,7 +1242,7 @@ func add_page_check_tariff_id(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFiled
 
 	already_write := make([]string, 0, 50)
 
-	for k, _ := range M {
+	for k := range M {
 
 		hash := fmt.Sprint(k.merchant_account_id, k.tariff_condition_id, k.operation_type)
 

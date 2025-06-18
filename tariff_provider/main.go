@@ -272,6 +272,10 @@ func (t *Tariff) IsValidForOperation(op Operation) bool {
 		return false
 	}
 
+	if t.Team != "" && t.Team != op.GetString("Team") {
+		return false
+	}
+
 	return true
 
 }

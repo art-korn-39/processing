@@ -45,9 +45,9 @@ func (o *Operation) StartingFill(from_file bool) {
 	// чтение файлов РЗ
 	if from_file {
 
-		if o.Provider_currency.Name == "EUR" && o.Rate != 0 {
-			o.Rate = 1 / o.Rate
-		}
+		// if o.Provider_currency.Name == "EUR" && o.Rate != 0 && o.Provider_name != "SepaViaInpay" {
+		// 	o.Rate = 1 / o.Rate
+		// }
 
 		o.Channel_currency_str = o.Channel_currency.Name
 		o.Provider_currency_str = o.Provider_currency.Name
@@ -56,6 +56,12 @@ func (o *Operation) StartingFill(from_file bool) {
 		o.Channel_currency = currency.New(o.Channel_currency_str)
 		o.Provider_currency = currency.New(o.Provider_currency_str)
 		o.BR_amount = util.Round(o.BR_amount, 4)
+	}
+
+	if o.Amount != 0 {
+		o.Rate = o.Channel_amount / o.Amount
+	} else {
+		o.Rate = 0
 	}
 
 	o.Transaction_completed_at_day = o.Transaction_completed_at.Truncate(24 * time.Hour)

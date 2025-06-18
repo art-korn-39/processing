@@ -42,18 +42,6 @@ func Read(db *sqlx.DB) {
 
 		data_guid[balance.GUID] = &balance
 
-		// if balance.Type == "IN-OUT" {
-		// 	hash := fmt.Sprint(balance.Provider_id, balance.Merchant_account_id, balance.Balance_currency.Name, "IN")
-		// 	data_maid[hash] = &balance
-		// 	hash = fmt.Sprint(balance.Provider_id, balance.Merchant_account_id, balance.Balance_currency.Name, "OUT")
-		// 	data_maid[hash] = &balance
-		// } else {
-		// 	hash := fmt.Sprint(balance.Provider_id, balance.Merchant_account_id, balance.Balance_currency.Name, balance.Type)
-		// 	data_maid[hash] = &balance
-		//}
-		// hash2 := fmt.Sprint(balance.Provider_id, balance.Merchant_account_id)
-		// data_maid[hash2] = &balance
-
 	}
 
 	logs.Add(logs.INFO, fmt.Sprintf("Чтение балансов провайдеров из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(slice_balances))))

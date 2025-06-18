@@ -47,6 +47,7 @@ type Tariff struct {
 	Use_transaction_created_at bool   `db:"use_transaction_created_at"`
 	Search_string_ma           string `db:"search_string_ma"`
 	Endpoint_id                string `db:"endpoint_id"`
+	Team                       string `db:"team"`
 
 	Range_turnouver_min float64 `db:"tariff_range_turnouver_min"`
 	Range_turnouver_max float64 `db:"tariff_range_turnouver_max"`
@@ -114,9 +115,6 @@ func (t *Tariff) SetCountUsefulFields() {
 	if t.Merchant_name != "" {
 		t.CountUsefulFields++
 	}
-	// if t.Merchant_account_name != "" {
-	// 	t.CountUsefulFields++
-	// }
 	if t.Merchant_account_id != 0 {
 		t.CountUsefulFields++
 	}
@@ -148,6 +146,9 @@ func (t *Tariff) SetCountUsefulFields() {
 		t.CountUsefulFields++
 	}
 	if t.Endpoint_id != "" {
+		t.CountUsefulFields++
+	}
+	if t.Team != "" {
 		t.CountUsefulFields++
 	}
 }

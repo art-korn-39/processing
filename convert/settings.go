@@ -21,6 +21,7 @@ type Setting struct {
 	bof_usage      bool
 	external_usage bool
 	Key_column     string
+	Daily_rates    bool
 }
 
 type Mapping struct {
@@ -61,6 +62,7 @@ func readSettings(db *sqlx.DB, provider_guid []string) {
 		File_format        string `db:"file_format"`
 		Sheet_name         string `db:"sheet_name"`
 		Comma              string `db:"comma"`
+		Daily_rates        bool   `db:"daily_rates"`
 		Registry_column    string `db:"registry_column"`
 		Table_column       string `db:"table_column"`
 		Date_format        string `db:"date_format"`
@@ -97,7 +99,7 @@ func readSettings(db *sqlx.DB, provider_guid []string) {
 		setting, ok = all_settings[row.Guid]
 		if !ok {
 			setting = &Setting{Name: row.Name, Guid: row.Guid, File_format: row.File_format, Key_column: row.Key_column,
-				Comma: row.Comma, Sheet_name: row.Sheet_name, values: map[string]Mapping{}}
+				Comma: row.Comma, Sheet_name: row.Sheet_name, Daily_rates: row.Daily_rates, values: map[string]Mapping{}}
 		}
 		setting.values[row.Registry_column] = mapping
 
@@ -133,19 +135,51 @@ func checkFields(setting *Setting, map_fileds map[string]int) error {
 
 func checkUsedSettings() (key_column string, external_usage bool, err error) {
 
-	for _, v := range used_settings {
+	if use_daily_rates {
 
-		if key_column != "" && v.Key_column != key_column {
-			err = fmt.Errorf("обнаружены настройки с разными значениями key_column")
+		// смотрим все настройки и ищем которую может подойти
+		for _, s := range all_settings {
+
+			suitable := false
+			if s.Daily_rates {
+				suitable = true
+			}
+
+			// for _, v := range s.values {
+			// 	if !v.From_bof && !v.Calculated && !v.External_source && !v.Skip {
+			// 		suitable = false
+			// 		break
+			// 	}
+			// }
+
+			if suitable {
+				main_setting = s
+				key_column = s.Key_column
+				external_usage = true
+				break
+			}
+		}
+
+		if main_setting == nil {
+			err = fmt.Errorf("не найдена подходящая настрока для режима 'Курс на день'")
 			return
 		}
 
-		key_column = v.Key_column
+	} else {
 
-		external_usage = v.external_usage || external_usage
+		for _, v := range used_settings {
 
+			if key_column != "" && v.Key_column != key_column {
+				err = fmt.Errorf("обнаружены настройки с разными значениями key_column")
+				return
+			}
+
+			key_column = v.Key_column
+
+			external_usage = v.external_usage || external_usage
+
+		}
 	}
-
 	return
 
 }

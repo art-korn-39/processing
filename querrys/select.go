@@ -133,7 +133,7 @@ func Stat_Select_tariffs_provider() string {
 				payment_method,payment_method_type,region,channel_currency,project_name,
 				business_type,operation_group,traffic_type,account_bank_name, use_transaction_created_at,
 				tariff_range_turnouver_min,tariff_range_turnouver_max,tariff_range_amount_min,
-				tariff_range_amount_max,percent,fix,min,max,search_string_ma,endpoint_id
+				tariff_range_amount_max,percent,fix,min,max,search_string_ma,endpoint_id,team
 			FROM tariffs_provider`
 }
 
@@ -175,6 +175,7 @@ func Stat_Select_conversion() string {
 				T1.file_format,
 				T1.sheet_name,
 				T1.comma,
+				T1.daily_rates,
 				T2.registry_column,
 				T2.table_column,
 				T2.calculated,
@@ -200,7 +201,7 @@ func Stat_Select_dragonpay() string {
 
 func Stat_Select_dragonpay_handbook() string {
 	return `SELECT 
-				endpoint_id,provider1c,payment_type
+				endpoint_id,provider1c,payment_type,payment_type_id
 			FROM dragonpay_handbook`
 }
 
@@ -219,4 +220,12 @@ func Stat_Select_detailed_provider() string {
 	WHERE lower(provider_name) = ANY($1) 
 	AND transaction_completed_at BETWEEN $2 AND $3`
 
+}
+
+func Stat_Select_providers_exchange_rates() string {
+	return `SELECT 
+				contractor_name,contractor_guid,provider_balance_name,provider_balance_guid,
+				balance_currency,channel_currency,
+				date,rate,provider_id,provider_name,operation_type
+			FROM providers_exchange_rates`
 }

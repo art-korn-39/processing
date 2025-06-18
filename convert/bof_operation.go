@@ -187,7 +187,7 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *B
 		Provider_payment_id:      record[map_fileds["acquirer_id / provider_payment_id"]-1],
 		Merchant_account_id:      util.FR(strconv.Atoi(record[map_fileds["merchant_account_id"]-1])).(int),
 		Transaction_created_at:   util.GetDateFromString(record[map_fileds["transaction_created_at"]-1]),
-		Transaction_completed_at: util.GetDateFromString(record[map_fileds["completed_at / operation_completed_at"]-1]),
+		Transaction_completed_at: util.GetDateFromString(record[map_fileds["transaction_completed_at"]-1]),
 		Provider_name:            record[map_fileds["provider_name"]-1],
 		Merchant_name:            record[map_fileds["merchant_name"]-1],
 		Merchant_account_name:    record[map_fileds["merchant_account_name"]-1],

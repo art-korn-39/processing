@@ -22,7 +22,8 @@ type Operation struct {
 }
 
 type Accord struct {
-	Endpoint_id  string `db:"endpoint_id"`
-	Provider1c   string `db:"provider1c"`
-	Payment_type string `db:"payment_type"`
+	Endpoint_id     string `db:"endpoint_id"`
+	Provider1c      string `db:"provider1c"`
+	Payment_type    string `db:"payment_type"`
+	Payment_type_id int    `db:"payment_type_id"`
 }

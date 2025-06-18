@@ -24,7 +24,11 @@ func GetMapOfColumnNamesCells(s []*xlsx.Cell) (res map[string]int) {
 	res = map[string]int{}
 
 	for i, cell := range s {
-		res[strings.ToLower(cell.String())] = i + 1
+		name := strings.ToLower(cell.String())
+		if name == "" {
+			continue
+		}
+		res[name] = i + 1
 	}
 
 	return res
@@ -190,7 +194,7 @@ func fields_bof_registry_raw_conversion() []string {
 	return []string{
 		"id / operation_id", "merchant_account_id", "provider_id",
 		"provider_name", "merchant_name", "merchant_account_name",
-		"operation_type", "completed_at / operation_completed_at", "transaction_created_at",
+		"operation_type", "transaction_completed_at", "transaction_created_at",
 		"payment_type_id / payment_method_type", "issuer_country",
 		"real_currency / channel_currency", "real_amount / channel_amount",
 		"acquirer_id / provider_payment_id",

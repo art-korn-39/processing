@@ -2,6 +2,7 @@ package convert
 
 import (
 	"app/config"
+	"app/exchange_rates"
 	"app/logs"
 	"app/provider_balances"
 	pr "app/provider_registry"
@@ -16,12 +17,14 @@ var (
 	ext_registry   []*Base_operation
 	bof_registry   map[string]*Bof_operation
 
-	is_kgx_tradex bool
-	all_settings  map[string]*Setting
-	used_settings map[string]*Setting
-	teams         map[string]team_line
-	providers     []provider_params
-	balances      map[Bof_operation]string
+	is_kgx_tradex   bool
+	use_daily_rates bool
+	main_setting    *Setting
+	all_settings    map[string]*Setting
+	used_settings   map[string]*Setting
+	teams           map[string]team_line
+	providers       []provider_params
+	balances        map[Bof_operation]string
 )
 
 func init() {
@@ -64,20 +67,23 @@ func ReadAndConvert(cfg *config.Config, storage *storage.Storage) []*Base_operat
 	}
 
 	is_kgx_tradex = cfg.Settings.KGX_Tradex
+	use_daily_rates = cfg.Settings.Daily_rates
 	filename := cfg.Provider_registry.Filename
 
 	logs.Add(logs.INFO, "Выполняется чтение...")
 
 	// чтение файла/папки реестра провайдера
-	if filepath.Ext(filename) == "" {
-		readFolder(filename)
-		if len(ext_registry) == 0 {
-			return nil
-		}
-	} else {
-		err = readFile(filename)
-		if err != nil {
-			logs.Add(logs.FATAL, err)
+	if !use_daily_rates {
+		if filepath.Ext(filename) == "" {
+			readFolder(filename)
+			if len(ext_registry) == 0 {
+				return nil
+			}
+		} else {
+			err = readFile(filename)
+			if err != nil {
+				logs.Add(logs.FATAL, err)
+			}
 		}
 	}
 
@@ -102,6 +108,9 @@ func ReadAndConvert(cfg *config.Config, storage *storage.Storage) []*Base_operat
 				logs.Add(logs.FATAL, err)
 			}
 		}
+		if use_daily_rates {
+			exchange_rates.Read(storage.Postgres)
+		}
 		provider_balances.Read(storage.Postgres)
 	}
 
@@ -121,22 +130,31 @@ func handleRecords() error {
 
 	cntWithoutBof := 0
 
-	for _, base_operation := range ext_registry {
+	if use_daily_rates {
+		for _, bof_op := range bof_registry {
+			base_op, _ := createBaseOperation(nil, nil, main_setting)
+			base_op.Bof_operation = bof_op
+			ext_registry = append(ext_registry, base_op)
+		}
+	} else {
+		for _, base_operation := range ext_registry {
+			var ok bool
+			switch base_operation.Setting.Key_column {
+			case OPID:
+				base_operation.Bof_operation, ok = bof_registry[base_operation.operation_id]
+			case PAYID:
+				base_operation.Bof_operation, ok = bof_registry[base_operation.payment_id]
+			}
+			if !ok {
+				cntWithoutBof++
+			}
+		}
+	}
 
-		var ok bool
-		switch base_operation.Setting.Key_column {
-		case OPID:
-			base_operation.Bof_operation, ok = bof_registry[base_operation.operation_id]
-		case PAYID:
-			base_operation.Bof_operation, ok = bof_registry[base_operation.payment_id]
-		}
-		if !ok {
-			cntWithoutBof++
-		}
+	for _, base_operation := range ext_registry {
 
 		provider_operation, err := base_operation.createProviderOperation()
 		if err != nil {
-			//return fmt.Errorf("ошибка при парсинге полей: %s", err)
 			logs.Add(logs.INFO, err)
 			continue
 		}
@@ -145,7 +163,7 @@ func handleRecords() error {
 
 		setCalculatedFields(provider_operation, sliceCalculatedFields)
 
-		if ok {
+		if base_operation.Bof_operation != nil {
 			final_registry[provider_operation.Id] = provider_operation
 		}
 
@@ -164,9 +182,9 @@ func setCalculatedFields(op *pr.Operation, calculatedFields []string) {
 		case "rate":
 			if op.Amount != 0 {
 				op.Rate = op.Channel_amount / op.Amount
-				if op.Provider_currency.Name == "EUR" && op.Rate != 0 {
-					op.Rate = 1 / op.Rate
-				}
+				// if op.Provider_currency.Name == "EUR" && op.Rate != 0 {
+				// 	op.Rate = 1 / op.Rate
+				// }
 			}
 		}
 	}

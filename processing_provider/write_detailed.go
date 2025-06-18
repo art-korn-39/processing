@@ -18,15 +18,14 @@ import (
 
 func Write_Detailed() {
 
+	PSQL_Insert_Detailed()
+
 	if !config.Get().Detailed.Usage {
 		return
 	}
 
-	if config.Get().Detailed.Storage == config.PSQL {
-		PSQL_Insert_Detailed()
-	} else {
+	if config.Get().Detailed.Storage == config.File {
 		Write_CSV_Detailed()
-
 	}
 
 }

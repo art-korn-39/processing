@@ -141,7 +141,7 @@ func Read_XLSX_Tariffs() {
 			tariff.DK_max = util.FloatFromCell(row.Cells[map_fileds["maxдк"]-1])
 
 			idx := map_fileds["валюта комиссии"]
-			if idx > 0 {
+			if idx > 0 && len(row.Cells) >= idx {
 				tariff.CurrencyCommission = row.Cells[idx-1].String()
 			}
 

@@ -169,6 +169,10 @@ func (o *Operation) SetCountry() {
 	o.Country = countries.GetCountry(o.Country_code2, o.Currency.Name)
 }
 
+func (o *Operation) SetPaymentType() {
+	//o.Payment_type = dragonpay.GetProvider1C()
+}
+
 // func (o *Operation) SetBalanceCurrency() {
 
 // 	if o.ProviderOperation != nil {
@@ -396,6 +400,10 @@ func (op *Operation) GetString(name string) string {
 		result = ""
 	case "Account_bank_name":
 		result = op.Account_bank_name
+	case "Team":
+		if op.ProviderOperation != nil {
+			result = op.ProviderOperation.Team
+		}
 	default:
 		logs.Add(logs.ERROR, "неизвестное поле string: ", name)
 	}

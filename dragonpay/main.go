@@ -10,12 +10,12 @@ import (
 
 var (
 	registry map[int]Operation
-	handbook map[string]string
+	handbook map[string]Accord
 )
 
 func init() {
 	registry = make(map[int]Operation, 1000)
-	handbook = make(map[string]string, 200)
+	handbook = make(map[string]Accord, 200)
 }
 
 func Start() {
@@ -31,6 +31,8 @@ func Start() {
 		logs.Add(logs.INFO, "Successful connection to Postgres")
 	}
 	defer db.Close()
+
+	PSQL_read_registry(db, true)
 
 	files, err := readFiles(db, config.Get().Dragonpay.Filename)
 	if err != nil {
@@ -48,26 +50,30 @@ func Start() {
 
 }
 
-func Read_Registry(db *sqlx.DB) {
+func Read_Registry(db *sqlx.DB, handbookOnly bool) {
 
-	PSQL_read_registry(db)
+	PSQL_read_registry(db, handbookOnly)
 
 }
 
-func GetOperation(id int, endpoint_id string) (*Operation, string) {
+func GetOperation(id int) *Operation {
 	if id != 0 {
 		op, ok := registry[id]
 		if ok {
-			return &op, op.Provider1c
-		} else {
-			return nil, handbook[endpoint_id]
+			return &op
 		}
 	}
-	return nil, ""
+	return nil
 }
 
 func GetProvider1C(endpoint_id string) string {
 
-	return handbook[endpoint_id]
+	return handbook[endpoint_id].Provider1c
+
+}
+
+func GetPaymentType(endpoint_id string) (string, int) {
+
+	return handbook[endpoint_id].Payment_type, handbook[endpoint_id].Payment_type_id
 
 }

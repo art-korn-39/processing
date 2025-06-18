@@ -1,6 +1,7 @@
 package convert
 
 import (
+	"app/exchange_rates"
 	"app/logs"
 	"app/provider_balances"
 	pg "app/provider_registry"
@@ -176,6 +177,8 @@ func (base_op *Base_operation) getValue(reg_name string) (result string) {
 			result = getProviderCurrency(bof_op)
 		case "team (kgx/tradex)":
 			result = getTeamByTeamID(base_op.record, base_op.map_fields)
+		case "rate":
+			result = strconv.FormatFloat(getRate(bof_op), 'f', -1, 64)
 		}
 	} else if mapping.Calculated {
 		switch reg_name {
@@ -270,5 +273,21 @@ func getProviderCurrency(op Bof_operation) (currency string) {
 	}
 
 	return currency
+
+}
+
+func getRate(bof_op Bof_operation) float64 {
+
+	balance, ok := provider_balances.GetBalanceByProviderAndMA(bof_op.Merchant_account_id, bof_op.Provider_id)
+	if !ok {
+		return 0
+	}
+
+	rate := exchange_rates.GetRate(bof_op.Transaction_completed_at, bof_op.Channel_currency, balance.Balance_currency, bof_op.Operation_type, balance.GUID)
+	if rate != nil {
+		return rate.Rate
+	}
+
+	return 0
 
 }

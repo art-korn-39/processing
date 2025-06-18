@@ -31,10 +31,11 @@ func readFiles(db *sqlx.DB, folder string) (files []*file.FileInfo, err error) {
 		return nil, err
 	}
 
-	err = readXLSXfile(filenames)
-	if err != nil {
-		return nil, err
-	}
+	// Handbook
+	// err = readXLSXfile(filenames)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	files = file.GetFiles(filenames, file.DRAGON_PAY, ".csv")
 	new_files := []*file.FileInfo{}
@@ -43,10 +44,6 @@ func readFiles(db *sqlx.DB, folder string) (files []*file.FileInfo, err error) {
 	var count_skipped int64
 
 	for _, file := range files {
-
-		// if filepath.Ext(filename) != ".csv" {
-		// 	continue
-		// }
 
 		if !config.Debug {
 			file.GetLastUpload(db)
@@ -140,7 +137,7 @@ func readCSVfile(filename string) (ops []Operation, err error) {
 		o.Endpoint_id = arr_record[map_fileds["proc"]-1]
 		o.Fee_amount, _ = strconv.ParseFloat(arr_record[map_fileds["fee"]-1], 64)
 
-		o.Provider1c = handbook[o.Endpoint_id]
+		o.Provider1c = handbook[o.Endpoint_id].Provider1c
 
 		idx := map_fileds["settle date"]
 		if idx > 0 {
@@ -221,7 +218,7 @@ func readDragonpaySheet(sheet *xlsx.Sheet) error {
 		endpoint_id := row.Cells[map_fileds["endpoint_id"]-1].String()
 		provider := row.Cells[map_fileds["поставщик dragonpay"]-1].String()
 
-		handbook[endpoint_id] = provider
+		handbook[endpoint_id] = Accord{Provider1c: provider}
 
 	}
 

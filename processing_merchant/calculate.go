@@ -32,7 +32,9 @@ func SelectTariffsInRegistry() {
 				operation := storage.Registry[index]
 
 				if operation.IsDragonPay {
-					operation.DragonpayOperation, operation.Provider1c = dragonpay.GetOperation(operation.Operation_id, operation.Endpoint_id)
+					operation.DragonpayOperation = dragonpay.GetOperation(operation.Operation_id)
+					operation.Provider1c = dragonpay.GetProvider1C(operation.Endpoint_id)
+					operation.Payment_type, operation.Payment_type_id = dragonpay.GetPaymentType(operation.Endpoint_id)
 				}
 
 				operation.Crypto_network = crypto.GetNetwork(operation.Operation_id)
@@ -83,6 +85,7 @@ func CalculateCommission() {
 				operation.mu.Lock()
 
 				operation.SetCountry()
+				operation.SetDetailed_provider()
 
 				if operation.Tariff != nil {
 					operation.SetBalanceAmount()

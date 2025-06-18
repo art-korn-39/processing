@@ -17,15 +17,14 @@ import (
 
 func Write_Detailed() {
 
+	PSQL_Insert_Detailed()
+
 	if !config.Get().Detailed.Usage {
 		return
 	}
 
-	if config.Get().Detailed.Storage == config.PSQL {
-		PSQL_Insert_Detailed()
-	} else {
+	if config.Get().Detailed.Storage == config.File {
 		Write_CSV_Detailed()
-
 	}
 
 }
@@ -132,7 +131,7 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		d.Channel_currency_str,
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Fee_amount), ".", ","),
 		d.Fee_currency_str,
-		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Balance_amount), ".", ","),
+		strings.ReplaceAll(fmt.Sprintf("%.3f", d.Balance_amount), ".", ","),
 		d.Balance_currency_str,
 		strings.ReplaceAll(fmt.Sprint(d.Rate), ".", ","),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Provider_registry_amount), ".", ","),

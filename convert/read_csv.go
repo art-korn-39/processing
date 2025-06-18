@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/csv"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sync"
@@ -106,15 +107,14 @@ func readCSV(filename string) (baseError error) {
 						if !ok {
 							return
 						}
-						op, err := createBaseOperation(record, map_fileds, setting)
+						bp, err := createBaseOperation(record, map_fileds, setting)
 						if err != nil {
 							baseError = err
 							cancel()
 							return
 						}
-						//op.StartingFill(true)
 						mu.Lock()
-						ext_registry = append(ext_registry, op)
+						ext_registry = append(ext_registry, bp)
 						mu.Unlock()
 					}
 				}
@@ -127,9 +127,12 @@ func readCSV(filename string) (baseError error) {
 				break loop
 			default:
 				record, err := reader.Read()
-				if err != nil || len(record) == 0 {
+				if err == io.EOF || len(record) == 0 {
 					break loop
+				} else if err != nil {
+					logs.Add(logs.FATAL, err)
 				}
+
 				channel_records <- record
 			}
 		}

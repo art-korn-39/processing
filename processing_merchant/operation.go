@@ -197,6 +197,10 @@ func (o *Operation) SetCountry() {
 	o.Country = countries.GetCountry(o.Country_code2, o.Currency.Name)
 }
 
+func (o *Operation) SetDetailed_provider() {
+	o.Detailed_provider = data_detailed_provider[o.Operation_id]
+}
+
 func (o *Operation) SetBalanceAmount() {
 
 	t := o.Tariff
@@ -233,7 +237,7 @@ func (o *Operation) SetBalanceAmount() {
 		} else if !(t.Convertation == "Реестр" || t.Convertation == "KGX") &&
 			(o.IsPerevodix || o.IsMonetix || o.IsQafpay) {
 
-			o.Detailed_provider, ok = data_detailed_provider[o.Operation_id]
+			//o.Detailed_provider, ok = data_detailed_provider[o.Operation_id]
 			if ok {
 				balance_amount = o.Detailed_provider.Balance_amount
 			}
@@ -285,7 +289,7 @@ func (o *Operation) SetSRAmount() {
 		if t.AmountInChannelCurrency {
 			SR_channel_currency = commission
 		} else { // тариф в валюте баланса и комса тоже, поэтому умножаем на курс
-			SR_channel_currency = commission * o.Rate
+			SR_channel_currency = commission / o.Rate
 		}
 	} else {
 		SR_channel_currency = commission
@@ -296,13 +300,20 @@ func (o *Operation) SetSRAmount() {
 	if (t.Convertation == "Реестр" ||
 		t.Convertation == "Колбек" ||
 		t.Convertation == "KGX") && t.AmountInChannelCurrency {
-		SR_balance_currency = commission / o.Rate
+		SR_balance_currency = commission * o.Rate
 	} else {
 		SR_balance_currency = commission
 	}
 
 	// для KGX используем BR
-	if (t.Convertation == "Реестр" || t.Convertation == "KGX") &&
+
+	if o.Detailed_provider != nil && (o.IsMonetix || o.IsPerevodix || o.IsQafpay) {
+
+		//SR_channel_currency = o.Detailed_provider.BR_amount
+		SR_balance_currency = o.Detailed_provider.BR_amount
+		SR_channel_currency = SR_balance_currency * o.Rate
+
+	} else if (t.Convertation == "Реестр" || t.Convertation == "KGX") &&
 		o.ProviderOperation != nil && (o.IsMonetix || o.IsPerevodix || o.IsQafpay) {
 
 		if t.AmountInChannelCurrency {
@@ -312,11 +323,6 @@ func (o *Operation) SetSRAmount() {
 			SR_balance_currency = o.ProviderOperation.BR_amount
 			SR_channel_currency = SR_balance_currency * o.Rate
 		}
-	} else if o.Detailed_provider != nil && (o.IsMonetix || o.IsPerevodix || o.IsQafpay) {
-
-		SR_channel_currency = o.Detailed_provider.BR_amount
-		SR_balance_currency = o.Detailed_provider.BR_amount
-
 	}
 
 	// ОКРУГЛЕНИЕ

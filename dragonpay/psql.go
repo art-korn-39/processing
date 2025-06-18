@@ -11,7 +11,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func PSQL_read_registry(db *sqlx.DB) {
+func PSQL_read_registry(db *sqlx.DB, handbookOnly bool) {
 
 	if db == nil {
 		return
@@ -28,7 +28,11 @@ func PSQL_read_registry(db *sqlx.DB) {
 	}
 
 	for _, row := range slice_rows {
-		handbook[row.Endpoint_id] = row.Provider1c
+		handbook[row.Endpoint_id] = row
+	}
+
+	if handbookOnly {
+		return
 	}
 
 	stat = querrys.Stat_Select_dragonpay()

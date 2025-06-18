@@ -73,9 +73,10 @@ func readXLSX(filename string) (baseError error) {
 						continue
 					}
 
-					if len(row.Cells) == 0 || row.Cells[1].String() == "" {
+					if len(row.Cells) == 0 || row.Cells[1].String() == "" || len(row.Cells) < len(map_fileds) {
 						break
 					}
+
 					record := getRecordFromCells(row.Cells)
 					op, err := createBaseOperation(record, map_fileds, setting)
 					if err != nil {
