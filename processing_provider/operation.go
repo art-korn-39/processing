@@ -9,6 +9,7 @@ import (
 	"app/provider_balances"
 	"app/provider_registry"
 	"app/tariff_provider"
+	"app/teams_tradex"
 	"app/util"
 	"strconv"
 	"strings"
@@ -89,6 +90,8 @@ type Operation struct {
 	IsDragonPay  bool
 	IsKessPay    bool
 	IsPerevodix  bool
+	IsTradex     bool
+
 	//Crypto_network string
 	//Provider1c     string
 
@@ -363,7 +366,16 @@ func (op *Operation) GetString(name string) string {
 	var result string
 	switch name {
 	case "Balance_guid":
-		if op.ProviderBalance != nil {
+		if op.IsTradex {
+			if op.ProviderOperation != nil {
+				team := op.ProviderOperation.Team
+				team_ref, ok := teams_tradex.GetTeamByName(team)
+				if ok {
+					return team_ref.Provider_balance_guid
+				}
+			}
+			return ""
+		} else if op.ProviderBalance != nil {
 			result = op.ProviderBalance.GUID
 		}
 	case "Extra_balance_guid":

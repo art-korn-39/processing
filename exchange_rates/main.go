@@ -6,6 +6,7 @@ import (
 	"app/querrys"
 	"app/util"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -52,7 +53,8 @@ func Read(db *sqlx.DB) {
 
 	for i := range data {
 
-		r := data[i]
+		r := &data[i]
+		r.Operation_type = strings.ToLower(r.Operation_type)
 		r.Balance_currency = currency.New(r.Balance_currency_str)
 		r.Channel_currency = currency.New(r.Channel_currency_str)
 
@@ -67,7 +69,7 @@ func GetRate(date time.Time, channel_currency, balance_currency currency.Currenc
 	day := util.TruncateToDay(date)
 
 	for _, v := range data {
-		if v.Date == day &&
+		if v.Date.Equal(day) &&
 			v.Channel_currency == channel_currency &&
 			v.Operation_type == operation_type &&
 			v.Provider_balance_guid == provider_balance_guid {

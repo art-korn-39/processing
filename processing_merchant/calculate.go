@@ -33,8 +33,13 @@ func SelectTariffsInRegistry() {
 
 				if operation.IsDragonPay {
 					operation.DragonpayOperation = dragonpay.GetOperation(operation.Operation_id)
-					operation.Provider1c = dragonpay.GetProvider1C(operation.Endpoint_id)
-					operation.Payment_type, operation.Payment_type_id = dragonpay.GetPaymentType(operation.Endpoint_id)
+					if operation.DragonpayOperation != nil {
+						operation.Payment_type, operation.Payment_type_id = dragonpay.GetPaymentType(operation.DragonpayOperation.Endpoint_id)
+						operation.Provider1c = dragonpay.GetProvider1C(operation.DragonpayOperation.Endpoint_id)
+					} else {
+						operation.Payment_type, operation.Payment_type_id = dragonpay.GetPaymentType(operation.Endpoint_id)
+						operation.Provider1c = dragonpay.GetProvider1C(operation.Endpoint_id)
+					}
 				}
 
 				operation.Crypto_network = crypto.GetNetwork(operation.Operation_id)
@@ -48,6 +53,7 @@ func SelectTariffsInRegistry() {
 					operation.ClassicTariffDragonPay = true
 					operation.Tariff_dragonpay_mid = tariff_merchant.FindTariffForOperation(operation)
 				}
+
 			}
 		}()
 	}

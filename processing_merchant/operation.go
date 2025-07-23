@@ -289,7 +289,7 @@ func (o *Operation) SetSRAmount() {
 		if t.AmountInChannelCurrency {
 			SR_channel_currency = commission
 		} else { // тариф в валюте баланса и комса тоже, поэтому умножаем на курс
-			SR_channel_currency = commission / o.Rate
+			SR_channel_currency = commission * o.Rate
 		}
 	} else {
 		SR_channel_currency = commission
@@ -300,7 +300,7 @@ func (o *Operation) SetSRAmount() {
 	if (t.Convertation == "Реестр" ||
 		t.Convertation == "Колбек" ||
 		t.Convertation == "KGX") && t.AmountInChannelCurrency {
-		SR_balance_currency = commission * o.Rate
+		SR_balance_currency = commission / o.Rate
 	} else {
 		SR_balance_currency = commission
 	}

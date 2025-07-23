@@ -119,6 +119,7 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.Verification = o.Verification
 	d.Rate = o.Rate
 	d.Crypto_network = o.Crypto_network
+	d.Provider1C = o.Provider1c
 
 	if o.Tariff != nil {
 		t := o.Tariff

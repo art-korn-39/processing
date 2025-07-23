@@ -52,7 +52,7 @@ func (ext_op *Base_operation) createProviderOperation() (op *pg.Operation, err e
 	op = &pg.Operation{}
 	ext_op.Provider_operation = op
 
-	if ext_op.operation_id != "" {
+	if ext_op.operation_id != "" && ext_op.operation_id != "0" {
 		op.Id, err = strconv.Atoi(ext_op.operation_id)
 	} else {
 		op.Id, err = strconv.Atoi(ext_op.getValue("operation_id"))

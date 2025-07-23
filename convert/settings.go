@@ -140,19 +140,7 @@ func checkUsedSettings() (key_column string, external_usage bool, err error) {
 		// смотрим все настройки и ищем которую может подойти
 		for _, s := range all_settings {
 
-			suitable := false
 			if s.Daily_rates {
-				suitable = true
-			}
-
-			// for _, v := range s.values {
-			// 	if !v.From_bof && !v.Calculated && !v.External_source && !v.Skip {
-			// 		suitable = false
-			// 		break
-			// 	}
-			// }
-
-			if suitable {
 				main_setting = s
 				key_column = s.Key_column
 				external_usage = true

@@ -106,19 +106,19 @@ func SetHeaders_detailed(writer *csv.Writer) {
 
 func makeDetailedRow(op *pr.Operation) []string {
 
-	var verification string
+	//var verification string
 
 	operation_id := strconv.Itoa(op.Id)
-	payment_id := op.Provider_payment_id
+	//payment_id := op.Provider_payment_id
 
-	_, ok1 := bof_registry[operation_id]
-	_, ok2 := bof_registry[payment_id]
+	// _, ok1 := bof_registry[operation_id]
+	// _, ok2 := bof_registry[payment_id]
 
-	if ok1 || ok2 {
-		verification = "ОК"
-	} else {
-		verification = "Не найдено"
-	}
+	// if (!use_daily_rates && (ok1 || ok2)) || (use_daily_rates && op.Rate != 0) {
+	// 	verification = "ОК"
+	// } else {
+	// 	verification = "Не найдено"
+	// }
 
 	result := []string{
 		operation_id,
@@ -143,7 +143,7 @@ func makeDetailedRow(op *pr.Operation) []string {
 		op.Provider1c,
 		op.Team,
 		op.Operation_status,
-		verification,
+		op.Verification,
 	}
 
 	return result

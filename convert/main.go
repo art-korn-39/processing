@@ -9,6 +9,7 @@ import (
 	"app/storage"
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"time"
 )
 
@@ -132,7 +133,11 @@ func handleRecords() error {
 
 	if use_daily_rates {
 		for _, bof_op := range bof_registry {
-			base_op, _ := createBaseOperation(nil, nil, main_setting)
+			base_op, err := createBaseOperation(nil, nil, main_setting)
+			if err != nil {
+				logs.Add(logs.INFO, err)
+				continue
+			}
 			base_op.Bof_operation = bof_op
 			ext_registry = append(ext_registry, base_op)
 		}
@@ -163,6 +168,8 @@ func handleRecords() error {
 
 		setCalculatedFields(provider_operation, sliceCalculatedFields)
 
+		setVerification(provider_operation)
+
 		if base_operation.Bof_operation != nil {
 			final_registry[provider_operation.Id] = provider_operation
 		}
@@ -188,5 +195,17 @@ func setCalculatedFields(op *pr.Operation, calculatedFields []string) {
 			}
 		}
 	}
+
+}
+
+func setVerification(op *pr.Operation) {
+
+	operation_id := strconv.Itoa(op.Id)
+	payment_id := op.Provider_payment_id
+
+	_, ok1 := bof_registry[operation_id]
+	_, ok2 := bof_registry[payment_id]
+
+	op.SetVerification(ok1 || ok2, use_daily_rates)
 
 }

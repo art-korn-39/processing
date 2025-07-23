@@ -17,6 +17,7 @@ type Detailed_row struct {
 	RRN                       string    `db:"rrn"`
 	Payment_id                string    `db:"payment_id"`
 	Provider_name             string    `db:"provider_name"`
+	Provider_id               int       `db:"provider_id"`
 	Merchant_account_name     string    `db:"merchant_account_name"`
 	Merchant_name             string    `db:"merchant_name"`
 	Project_id                int       `db:"project_id"`
@@ -52,6 +53,8 @@ type Detailed_row struct {
 	Region                    string    `db:"region"`
 	Document_id               int       `db:"document_id"`
 	Provider_dragonpay        string    `db:"provider_dragonpay"`
+
+	Provider_BR float64
 
 	// Merchant_id         int    `db:"merchant_id"`
 	// Merchant_account_id int    `db:"merchant_account_id"`
@@ -103,6 +106,7 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.RRN = o.RRN
 	d.Payment_id = o.Payment_id
 	d.Provider_name = o.Provider_name
+	d.Provider_id = o.Provider_id
 	d.Merchant_name = o.Merchant_name
 	d.Merchant_account_name = o.Merchant_account_name
 	d.Project_id = o.Project_id
@@ -122,7 +126,11 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.Operation_actual_amount = o.Operation_actual_amount
 	d.Surcharge_amount = o.Surcharge_amount
 	d.Surcharge_currency_str = o.Surcharge_currency.Name
-	d.Endpoint_id = o.Endpoint_id
+	if o.DragonpayOperation != nil {
+		d.Endpoint_id = o.DragonpayOperation.Endpoint_id
+	} else {
+		d.Endpoint_id = o.Endpoint_id
+	}
 	d.Account_bank_name = o.Account_bank_name
 	d.Operation_created_at = o.Operation_created_at
 	d.Balance_amount = o.Balance_amount
@@ -151,12 +159,10 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 		d.Act_max = t.Max
 		d.Range_min = t.Range_amount_min
 		d.Range_max = t.Range_amount_max
+	}
 
-		// d.Convertation = t.Convertation
-		// d.Provider1C = t.Provider1C
-		// d.RatedAccount = t.RatedAccount
-		// d.Subdivision1C = t.Subdivision1C
-		// d.Tariff_condition_id = t.Id
+	if o.ProviderOperation != nil {
+		d.Provider_BR = o.ProviderOperation.BR_amount
 	}
 
 	// d.Document_id = o.Document_id

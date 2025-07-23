@@ -2,15 +2,16 @@ package main
 
 import (
 	"app/aws"
-	"app/chargeback"
 	"app/config"
 	"app/conversion"
 	"app/convert"
+	"app/crm_chargeback"
 	"app/crm_dictionary"
 	"app/crypto"
 	"app/decline"
 	"app/dragonpay"
 	"app/logs"
+	"app/origamix"
 	"app/processing_merchant"
 	"app/processing_provider"
 	"app/sverka"
@@ -29,8 +30,8 @@ func main() {
 	var file_config string
 
 	// processing_merchant | processing_provider | convert | sverka
-	// conversion | decline crypto | dragonpay | aws | chargeback | crm_dictionary
-	flag.StringVar(&app, "app", "convert", "")
+	// conversion | decline crypto | dragonpay | aws | crm_chargeback | crm_dictionary | origamix
+	flag.StringVar(&app, "app", "crm_dictionary", "")
 	flag.StringVar(&file_config, "file_config", "", "")
 	flag.Parse()
 
@@ -56,14 +57,16 @@ func main() {
 		dragonpay.Start()
 	case "aws":
 		aws.Start()
-	case "chargeback":
-		chargeback.Start()
+	case "crm_chargeback":
+		crm_chargeback.Start()
 	case "crm_dictionary":
 		crm_dictionary.Start()
 	case "convert":
 		convert.Start()
 	case "sverka":
 		sverka.Start()
+	case "origamix":
+		origamix.Start()
 	}
 
 	logs.Add(logs.MAIN, fmt.Sprintf("Общее время выполнения: %v", time.Since(start_time)))

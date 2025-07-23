@@ -66,6 +66,8 @@ func CheckMapOfColumnNames(map_fileds map[string]int, table string) error {
 		s = fields_kgx_providers_xlsx()
 	case "bof_registry_raw_conversion":
 		s = fields_bof_registry_raw_conversion()
+	case "origamix":
+		s = fields_origamix()
 	default:
 		return fmt.Errorf("table %s is not supported", table)
 	}
@@ -203,13 +205,16 @@ func fields_bof_registry_raw_conversion() []string {
 	}
 }
 
-// func fields_provider_registry_rub() []string {
-// 	return []string{
-// 		"id / operation_id", "transaction_completed_at",
-// 		"operation_type", "issuer_country",
-// 		"payment_type_id / payment_method_type",
-// 		"merchant_name", "real_currency / channel_currency", "real_amount / channel_amount",
-// 		"provider_name", "merchant_account_name", "acquirer_id / provider_payment_id",
-// 		"project_url", "operation_status",
-// 	}
-// }
+func fields_origamix() []string {
+	return []string{
+		"payment id", "merchant id",
+		"merchant",         //"merchant account id",
+		"merchant account", //"merchant payment id",
+		"payment type", "payment method", "operation id",
+		"ps provider", "ps account", //"ps account id",
+		"ps operation id", "amount init",
+		"amount processed", "currency",
+		"status", "ps code", "ps message", "result code",
+		"result message", "created at", "updated at",
+	}
+}

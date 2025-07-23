@@ -1,4 +1,4 @@
-package crm_dictionary
+package crm_chargeback
 
 import (
 	"app/config"
@@ -11,7 +11,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func paymentMethodInsertIntoDB(db *sqlx.DB) {
+func chargebacksInsertIntoDB(db *sqlx.DB) {
 
 	if db == nil {
 		return
@@ -19,13 +19,13 @@ func paymentMethodInsertIntoDB(db *sqlx.DB) {
 
 	start_time := time.Now()
 
-	channel := make(chan []Payment_method, 1000)
+	channel := make(chan []Chargeback, 1000)
 
 	const batch_len = 100
 
 	var wg sync.WaitGroup
 
-	stat := querrys.Stat_Insert_payment_method()
+	stat := querrys.Stat_Insert_chargeback()
 	_, err := db.PrepareNamed(stat)
 	if err != nil {
 		logs.Add(logs.INFO, err)
@@ -40,7 +40,7 @@ func paymentMethodInsertIntoDB(db *sqlx.DB) {
 
 				_, err := db.NamedExec(stat, v)
 				if err != nil {
-					logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД (payment_method): ", err))
+					logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД (chargeback): ", err))
 				}
 
 			}
@@ -48,12 +48,12 @@ func paymentMethodInsertIntoDB(db *sqlx.DB) {
 	}
 
 	var i int
-	batch := make([]Payment_method, 0, batch_len)
-	for _, v := range payment_methods {
-		batch = append(batch, v)
+	batch := make([]Chargeback, 0, batch_len)
+	for _, v := range chargebacks {
+		batch = append(batch, *v)
 		if (i+1)%batch_len == 0 {
 			channel <- batch
-			batch = make([]Payment_method, 0, batch_len)
+			batch = make([]Chargeback, 0, batch_len)
 		}
 		i++
 	}
@@ -66,10 +66,10 @@ func paymentMethodInsertIntoDB(db *sqlx.DB) {
 
 	wg.Wait()
 
-	logs.Add(logs.MAIN, fmt.Sprintf("Загрузка payment_method в Postgres: %v", time.Since(start_time)))
+	logs.Add(logs.MAIN, fmt.Sprintf("Загрузка chargeback в Postgres: %v", time.Since(start_time)))
 }
 
-func paymentTypeInsertIntoDB(db *sqlx.DB) {
+func operationsInsertIntoDB(db *sqlx.DB) {
 
 	if db == nil {
 		return
@@ -77,13 +77,13 @@ func paymentTypeInsertIntoDB(db *sqlx.DB) {
 
 	start_time := time.Now()
 
-	channel := make(chan []Payment_type, 1000)
+	channel := make(chan []Operation, 1000)
 
 	const batch_len = 100
 
 	var wg sync.WaitGroup
 
-	stat := querrys.Stat_Insert_payment_type()
+	stat := querrys.Stat_Insert_chargeback_operations()
 	_, err := db.PrepareNamed(stat)
 	if err != nil {
 		logs.Add(logs.INFO, err)
@@ -98,7 +98,7 @@ func paymentTypeInsertIntoDB(db *sqlx.DB) {
 
 				_, err := db.NamedExec(stat, v)
 				if err != nil {
-					logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД (payment_type): ", err))
+					logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД (chargeback operations): ", err))
 				}
 
 			}
@@ -106,12 +106,12 @@ func paymentTypeInsertIntoDB(db *sqlx.DB) {
 	}
 
 	var i int
-	batch := make([]Payment_type, 0, batch_len)
-	for _, v := range payment_types {
-		batch = append(batch, v)
+	batch := make([]Operation, 0, batch_len)
+	for _, v := range operations {
+		batch = append(batch, *v)
 		if (i+1)%batch_len == 0 {
 			channel <- batch
-			batch = make([]Payment_type, 0, batch_len)
+			batch = make([]Operation, 0, batch_len)
 		}
 		i++
 	}
@@ -124,5 +124,5 @@ func paymentTypeInsertIntoDB(db *sqlx.DB) {
 
 	wg.Wait()
 
-	logs.Add(logs.MAIN, fmt.Sprintf("Загрузка payment_type в Postgres: %v", time.Since(start_time)))
+	logs.Add(logs.MAIN, fmt.Sprintf("Загрузка chargeback operations в Postgres: %v", time.Since(start_time)))
 }

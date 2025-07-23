@@ -74,6 +74,7 @@ func GetProvider1C(endpoint_id string) string {
 
 func GetPaymentType(endpoint_id string) (string, int) {
 
-	return handbook[endpoint_id].Payment_type, handbook[endpoint_id].Payment_type_id
+	row := handbook[endpoint_id]
+	return row.Payment_type, row.Payment_type_id
 
 }

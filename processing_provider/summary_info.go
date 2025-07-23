@@ -6,6 +6,7 @@ import (
 	"app/dragonpay"
 	"app/logs"
 	"app/tariff_provider"
+	"app/teams_tradex"
 	"app/util"
 	"fmt"
 	"time"
@@ -93,7 +94,14 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		//KF.provider = o.Tariff.Provider
 	}
 
-	if o.ProviderBalance != nil {
+	if o.IsTradex {
+		if o.ProviderOperation != nil {
+			team, ok := teams_tradex.GetTeamByName(o.ProviderOperation.Team)
+			if ok {
+				KF.balance = team.Provider_balance_name
+			}
+		}
+	} else if o.ProviderBalance != nil {
 		KF.id_revise = o.ProviderBalance.Balance_code
 		KF.balance = o.ProviderBalance.Name
 		KF.organization = o.ProviderBalance.Legal_entity
@@ -109,7 +117,11 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 	}
 
 	if o.IsDragonPay {
-		KF.provider1c = dragonpay.GetProvider1C(o.Endpoint_id)
+		if o.DragonpayOperation != nil {
+			KF.provider1c = dragonpay.GetProvider1C(o.DragonpayOperation.Endpoint_id)
+		} else {
+			KF.provider1c = dragonpay.GetProvider1C(o.Endpoint_id)
+		}
 	}
 
 	return

@@ -31,7 +31,8 @@ type Operation struct {
 	Provider1c            string  `db:"provider1c"`
 	Team                  string  `db:"team"`
 
-	Partner_id string
+	Partner_id   string
+	Verification string
 
 	Channel_currency_str  string `db:"channel_currency"`
 	Provider_currency_str string `db:"provider_currency"`
@@ -65,5 +66,15 @@ func (o *Operation) StartingFill(from_file bool) {
 	}
 
 	o.Transaction_completed_at_day = o.Transaction_completed_at.Truncate(24 * time.Hour)
+
+}
+
+func (o *Operation) SetVerification(bof_usage, use_daily_rates bool) {
+
+	if (!use_daily_rates && bof_usage) || (use_daily_rates && o.Rate != 0) {
+		o.Verification = "ОК"
+	} else {
+		o.Verification = "Не найдено"
+	}
 
 }

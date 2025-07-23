@@ -33,6 +33,9 @@ func SetProviderOperations() {
 		ProviderOperation, ok := provider_registry.GetOperation(o.Operation_id, o.Document_date, o.Channel_amount)
 		if ok {
 			o.ProviderOperation = ProviderOperation
+			if ProviderOperation.Team != "" {
+				o.IsTradex = true
+			}
 		} else {
 			countWithout++
 		}
@@ -122,7 +125,11 @@ func SelectTariffsInRegistry() {
 
 				if operation.IsDragonPay {
 					operation.DragonpayOperation = dragonpay.GetOperation(operation.Operation_id)
-					operation.Payment_type, operation.Payment_type_id = dragonpay.GetPaymentType(operation.Endpoint_id)
+					if operation.DragonpayOperation != nil {
+						operation.Payment_type, operation.Payment_type_id = dragonpay.GetPaymentType(operation.DragonpayOperation.Endpoint_id)
+					} else {
+						operation.Payment_type, operation.Payment_type_id = dragonpay.GetPaymentType(operation.Endpoint_id)
+					}
 				}
 
 				operation.Tariff = tariff_provider.FindTariffForOperation(operation, "Balance_guid")

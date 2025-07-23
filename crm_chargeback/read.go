@@ -1,4 +1,4 @@
-package chargeback
+package crm_chargeback
 
 import (
 	"app/logs"

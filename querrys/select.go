@@ -229,3 +229,21 @@ func Stat_Select_providers_exchange_rates() string {
 				date,rate,provider_id,provider_name,operation_type
 			FROM providers_exchange_rates`
 }
+
+func Stat_Select_bof_origamix() string {
+	return `SELECT
+				operation_id, payment_id, merchant_id,
+				merchant_account_name, payment_method, payment_type,
+				ps_id, ps_account, ps_provider,
+				amount_init, amount_processed, currency,
+				status, ps_code, ps_message,
+				result_code, result_message, created_at, updated_at
+		FROM bof_origamix`
+}
+
+func Stat_Select_teams_tradex() string {
+	return `SELECT 
+				guid,name,id,provider_balance_guid,provider_balance_name,provider_balance_nickname
+			FROM teams_tradex
+			`
+}

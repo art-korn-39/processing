@@ -86,7 +86,7 @@ func Stat_Insert_detailed() string {
 
 func Stat_Insert_detailed_provider() string {
 	return `INSERT INTO detailed_provider (
-		document_id, operation_id, provider_payment_id, transaction_id, rrn, payment_id,
+		document_id, operation_id, provider_payment_id, transaction_id, rrn, payment_id, provider_id,
 		provider_name, merchant_name, merchant_account_name, project_id, operation_type,
 		payment_type, transaction_created_at, transaction_completed_at, channel_amount, channel_currency,
 		provider_amount, provider_currency, operation_actual_amount, surcharge_amount, surcharge_currency,
@@ -95,7 +95,7 @@ func Stat_Insert_detailed_provider() string {
 		tariff_date_start, act_percent, act_fix, act_min, act_max, range_min, range_max, region, provider_dragonpay
 	)
 	VALUES (
-		:document_id, :operation_id,  :provider_payment_id, :transaction_id, :rrn, :payment_id,
+		:document_id, :operation_id,  :provider_payment_id, :transaction_id, :rrn, :payment_id, :provider_id,
 		:provider_name, :merchant_name, :merchant_account_name, :project_id, :operation_type,
 		:payment_type, :transaction_created_at, :transaction_completed_at, :channel_amount, :channel_currency,
 		:provider_amount, :provider_currency, :operation_actual_amount, :surcharge_amount, :surcharge_currency,
@@ -220,7 +220,7 @@ func Stat_Insert_chargeback_operations() string {
 		chargeback_deadline = EXCLUDED.chargeback_deadline, chargeback_code_reason = EXCLUDED.chargeback_code_reason`
 }
 
-func Stat_Insert_payment_method() string {
+func Stat_Insert_crm_payment_method() string {
 	return `INSERT INTO payment_method (
 		id, name, parent_id, bof_id
 	)
@@ -233,7 +233,7 @@ func Stat_Insert_payment_method() string {
 	SET name = EXCLUDED.name, parent_id = EXCLUDED.parent_id, bof_id = EXCLUDED.bof_id`
 }
 
-func Stat_Insert_payment_type() string {
+func Stat_Insert_crm_payment_type() string {
 	return `INSERT INTO payment_type (
 		id, name, method_id, bof_id
 	)
@@ -244,6 +244,51 @@ func Stat_Insert_payment_type() string {
 	ON CONFLICT ON CONSTRAINT pk_payment_type_id DO UPDATE
 
 	SET name = EXCLUDED.name, method_id = EXCLUDED.method_id, bof_id = EXCLUDED.bof_id`
+}
+
+func Stat_Insert_crm_employees() string {
+	return `INSERT INTO crm_employees (
+		id, name, email, department, job_title, manager
+	)
+	VALUES (
+		:id, :name, :email, :department, :job_title, :manager
+	)
+
+	ON CONFLICT ON CONSTRAINT pk_crm_employees_id DO UPDATE
+
+	SET name = EXCLUDED.name, email = EXCLUDED.email, 
+		department = EXCLUDED.department, job_title = EXCLUDED.job_title,
+		manager = EXCLUDED.manager`
+}
+
+func Stat_Insert_crm_merchants() string {
+	return `INSERT INTO crm_merchants (
+		id, name, bof_id, type, fin_manager_id, kam_id, kam_sub_id
+	)
+	VALUES (
+		:id, :name, :bof_id, :type, :fin_manager_id, :kam_id, :kam_sub_id
+	)
+
+	ON CONFLICT ON CONSTRAINT pk_crm_merchants_id DO UPDATE
+
+	SET name = EXCLUDED.name, bof_id = EXCLUDED.bof_id, 
+		type = EXCLUDED.type, fin_manager_id = EXCLUDED.fin_manager_id,
+		kam_id = EXCLUDED.kam_id, kam_sub_id = EXCLUDED.kam_sub_id`
+}
+
+func Stat_Insert_crm_providers() string {
+	return `INSERT INTO crm_providers (
+		id, name, manager_id, manager_name, owner_id, owner_name, status 
+	)
+	VALUES (
+		:id, :name, :manager_id, :manager_name, :owner_id, :owner_name, :status
+	)
+
+	ON CONFLICT ON CONSTRAINT pk_crm_providers_id DO UPDATE
+
+	SET name = EXCLUDED.name, manager_id = EXCLUDED.manager_id, 
+		manager_name = EXCLUDED.manager_name, owner_id = EXCLUDED.owner_id,
+		owner_name = EXCLUDED.owner_name, status = EXCLUDED.status`
 }
 
 func Stat_Insert_summary_merchant() string {
@@ -290,4 +335,37 @@ func Stat_Insert_source_files() string {
 	VALUES (
 		:filename, :category, :size, :size_mb, :modified, :rows, :last_upload
 		)`
+}
+
+func Stat_Insert_bof_origamix() string {
+	return `INSERT INTO bof_origamix (
+		operation_id, payment_id, merchant_id,
+		merchant_account_name, payment_method, payment_type,
+		ps_id, ps_account, ps_provider,
+		amount_init, amount_processed, currency,
+		status, ps_code, ps_message,
+		result_code, result_message, created_at, updated_at
+	)
+	VALUES (
+		:operation_id, :payment_id, :merchant_id,
+		:merchant_account_name, :payment_method, :payment_type,
+		:ps_id, :ps_account, :ps_provider,
+		:amount_init, :amount_processed, :currency,
+		:status, :ps_code, :ps_message,
+		:result_code, :result_message, :created_at, :updated_at
+	)
+
+	ON CONFLICT ON CONSTRAINT bof_origamix_operation_id DO UPDATE
+
+	SET payment_id = EXCLUDED.payment_id, merchant_id = EXCLUDED.merchant_id, 
+		merchant_account_name = EXCLUDED.merchant_account_name,
+		payment_method = EXCLUDED.payment_method, payment_type = EXCLUDED.payment_type,
+		ps_id = EXCLUDED.ps_id, ps_account = EXCLUDED.ps_account,
+		ps_provider = EXCLUDED.ps_provider, amount_init = EXCLUDED.amount_init,
+		amount_processed = EXCLUDED.amount_processed, currency = EXCLUDED.currency,
+		status = EXCLUDED.status, ps_code = EXCLUDED.ps_code,
+		ps_message = EXCLUDED.ps_message, result_code = EXCLUDED.result_code,
+		result_message = EXCLUDED.result_message, created_at = EXCLUDED.created_at,
+		updated_at = EXCLUDED.updated_at
+	`
 }

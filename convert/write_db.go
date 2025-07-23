@@ -71,9 +71,9 @@ func writeIntoDB(db *sqlx.DB) {
 	var i int
 	batch := make([]provider_registry.Operation, 0, batch_len)
 	for _, v := range final_registry {
-		// if v.Id == 0 {
-		// 	continue
-		// }
+		if v.Verification != "ОК" {
+			continue
+		}
 		batch = append(batch, *v)
 		if (i+1)%batch_len == 0 {
 			chan_operations <- batch
@@ -90,6 +90,6 @@ func writeIntoDB(db *sqlx.DB) {
 
 	wg.Wait()
 
-	logs.Add(logs.MAIN, fmt.Sprintf("Загрузка операций в provider_registry: %v [%s строк]", time.Since(start_time), util.FormatInt(len(final_registry))))
+	logs.Add(logs.MAIN, fmt.Sprintf("Загрузка операций в provider_registry: %v [%s строк]", time.Since(start_time), util.FormatInt(i)))
 
 }

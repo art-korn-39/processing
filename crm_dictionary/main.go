@@ -6,14 +6,6 @@ import (
 	"app/storage"
 )
 
-const (
-	PAYMENT_METHOD = "/0/OData/UsrProcessingPaymentMethod"
-	PAYMENT_TYPE   = "/0/OData/UsrPaymentMethodTypes"
-)
-
-var payment_methods []Payment_method
-var payment_types []Payment_type
-
 func Start() {
 
 	cfg := config.Get()
@@ -30,17 +22,34 @@ func Start() {
 		logs.Add(logs.FATAL, err)
 	}
 
-	err = loadPaymentMethod(cfg, token)
+	// err = loadPaymentMethod(cfg, token)
+	// if err != nil {
+	// 	logs.Add(logs.ERROR, err)
+	// }
+	// paymentMethodInsertIntoDB(storage.Postgres)
+
+	// err = loadPaymentType(cfg, token)
+	// if err != nil {
+	// 	logs.Add(logs.ERROR, err)
+	// }
+	// paymentTypeInsertIntoDB(storage.Postgres)
+
+	err = load_employees(cfg, token)
 	if err != nil {
 		logs.Add(logs.ERROR, err)
 	}
+	InsertIntoDB_employees(storage.Postgres)
 
-	err = loadPaymentType(cfg, token)
+	err = load_merchants(cfg, token)
 	if err != nil {
 		logs.Add(logs.ERROR, err)
 	}
+	InsertIntoDB_merchants(storage.Postgres)
 
-	paymentMethodInsertIntoDB(storage.Postgres)
-	paymentTypeInsertIntoDB(storage.Postgres)
+	err = load_providers(cfg, token)
+	if err != nil {
+		logs.Add(logs.ERROR, err)
+	}
+	InsertIntoDB_providers(storage.Postgres)
 
 }

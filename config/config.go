@@ -52,23 +52,31 @@ type (
 		Routine_task bool `json:"routine_task"`
 		Full_loading bool `json:"full_loading"`
 
+		// сборная солянка всяких доп. настроек
 		Settings Settings `json:"settings"`
 
-		// подключения к базам
+		// подключения к базам (берем из embed файлов)
 		Clickhouse DatabaseConnection `json:"clickhouse"`
 		PSQL       DatabaseConnection `json:"psql"`
 		AWS        CloudConnection    `json:"aws"`
 		CRM        ODataConnection    `json:"crm"`
 
-		Registry          Registry   `json:"registry"` //входящие данные (bof,crm,aws)
+		// главный источник данных
+		// BOF [CH/FILE], CRM, AWS
+		Registry Registry `json:"registry"`
+
+		// дополнительные источники данных
 		Tariffs           ImportData `json:"tariffs"`
 		Crypto            ImportData `json:"crypto"`
+		Origamix          ImportData `json:"origamix"`
 		Provider_registry ImportData `json:"provider_registry"` //!!!!
 		Decline           ImportData `json:"decline"`
 		Dragonpay         ImportData `json:"dragonpay"`
-		Detailed          ExportData `json:"detailed"`
-		SummaryInfo       ExportData `json:"summary_info"`
-		Summary           ExportData `json:"summary"`
+
+		// исходящие данные
+		Detailed    ExportData `json:"detailed"`
+		SummaryInfo ExportData `json:"summary_info"`
+		Summary     ExportData `json:"summary"`
 	}
 
 	Settings struct {
@@ -238,29 +246,19 @@ func (c *Config) ReadConfigFile() error {
 
 func (c *Config) SetDBUsage() {
 
-	c.Clickhouse.Usage = c.Registry.Storage == Clickhouse
-
-	// c.PSQL.Usage = c.Tariffs.Storage == PSQL ||
-	// 	c.Decline.Storage == PSQL ||
-	// 	c.Crypto.Storage == PSQL ||
-	// 	c.Rates.Storage == PSQL ||
-	// 	c.Dragonpay.Storage == PSQL ||
-	// 	c.Summary.Storage == PSQL ||
-	// 	c.SummaryInfo.Storage == PSQL ||
-	// 	c.Detailed.Storage == PSQL
-
+	// по умолчанию всегда подключаемся к postgres, т.к. случаи, когда он не используется крайне редкие
 	c.PSQL.Usage = true
+
+	c.Clickhouse.Usage = c.Registry.Storage == Clickhouse
 
 	c.AWS.Usage = c.Registry.Storage == AWS
 	if c.AWS.Usage {
 		c.Clickhouse.Usage = true
-		//c.PSQL.Usage = true
 	}
 
 	c.CRM.Usage = c.Registry.Storage == CRM
 	if c.CRM.Usage {
 		c.Clickhouse.Usage = false
-		//c.PSQL.Usage = true
 	}
 
 }
