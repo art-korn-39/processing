@@ -76,3 +76,27 @@ func GetCheckFeeCount() int {
 	}
 	return count
 }
+
+func BofRegistryNotValid() bool {
+
+	cfg := config.Get()
+	if cfg.Registry.Storage != config.File {
+		return false
+	}
+
+	i := 0
+	for _, o := range storage.Registry {
+		if i > 5 {
+			break
+		}
+
+		if o.Operation_id%1000000 != 0 {
+			return false
+		}
+
+		i++
+	}
+
+	return true
+
+}

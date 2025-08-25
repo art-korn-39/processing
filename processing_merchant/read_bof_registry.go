@@ -2,6 +2,7 @@ package processing_merchant
 
 import (
 	"app/config"
+	"app/currency"
 	"app/logs"
 	"app/querrys"
 	"app/util"
@@ -218,6 +219,20 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 	idx = map_fileds["provider_id"]
 	if idx > 0 {
 		op.Provider_id, _ = strconv.Atoi(record[idx-1])
+	}
+
+	idx = map_fileds["is_test"]
+	if idx > 0 {
+		num, _ := strconv.Atoi(record[idx-1])
+		if num == 1 {
+			op.IsTestId = 2
+			op.IsTestType = "tech test"
+		}
+	}
+
+	idx = map_fileds["tariff_currency"]
+	if idx > 0 {
+		op.Tariff_currency = currency.New(record[idx-1])
 	}
 
 	return

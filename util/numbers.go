@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -8,7 +9,7 @@ import (
 	"github.com/tealeg/xlsx"
 )
 
-func Round(x float64, decimals float64) float64 {
+func Round(x float64, decimals int) float64 {
 
 	//0. 0.64496
 	//1. узнать количество знаков после запятой (n) [5]
@@ -37,10 +38,10 @@ func Round(x float64, decimals float64) float64 {
 	m1 := math.Pow(10, float64(n))
 	x1 := x * m1
 	x2 := math.Round(x1)
-	m2 := math.Pow(10, float64(n)-decimals)
+	m2 := math.Pow(10, float64(n)-float64(decimals))
 	x3 := x2 / m2
 	x4 := math.Round(x3)
-	m3 := math.Pow(10, decimals)
+	m3 := math.Pow(10, float64(decimals))
 	x5 := x4 / m3
 
 	return x5
@@ -118,4 +119,26 @@ func ParseFloat(str string) (float64, error) {
 		str = strings.ReplaceAll(str, ",", ".")
 	}
 	return strconv.ParseFloat(str, 64)
+}
+
+func FloatToString(f float64, accuracy int) string {
+	mask := fmt.Sprint("%.", accuracy, "f")
+	return strings.ReplaceAll(fmt.Sprintf(mask, f), ".", ",")
+}
+
+func AddCellWithFloat(row *xlsx.Row, f float64, accuracy int) {
+
+	cell := row.AddCell() //26
+	cell.SetFloat(f)
+
+	s := make([]string, 0, 8)
+
+	for i := 0; i < accuracy; i++ {
+		s = append(s, "0")
+	}
+
+	format := fmt.Sprint("0.", strings.Join(s, ""))
+
+	cell.SetFormat(format)
+
 }

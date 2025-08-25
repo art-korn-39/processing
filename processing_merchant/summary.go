@@ -170,6 +170,9 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 
 	group_data := map[SummaryRowMerchant]SummaryRowMerchant{}
 	for _, operation := range storage.Registry {
+		if operation.IsTestId > 1 {
+			continue
+		}
 		key := NewKey(operation) // получили структуру с полями группировки
 		row := group_data[key]   // получили текущие агрегатные данные по ним
 		row.AddValues(operation) // увеличили агрегатные данные на значения тек. операции

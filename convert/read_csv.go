@@ -31,7 +31,7 @@ func readFile(filename string) (err error) {
 	case ".xlsx":
 		err = readXLSX(filename)
 	default:
-		return fmt.Errorf("формат файла не поддерживается")
+		return fmt.Errorf("формат файла '%s' не поддерживается", filepath.Base(filename))
 	}
 
 	logs.Add(logs.INFO, fmt.Sprintf("Чтение операций провайдера: %v [%s строк]", time.Since(start_time), util.FormatInt(len(ext_registry))))

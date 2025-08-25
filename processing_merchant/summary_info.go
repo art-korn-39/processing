@@ -91,6 +91,7 @@ type KeyFields_SummaryInfo struct {
 
 	channel_currency currency.Currency
 	balance_currency currency.Currency
+	tariff_currency  currency.Currency
 
 	tariff               tariff_merchant.Tariff
 	tariff_bof           tariff_merchant.Tariff
@@ -101,6 +102,8 @@ type KeyFields_SummaryInfo struct {
 	hold_date      time.Time
 	crypto_network string
 	provider1c     string
+
+	project_id int
 }
 
 func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
@@ -115,11 +118,13 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		payment_type:          o.Payment_type,
 		merchant_name:         o.Merchant_name,
 		project_name:          o.Project_name,
+		project_id:            o.Project_id,
 		merchant_account_name: o.Merchant_account_name,
 		merchant_account_id:   o.Merchant_account_id,
 		tariff_condition_id:   o.Tariff_condition_id,
 		channel_currency:      o.Channel_currency,
 		balance_currency:      o.Balance_currency,
+		tariff_currency:       o.Tariff_currency,
 		crypto_network:        o.Crypto_network,
 		RR_date:               o.RR_date,
 		hold_date:             o.hold_date,
@@ -166,6 +171,9 @@ func GroupRegistryToSummaryInfo() (group_data map[KeyFields_SummaryInfo]SumFiled
 
 	group_data = map[KeyFields_SummaryInfo]SumFileds{}
 	for _, operation := range storage.Registry {
+		if operation.IsTestId > 0 {
+			continue
+		}
 		kf := NewKeyFields_SummaryInfo(operation) // получили структуру с полями группировки
 		sf := group_data[kf]                      // получили текущие агрегатные данные по ним
 		sf.AddValues(operation)                   // увеличили агрегатные данные на значения тек. операции

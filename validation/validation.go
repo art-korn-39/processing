@@ -52,6 +52,8 @@ func CheckMapOfColumnNames(map_fileds map[string]int, table string) error {
 		s = fields_holds()
 	case "crypto":
 		s = fields_crypto()
+	case "crypto3":
+		s = fields_crypto3()
 	case "decline_csv":
 		s = fields_decline_csv()
 	case "dragonpay_csv":
@@ -68,6 +70,8 @@ func CheckMapOfColumnNames(map_fileds map[string]int, table string) error {
 		s = fields_bof_registry_raw_conversion()
 	case "origamix":
 		s = fields_origamix()
+	case "convert_comission":
+
 	default:
 		return fmt.Errorf("table %s is not supported", table)
 	}
@@ -95,9 +99,9 @@ func fields_bof_registry_merchant() []string {
 		"contract_id", "tariff_condition_id", "external_id / payment_id",
 		"currency / currency",
 		"real_currency / channel_currency", "real_amount / channel_amount",
-		"fee_currency", "fee_amount",
-		"provider_currency", "provider_amount",
+		"fee_currency", "fee_amount", "provider_currency", "provider_amount",
 		"tariff_rate_percent", "tariff_rate_fix", "tariff_rate_min", "tariff_rate_max",
+		"is_test",
 	}
 }
 
@@ -109,11 +113,11 @@ func fields_bof_registry_provider() []string {
 		"acquirer_id / provider_payment_id", "issuer_country",
 		"operation_type", "payment_type_id / payment_method_type",
 		"real_currency / channel_currency", "real_amount / channel_amount",
-		"currency / currency",
-		"provider_currency", "provider_amount",
+		"currency / currency", "provider_currency", "provider_amount",
 		"legal_entity_id", "business_type", "account_bank_name", "payment_method_name",
 		"surcharge_currency", "surcharge_amount",
 		"rrn", "external_id / payment_id", "transaction_created_at", "operation_actual_amount",
+		"is_test",
 	}
 }
 
@@ -149,6 +153,14 @@ func fields_crypto() []string {
 	return []string{"operation id", "crypto network", "created at", "operation type",
 		"payment amount", "payment currency", "crypto amount", "crypto currency",
 		"transfer fee rate, usdt"}
+}
+
+func fields_crypto3() []string {
+	return []string{"date", "time (utc+0)", "merchant email", "project name", "transaction type", "transaction id",
+		"transaction status", "transaction currency", "transaction network", "transaction amount",
+		"fee", "fee network", "fee currency", "merchant amount", "merchant amount network", "merchant amount currency",
+		"fee payer", "transfer fee", "transfer fee network", "transfer fee currency", "transfer fee rate",
+		"transfer fee rate, usdt", "markup amount", "markup amount (usdt)", "markup amount currency"}
 }
 
 func fields_decline_csv() []string {
@@ -216,5 +228,11 @@ func fields_origamix() []string {
 		"amount processed", "currency",
 		"status", "ps code", "ps message", "result code",
 		"result message", "created at", "updated at",
+	}
+}
+
+func fields_convert_comission() []string {
+	return []string{
+		"originoperationid", "amount",
 	}
 }

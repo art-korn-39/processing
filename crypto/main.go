@@ -9,11 +9,13 @@ import (
 )
 
 var (
-	Registry map[int]Operation
+	Registry  map[int]Operation
+	Registry3 map[string]Operation3
 )
 
 func init() {
 	Registry = make(map[int]Operation, 300000)
+	Registry3 = make(map[string]Operation3, 300000)
 }
 
 func Start() {
@@ -32,6 +34,7 @@ func Start() {
 
 	Read_CSV_files(config.Get().Crypto.Filename)
 	insert_into_db(db)
+	insert_into_db3(db)
 
 }
 

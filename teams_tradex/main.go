@@ -5,6 +5,7 @@ import (
 	"app/querrys"
 	"app/util"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -12,10 +13,12 @@ import (
 
 var (
 	map_team_names map[string]*Team
+	map_team_ids   map[string]*Team
 )
 
 func init() {
 	map_team_names = map[string]*Team{}
+	map_team_ids = map[string]*Team{}
 }
 
 func Read(db *sqlx.DB) {
@@ -39,6 +42,7 @@ func Read(db *sqlx.DB) {
 	for _, team := range slice_teams {
 
 		map_team_names[team.Name] = &team
+		map_team_ids[strings.ToLower(team.Id)] = &team
 
 	}
 
@@ -49,6 +53,17 @@ func Read(db *sqlx.DB) {
 func GetTeamByName(name string) (*Team, bool) {
 
 	val, ok := map_team_names[name]
+	if ok {
+		return val, true
+	}
+
+	return nil, false
+
+}
+
+func GetTeamByTeamID(team_id string) (*Team, bool) {
+
+	val, ok := map_team_ids[strings.ToLower(team_id)]
 	if ok {
 		return val, true
 	}

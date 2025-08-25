@@ -201,6 +201,15 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		op.Surcharge_amount = util.FR(strconv.ParseFloat(record[idx-1], 64)).(float64)
 	}
 
+	idx = map_fileds["is_test"]
+	if idx > 0 {
+		num, _ := strconv.Atoi(record[idx-1])
+		if num == 1 {
+			op.IsTestId = 2
+			op.IsTestType = "tech test"
+		}
+	}
+
 	return
 
 }

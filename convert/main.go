@@ -1,42 +1,46 @@
 package convert
 
 import (
+	"app/balances_tradex"
 	"app/config"
 	"app/exchange_rates"
 	"app/logs"
 	"app/provider_balances"
 	pr "app/provider_registry"
 	"app/storage"
+	"app/teams_tradex"
 	"fmt"
-	"path/filepath"
+	"os"
 	"strconv"
 	"time"
 )
 
 var (
-	final_registry map[int]*pr.Operation
-	ext_registry   []*Base_operation
-	bof_registry   map[string]*Bof_operation
+	final_registry  map[int]*pr.Operation
+	ext_registry    []*Base_operation
+	bof_registry    map[string]*Bof_operation
+	tradex_registry map[string]*Tradex_operation
 
 	is_kgx_tradex   bool
 	use_daily_rates bool
 	main_setting    *Setting
 	all_settings    map[string]*Setting
 	used_settings   map[string]*Setting
-	teams           map[string]team_line
-	providers       []provider_params
-	balances        map[Bof_operation]string
+	// teams           map[string]team_line
+	// providers       []provider_params
+	balances map[Bof_operation]string // кэш балансов полученных методом getBalance()
 )
 
 func init() {
 	final_registry = map[int]*pr.Operation{}
 	ext_registry = make([]*Base_operation, 0, 100000)
 	bof_registry = map[string]*Bof_operation{}
+	tradex_registry = map[string]*Tradex_operation{}
 
 	all_settings = map[string]*Setting{}
 	used_settings = map[string]*Setting{}
-	teams = map[string]team_line{}
-	providers = []provider_params{}
+	// teams = map[string]team_line{}
+	// providers = []provider_params{}
 	balances = map[Bof_operation]string{}
 }
 
@@ -69,13 +73,16 @@ func ReadAndConvert(cfg *config.Config, storage *storage.Storage) []*Base_operat
 
 	is_kgx_tradex = cfg.Settings.KGX_Tradex
 	use_daily_rates = cfg.Settings.Daily_rates
+	tradex_comission_file := cfg.Settings.Tradex_comission
 	filename := cfg.Provider_registry.Filename
 
 	logs.Add(logs.INFO, "Выполняется чтение...")
 
 	// чтение файла/папки реестра провайдера
 	if !use_daily_rates {
-		if filepath.Ext(filename) == "" {
+
+		info, _ := os.Stat(filename)
+		if info.IsDir() {
 			readFolder(filename)
 			if len(ext_registry) == 0 {
 				return nil
@@ -86,6 +93,7 @@ func ReadAndConvert(cfg *config.Config, storage *storage.Storage) []*Base_operat
 				logs.Add(logs.FATAL, err)
 			}
 		}
+
 	}
 
 	// проверить, что во всех настройках используется одна key_column для поиска в БОФ
@@ -104,9 +112,15 @@ func ReadAndConvert(cfg *config.Config, storage *storage.Storage) []*Base_operat
 	// чтение дополнительного маппинга
 	if external_usage {
 		if is_kgx_tradex {
-			err = readHandbook(cfg.Settings.Handbook)
-			if err != nil {
-				logs.Add(logs.FATAL, err)
+			// err = readHandbook(cfg.Settings.Handbook)
+			// if err != nil {
+			// 	logs.Add(logs.FATAL, err)
+			// }
+			teams_tradex.Read(storage.Postgres)
+			balances_tradex.Read(storage.Postgres)
+
+			if tradex_comission_file != "" {
+				readTradexComission(tradex_comission_file)
 			}
 		}
 		if use_daily_rates {
@@ -162,6 +176,13 @@ func handleRecords() error {
 		if err != nil {
 			logs.Add(logs.INFO, err)
 			continue
+		}
+
+		if is_kgx_tradex {
+			tradex_operation, ok := tradex_registry[base_operation.payment_id]
+			if ok {
+				provider_operation.BR_amount = tradex_operation.amount
+			}
 		}
 
 		sliceCalculatedFields := base_operation.Setting.getCalculatedFields()

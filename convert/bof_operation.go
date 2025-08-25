@@ -119,7 +119,7 @@ func readBofFile(filename string, key_column string) error {
 	var mu sync.Mutex
 
 	if filename == "" {
-		return fmt.Errorf("файл реестра БОФ не укаазан")
+		return fmt.Errorf("файл реестра БОФ не указан")
 	}
 
 	file, err := os.Open(filename)

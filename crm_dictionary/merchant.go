@@ -30,13 +30,15 @@ type Merchant struct {
 	Name           string `json:"name" db:"name"`
 	Bof_id         int    `db:"bof_id"`
 	TypeName       string `db:"type"`
+	StatusName     string `db:"status"`
 	Fin_manager_id string `json:"UsrMerchantFinManagerId" db:"fin_manager_id"`
 	Kam_id         string `json:"UsrMerchantKamId" db:"kam_id"`
 	Kam_sub_id     string `json:"UsrMerchantKamSubstitteId" db:"kam_sub_id"`
 
 	// вложенные структуры json файла
 	// перекладываем их значения на верхний уровень
-	Type       map[string]string `json:"type"` //Name
+	Type       map[string]string `json:"type"`              //Name
+	Status     map[string]string `json:"usrmerchantstatus"` //Name
 	Bof_id_str string            `json:"pspmechantprocessingid"`
 }
 
@@ -70,6 +72,7 @@ func (m *Merchant) getIDs() ([]int, error) {
 
 func (m *Merchant) fill() {
 	m.TypeName = m.Type["Name"]
+	m.StatusName = m.Status["Name"]
 }
 
 func load_merchants(cfg config.Config, token string) error {
@@ -83,7 +86,7 @@ func load_merchants(cfg config.Config, token string) error {
 	s0 := []string{
 		"$select=Id,Name,PspMechantProcessingId,UsrMerchantKamId,UsrMerchantKamSubstitteId,UsrMerchantFinManagerId",
 		`filter=Type/Name%20eq%20%27Merchant%27%20or%20Type/Name%20eq%20%27Aggregator%27`,
-		"$expand=Type($select=Name)",
+		"$expand=Type($select=Name),UsrMerchantStatus($select=Name)",
 	}
 
 	url_params := strings.Join(s0, "&")
@@ -165,8 +168,18 @@ func InsertIntoDB_merchants(db *sqlx.DB) {
 
 	var wg sync.WaitGroup
 
+	tx, _ := db.Beginx()
+
+	tx.Exec(`DELETE from crm_merchants
+	where bof_id IN (
+	SELECT bof_id 
+	FROM crm_merchants
+	where bof_id != 0
+	group by bof_id
+	having sum(1) > 1)`)
+
 	stat := querrys.Stat_Insert_crm_merchants()
-	_, err := db.PrepareNamed(stat)
+	_, err := tx.PrepareNamed(stat)
 	if err != nil {
 		logs.Add(logs.INFO, err)
 		return
@@ -178,7 +191,7 @@ func InsertIntoDB_merchants(db *sqlx.DB) {
 			defer wg.Done()
 			for v := range channel {
 
-				_, err := db.NamedExec(stat, v)
+				_, err := tx.NamedExec(stat, v)
 				if err != nil {
 					logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД (merchant): ", err))
 				}
@@ -205,6 +218,8 @@ func InsertIntoDB_merchants(db *sqlx.DB) {
 	close(channel)
 
 	wg.Wait()
+
+	tx.Commit()
 
 	logs.Add(logs.MAIN, fmt.Sprintf("Загрузка merchants crm в Postgres: %v", time.Since(start_time)))
 }

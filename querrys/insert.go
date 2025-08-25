@@ -69,7 +69,7 @@ func Stat_Insert_detailed() string {
 		balance_amount, balance_currency, rate, sr_channel_currency, sr_balance_currency, check_fee, provider_registry_amount,
 		verification, crypto_network, convertation, provider_1c, subdivision_1c, rated_account, tariff_id,
 		tariff_date_start, act_percent, act_fix, act_min, act_max, range_min, range_max,
-		tariff_rate_percent, tariff_rate_fix, tariff_rate_min, tariff_rate_max
+		tariff_rate_percent, tariff_rate_fix, tariff_rate_min, tariff_rate_max, is_test_id, is_test_type
 	)
 	VALUES (
 		:document_id, :operation_id, :transaction_completed_at, :merchant_id, :merchant_account_id, :balance_id, :company_id,
@@ -80,7 +80,7 @@ func Stat_Insert_detailed() string {
 		:balance_amount, :balance_currency, :rate, :sr_channel_currency, :sr_balance_currency, :check_fee, :provider_registry_amount,
 		:verification, :crypto_network, :convertation, :provider_1c, :subdivision_1c, :rated_account, :tariff_id,
 		:tariff_date_start, :act_percent, :act_fix, :act_min, :act_max, :range_min, :range_max,
-		:tariff_rate_percent, :tariff_rate_fix, :tariff_rate_min, :tariff_rate_max
+		:tariff_rate_percent, :tariff_rate_fix, :tariff_rate_min, :tariff_rate_max, :is_test_id, :is_test_type
 		)`
 }
 
@@ -92,7 +92,8 @@ func Stat_Insert_detailed_provider() string {
 		provider_amount, provider_currency, operation_actual_amount, surcharge_amount, surcharge_currency,
 		endpoint_id, account_bank_name, operation_created_at, balance_amount, br_balance_currency,
 		balance_currency, rate, compensation_br, verification,
-		tariff_date_start, act_percent, act_fix, act_min, act_max, range_min, range_max, region, provider_dragonpay
+		tariff_date_start, act_percent, act_fix, act_min, act_max, range_min, range_max, region, provider_dragonpay,
+		is_test_id, is_test_type
 	)
 	VALUES (
 		:document_id, :operation_id,  :provider_payment_id, :transaction_id, :rrn, :payment_id, :provider_id,
@@ -102,7 +103,7 @@ func Stat_Insert_detailed_provider() string {
 		:endpoint_id, :account_bank_name, :operation_created_at, :balance_amount, :br_balance_currency,
 		:balance_currency, :rate, :compensation_br, :verification,
 		:tariff_date_start, :act_percent, :act_fix, :act_min, :act_max, 
-		:range_min, :range_max, :region, :provider_dragonpay
+		:range_min, :range_max, :region, :provider_dragonpay, :is_test_id, :is_test_type
 		)`
 }
 
@@ -144,6 +145,37 @@ func Stat_Insert_crypto() string {
 	SET created_at = EXCLUDED.created_at, created_at_day = EXCLUDED.created_at_day,
 		payment_amount = EXCLUDED.payment_amount, crypto_amount = EXCLUDED.crypto_amount,
 		transfer_fee_rate_usdt = EXCLUDED.transfer_fee_rate_usdt`
+}
+
+func Stat_Insert_crypto3() string {
+	return `INSERT INTO crypto3 (
+		charge_id, date, merchant_email, project_name, transaction_type, transaction_id, status,
+		amount, network, fee, fee_network, merchant_amount, merchant_amount_network,
+		fee_payer, transfer_fee, transfer_fee_network, transfer_fee_rate, transfer_fee_rate_usdt, 	
+		markup_amount, markup_amount_usdt, currency, fee_currency, merchant_amount_currency, 
+		transfer_fee_currency, markup_amount_currency
+	)
+	VALUES (
+		:charge_id, :date, :merchant_email, :project_name, :transaction_type, :transaction_id, :status,
+		:amount, :network, :fee, :fee_network, :merchant_amount, :merchant_amount_network,
+		:fee_payer, :transfer_fee, :transfer_fee_network, :transfer_fee_rate, :transfer_fee_rate_usdt, 	
+		:markup_amount, :markup_amount_usdt, :currency, :fee_currency, :merchant_amount_currency, 
+		:transfer_fee_currency, :markup_amount_currency
+
+	)
+
+	ON CONFLICT ON CONSTRAINT pk_crypto3_transaction_id DO UPDATE
+
+	SET date = EXCLUDED.date, merchant_email = EXCLUDED.merchant_email, project_name = EXCLUDED.project_name,
+		transaction_type = EXCLUDED.transaction_type, charge_id = EXCLUDED.charge_id, status = EXCLUDED.status,
+		amount = EXCLUDED.amount, network = EXCLUDED.network, fee = EXCLUDED.fee, fee_network = EXCLUDED.fee_network,
+		merchant_amount = EXCLUDED.merchant_amount, merchant_amount_network = EXCLUDED.merchant_amount_network,
+		fee_payer = EXCLUDED.fee_payer, transfer_fee = EXCLUDED.transfer_fee, 
+		transfer_fee_network = EXCLUDED.transfer_fee_network, transfer_fee_rate = EXCLUDED.transfer_fee_rate,
+		transfer_fee_rate_usdt  = EXCLUDED.transfer_fee_rate_usdt, markup_amount = EXCLUDED.markup_amount, 
+		markup_amount_usdt = EXCLUDED.markup_amount_usdt, currency = EXCLUDED.currency, 
+		fee_currency = EXCLUDED.fee_currency, merchant_amount_currency = EXCLUDED.merchant_amount_currency, 
+		transfer_fee_currency = EXCLUDED.transfer_fee_currency, markup_amount_currency = EXCLUDED.markup_amount_currency`
 }
 
 func Stat_Insert_dragonpay() string {
@@ -221,7 +253,7 @@ func Stat_Insert_chargeback_operations() string {
 }
 
 func Stat_Insert_crm_payment_method() string {
-	return `INSERT INTO payment_method (
+	return `INSERT INTO crm_payment_method (
 		id, name, parent_id, bof_id
 	)
 	VALUES (
@@ -234,7 +266,7 @@ func Stat_Insert_crm_payment_method() string {
 }
 
 func Stat_Insert_crm_payment_type() string {
-	return `INSERT INTO payment_type (
+	return `INSERT INTO crm_payment_type (
 		id, name, method_id, bof_id
 	)
 	VALUES (
@@ -263,17 +295,18 @@ func Stat_Insert_crm_employees() string {
 
 func Stat_Insert_crm_merchants() string {
 	return `INSERT INTO crm_merchants (
-		id, name, bof_id, type, fin_manager_id, kam_id, kam_sub_id
+		id, name, bof_id, type, fin_manager_id, kam_id, kam_sub_id, status
 	)
 	VALUES (
-		:id, :name, :bof_id, :type, :fin_manager_id, :kam_id, :kam_sub_id
+		:id, :name, :bof_id, :type, :fin_manager_id, :kam_id, :kam_sub_id, :status
 	)
 
 	ON CONFLICT ON CONSTRAINT pk_crm_merchants_id DO UPDATE
 
 	SET name = EXCLUDED.name, bof_id = EXCLUDED.bof_id, 
 		type = EXCLUDED.type, fin_manager_id = EXCLUDED.fin_manager_id,
-		kam_id = EXCLUDED.kam_id, kam_sub_id = EXCLUDED.kam_sub_id`
+		kam_id = EXCLUDED.kam_id, kam_sub_id = EXCLUDED.kam_sub_id,
+		status = EXCLUDED.status`
 }
 
 func Stat_Insert_crm_providers() string {
@@ -289,6 +322,24 @@ func Stat_Insert_crm_providers() string {
 	SET name = EXCLUDED.name, manager_id = EXCLUDED.manager_id, 
 		manager_name = EXCLUDED.manager_name, owner_id = EXCLUDED.owner_id,
 		owner_name = EXCLUDED.owner_name, status = EXCLUDED.status`
+}
+
+func Stat_Insert_crm_provider_solutions() string {
+	return `INSERT INTO crm_provider_solutions (
+		id, solution_name, provider_id, provider_name, provider_id_bof, 
+		provider_name_bof, payment_method_id_bof, payment_method_name_bof 
+	)
+	VALUES (
+		:id, :solution_name, :provider_id, :provider_name, :provider_id_bof, 
+		:provider_name_bof, :payment_method_id_bof, :payment_method_name_bof 
+	)
+
+	ON CONFLICT ON CONSTRAINT pk_crm_provider_solutions_id DO UPDATE
+
+	SET solution_name = EXCLUDED.solution_name, provider_id = EXCLUDED.provider_id, 
+		provider_name = EXCLUDED.provider_name, provider_id_bof = EXCLUDED.provider_id_bof,
+		provider_name_bof = EXCLUDED.provider_name_bof, payment_method_id_bof = EXCLUDED.payment_method_id_bof,
+		payment_method_name_bof = EXCLUDED.payment_method_name_bof`
 }
 
 func Stat_Insert_summary_merchant() string {

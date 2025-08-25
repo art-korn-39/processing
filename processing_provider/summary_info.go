@@ -5,6 +5,7 @@ import (
 	"app/currency"
 	"app/dragonpay"
 	"app/logs"
+	"app/provider_balances"
 	"app/tariff_provider"
 	"app/teams_tradex"
 	"app/util"
@@ -32,10 +33,10 @@ func (sf *SumFileds) AddValues(o *Operation) {
 	sf.surcharge_amount = sf.surcharge_amount + o.Surcharge_amount
 }
 
-func (sf *SumFileds) RoundValues() {
-	sf.balance_amount = util.Round(sf.balance_amount, 2)
-	sf.BR_balance_currency = util.Round(sf.BR_balance_currency, 4)
-	sf.Extra_BR_balance_currency = util.Round(sf.Extra_BR_balance_currency, 4)
+func (sf *SumFileds) RoundValues(balance_currency currency.Currency) {
+	sf.balance_amount = util.Round(sf.balance_amount, balance_currency.GetAccuracy(2))                       //2
+	sf.BR_balance_currency = util.Round(sf.BR_balance_currency, balance_currency.GetAccuracy(4))             //4
+	sf.Extra_BR_balance_currency = util.Round(sf.Extra_BR_balance_currency, balance_currency.GetAccuracy(4)) //4
 	sf.compensationBR = util.Round(sf.compensationBR, 2)
 	sf.channel_amount = util.Round(sf.channel_amount, 2)
 	sf.surcharge_amount = util.Round(sf.surcharge_amount, 2)
@@ -46,8 +47,8 @@ type KeyFields_SummaryInfo struct {
 	organization string
 	id_revise    string
 
-	document_date  time.Time
-	provider       string
+	document_date time.Time
+	//provider       string
 	provider_name  string
 	verification   string
 	operation_type string
@@ -56,16 +57,17 @@ type KeyFields_SummaryInfo struct {
 	merchant_account_name string
 	merchant_name         string
 	region                string
-	account_bank_name     string
-	channel_currency      currency.Currency
-	balance_currency      currency.Currency
-	tariff                tariff_provider.Tariff
-	contractor_provider   string
-	contractor_merchant   string
-	project_name          string
-	project_id            int
-	provider1c            string
-	isDragonpay           bool
+	//account_bank_name     string
+	channel_currency    currency.Currency
+	balance_currency    currency.Currency
+	tariff              tariff_provider.Tariff
+	contractor_provider string
+	contractor_merchant string
+	project_name        string
+	project_id          int
+	provider1c          string
+	isDragonpay         bool
+	isTestId            int
 }
 
 func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
@@ -83,6 +85,7 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		channel_currency: o.Channel_currency,
 		balance_currency: o.Balance_currency,
 		isDragonpay:      o.IsDragonPay,
+		isTestId:         o.IsTestId,
 	}
 
 	// if KF.country == "" {
@@ -98,7 +101,13 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		if o.ProviderOperation != nil {
 			team, ok := teams_tradex.GetTeamByName(o.ProviderOperation.Team)
 			if ok {
-				KF.balance = team.Provider_balance_name
+				KF.balance = team.Balance_name
+				providerBalance, ok := provider_balances.GetbalanceByGUID(team.Balance_guid)
+				if ok {
+					KF.id_revise = providerBalance.Balance_code
+					KF.organization = providerBalance.Legal_entity
+					KF.contractor_provider = util.TR(providerBalance.Nickname == "", providerBalance.Contractor, providerBalance.Nickname).(string)
+				}
 			}
 		}
 	} else if o.ProviderBalance != nil {
@@ -138,11 +147,11 @@ func GroupRegistryToSummaryInfo() (group_data map[KeyFields_SummaryInfo]SumFiled
 
 	group_data = map[KeyFields_SummaryInfo]SumFileds{}
 	for _, operation := range storage.Registry {
-		kf := NewKeyFields_SummaryInfo(operation) // получили структуру с полями группировки
-		sf := group_data[kf]                      // получили текущие агрегатные данные по ним
-		sf.AddValues(operation)                   // увеличили агрегатные данные на значения тек. операции
-		sf.RoundValues()                          // снова избавляемся от погрешностей
-		group_data[kf] = sf                       // положили обратно в мапу
+		kf := NewKeyFields_SummaryInfo(operation)  // получили структуру с полями группировки
+		sf := group_data[kf]                       // получили текущие агрегатные данные по ним
+		sf.AddValues(operation)                    // увеличили агрегатные данные на значения тек. операции
+		sf.RoundValues(operation.Balance_currency) // снова избавляемся от погрешностей
+		group_data[kf] = sf                        // положили обратно в мапу
 	}
 
 	for k, v := range group_data {

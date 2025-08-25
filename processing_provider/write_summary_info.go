@@ -90,7 +90,7 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 	sheet.SetColWidth(9, 9, 30)   // MA
 	sheet.SetColWidth(10, 16, 15) // merchant_name, Валюта канала...
 
-	var cell *xlsx.Cell
+	//var cell *xlsx.Cell
 
 	for k, v := range M {
 
@@ -109,28 +109,39 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		row.AddCell().SetString(k.balance_currency.Name)
 		row.AddCell().SetInt(v.count_operations)
 
-		cell = row.AddCell()
-		cell.SetFloat(v.balance_amount)
-		cell.SetFormat("0.00")
+		// cell = row.AddCell()
+		// cell.SetFloat(v.balance_amount)
+		// cell.SetFormat("0.00")
 
-		cell = row.AddCell()
-		cell.SetFloat(v.BR_balance_currency)
-		cell.SetFormat("0.0000")
+		// cell = row.AddCell()
+		// cell.SetFloat(v.BR_balance_currency)
+		// cell.SetFormat("0.0000")
 
-		cell = row.AddCell()
-		cell.SetFloat(v.surcharge_amount)
-		cell.SetFormat("0.00")
+		// cell = row.AddCell()
+		// cell.SetFloat(v.surcharge_amount)
+		// cell.SetFormat("0.00")
 
-		cell = row.AddCell()
-		cell.SetFloat(v.Extra_BR_balance_currency)
-		cell.SetFormat("0.0000")
+		// cell = row.AddCell()
+		// cell.SetFloat(v.Extra_BR_balance_currency)
+		// cell.SetFormat("0.0000")
 
-		cell = row.AddCell()
-		cell.SetFloat(v.channel_amount)
-		cell.SetFormat("0.00")
+		// cell = row.AddCell()
+		// cell.SetFloat(v.channel_amount)
+		// cell.SetFormat("0.00")
+
+		util.AddCellWithFloat(row, v.balance_amount, k.balance_currency.GetAccuracy(2))
+		util.AddCellWithFloat(row, v.BR_balance_currency, k.balance_currency.GetAccuracy(4))
+		util.AddCellWithFloat(row, v.surcharge_amount, 2)
+		util.AddCellWithFloat(row, v.Extra_BR_balance_currency, k.balance_currency.GetAccuracy(4))
+		util.AddCellWithFloat(row, v.channel_amount, 2)
 
 		row.AddCell().SetString(k.channel_currency.Name)
-		row.AddCell().SetString(k.contractor_merchant)
+
+		if k.isTestId == 2 {
+			row.AddCell().SetString("Тест")
+		} else {
+			row.AddCell().SetString(k.contractor_merchant)
+		}
 
 	}
 }
@@ -169,7 +180,7 @@ func add_page_detail(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 	sheet.SetColWidth(0, 22, 18)
 
-	var cell *xlsx.Cell
+	//var cell *xlsx.Cell
 
 	for k, v := range M {
 
@@ -190,17 +201,21 @@ func add_page_detail(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		row.AddCell().SetString(k.balance_currency.Name)
 		row.AddCell().SetInt(v.count_operations)
 
-		cell = row.AddCell()
-		cell.SetFloat(v.balance_amount)
-		cell.SetFormat("0.00")
+		// cell = row.AddCell()
+		// cell.SetFloat(v.balance_amount)
+		// cell.SetFormat("0.00")
 
-		cell = row.AddCell()
-		cell.SetFloat(v.BR_balance_currency)
-		cell.SetFormat("0.0000")
+		// cell = row.AddCell()
+		// cell.SetFloat(v.BR_balance_currency)
+		// cell.SetFormat("0.0000")
 
-		cell = row.AddCell()
-		cell.SetFloat(v.compensationBR)
-		cell.SetFormat("0.00")
+		// cell = row.AddCell()
+		// cell.SetFloat(v.compensationBR)
+		// cell.SetFormat("0.00")
+
+		util.AddCellWithFloat(row, v.balance_amount, k.balance_currency.GetAccuracy(2))
+		util.AddCellWithFloat(row, v.BR_balance_currency, k.balance_currency.GetAccuracy(4))
+		util.AddCellWithFloat(row, v.compensationBR, 2)
 
 		row.AddCell().SetString(k.tariff.Formula) // Формула
 		row.AddCell().SetString(k.verification)
@@ -262,7 +277,7 @@ func add_page_turnover_dragonpay(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFi
 	sheet.SetColWidth(9, 9, 30)   // MA
 	sheet.SetColWidth(10, 16, 15) // merchant_name, Валюта канала...
 
-	var cell *xlsx.Cell
+	//var cell *xlsx.Cell
 
 	for k, v := range M {
 
@@ -285,25 +300,31 @@ func add_page_turnover_dragonpay(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFi
 		row.AddCell().SetString(k.balance_currency.Name)
 		row.AddCell().SetInt(v.count_operations)
 
-		cell = row.AddCell()
-		cell.SetFloat(v.balance_amount)
-		cell.SetFormat("0.00")
+		// cell = row.AddCell()
+		// cell.SetFloat(v.balance_amount)
+		// cell.SetFormat("0.00")
 
-		cell = row.AddCell()
-		cell.SetFloat(v.BR_balance_currency)
-		cell.SetFormat("0.0000")
+		// cell = row.AddCell()
+		// cell.SetFloat(v.BR_balance_currency)
+		// cell.SetFormat("0.0000")
 
-		cell = row.AddCell()
-		cell.SetFloat(v.surcharge_amount)
-		cell.SetFormat("0.00")
+		// cell = row.AddCell()
+		// cell.SetFloat(v.surcharge_amount)
+		// cell.SetFormat("0.00")
 
-		cell = row.AddCell()
-		cell.SetFloat(v.Extra_BR_balance_currency)
-		cell.SetFormat("0.0000")
+		// cell = row.AddCell()
+		// cell.SetFloat(v.Extra_BR_balance_currency)
+		// cell.SetFormat("0.0000")
 
-		cell = row.AddCell()
-		cell.SetFloat(v.channel_amount)
-		cell.SetFormat("0.00")
+		// cell = row.AddCell()
+		// cell.SetFloat(v.channel_amount)
+		// cell.SetFormat("0.00")
+
+		util.AddCellWithFloat(row, v.balance_amount, k.balance_currency.GetAccuracy(2))
+		util.AddCellWithFloat(row, v.BR_balance_currency, k.balance_currency.GetAccuracy(4))
+		util.AddCellWithFloat(row, v.surcharge_amount, 2)
+		util.AddCellWithFloat(row, v.Extra_BR_balance_currency, k.balance_currency.GetAccuracy(4))
+		util.AddCellWithFloat(row, v.channel_amount, 2)
 
 		row.AddCell().SetString(k.channel_currency.Name)
 		row.AddCell().SetString(k.contractor_merchant)

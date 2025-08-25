@@ -31,6 +31,10 @@ func SelectTariffsInRegistry() {
 			for index := range channel_indexes {
 				operation := storage.Registry[index]
 
+				if operation.IsTestId > 0 {
+					continue
+				}
+
 				if operation.IsDragonPay {
 					operation.DragonpayOperation = dragonpay.GetOperation(operation.Operation_id)
 					if operation.DragonpayOperation != nil {
@@ -87,6 +91,10 @@ func CalculateCommission() {
 			for index := range channel_indexes {
 
 				operation := storage.Registry[index]
+
+				if operation.IsTestId > 0 {
+					continue
+				}
 
 				operation.mu.Lock()
 

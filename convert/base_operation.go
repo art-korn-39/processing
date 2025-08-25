@@ -1,6 +1,7 @@
 package convert
 
 import (
+	"app/balances_tradex"
 	"app/exchange_rates"
 	"app/logs"
 	"app/provider_balances"
@@ -233,31 +234,10 @@ func getBalance(record []string, map_fields map[string]int, bof_op Bof_operation
 func getProvider1c(bof_op Bof_operation, provider_currency string) (provider1c string) {
 
 	balance := balances[bof_op]
-	//provider_currency := getProviderCurrency(bof_op)
 
 	if is_kgx_tradex {
 
-		for _, v := range providers {
-
-			if v.balance != "" && v.balance != balance {
-				continue
-			}
-
-			if v.currency != "" && v.currency != provider_currency {
-				continue
-			}
-
-			if v.country != "" && v.country != bof_op.Country_code2 {
-				continue
-			}
-
-			if v.payment_type != "" && v.payment_type != bof_op.Payment_type {
-				continue
-			}
-
-			return v.provider1c
-
-		}
+		return balances_tradex.GetProvider1c(balance, provider_currency, bof_op.Country_code2, bof_op.Payment_type)
 
 	}
 
@@ -291,3 +271,37 @@ func getRate(bof_op Bof_operation) float64 {
 	return 0
 
 }
+
+// func arch_getProvider1c(bof_op Bof_operation, provider_currency string) (provider1c string) {
+
+// 	balance := balances[bof_op]
+// 	//provider_currency := getProviderCurrency(bof_op)
+
+// 	if is_kgx_tradex {
+
+// 		for _, v := range providers {
+
+// 			if v.balance != "" && v.balance != balance {
+// 				continue
+// 			}
+
+// 			if v.currency != "" && v.currency != provider_currency {
+// 				continue
+// 			}
+
+// 			if v.country != "" && v.country != bof_op.Country_code2 {
+// 				continue
+// 			}
+
+// 			if v.payment_type != "" && v.payment_type != bof_op.Payment_type {
+// 				continue
+// 			}
+
+// 			return v.provider1c
+
+// 		}
+
+// 	}
+
+// 	return provider1c
+// }

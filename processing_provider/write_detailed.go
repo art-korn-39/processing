@@ -100,11 +100,11 @@ func SetHeaders_detailed(writer *csv.Writer) {
 		"real_amount / channel_amount", "real_currency / channel_currency",
 		"provider_amount", "provider_currency", "operation_actual_amount",
 		"surcharge amount", "surcharge currency", "endpoint_id", "account_bank_name", "operation_created_at",
-		"Сумма в валюте баланса", "BR в валюте баланса", "Доп BR", "Provider BR", "Валюта баланса", "Курс",
+		"Сумма в валюте баланса", "BR в валюте баланса", "Доп BR", "Валюта баланса", "Курс",
 		"Компенсация BR", "Проверка", "Старт тарифа",
 		"Акт. тариф", "Акт. фикс", "Акт. Мин", "Акт. Макс",
 		"Range min", "Range max",
-		"region", "Поставщик Dragonpay",
+		"region", "Поставщик Dragonpay", "Provider BR", "Тип трафика",
 	}
 	writer.Write(headers)
 }
@@ -137,12 +137,11 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		d.Endpoint_id,
 		util.IsString1251(d.Account_bank_name),
 		d.Operation_created_at.Format(time.DateTime),
-		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Balance_amount), ".", ","),
-		strings.ReplaceAll(fmt.Sprintf("%.4f", d.BR_balance_currency), ".", ","),
-		strings.ReplaceAll(fmt.Sprintf("%.4f", d.Extra_BR_balance_currency), ".", ","),
-		strings.ReplaceAll(fmt.Sprintf("%.4f", d.Provider_BR), ".", ","),
+		util.FloatToString(d.Balance_amount, d.Balance_currency.GetAccuracy(2)),
+		util.FloatToString(d.BR_balance_currency, d.Balance_currency.GetAccuracy(4)),
+		util.FloatToString(d.Extra_BR_balance_currency, d.Balance_currency.GetAccuracy(4)),
 		d.Balance_currency_str,
-		strings.ReplaceAll(fmt.Sprintf("%.4f", d.Rate), ".", ","),
+		util.FloatToString(d.Rate, d.Balance_currency.GetAccuracy(2)),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.CompensationBR), ".", ","),
 		d.Verification,
 		d.Tariff_date_start.Format(time.DateOnly),
@@ -154,6 +153,8 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Range_max), ".", ","),
 		d.Region,
 		d.Provider_dragonpay,
+		util.FloatToString(d.Provider_BR, d.Balance_currency.GetAccuracy(4)),
+		d.IsTestType,
 	}
 
 	return

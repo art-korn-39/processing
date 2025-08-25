@@ -93,3 +93,63 @@ func insert_into_db(db *sqlx.DB) {
 	logs.Add(logs.MAIN, fmt.Sprintf("Загрузка crypto в Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(Registry))))
 
 }
+
+func insert_into_db3(db *sqlx.DB) {
+
+	if db == nil {
+		return
+	}
+
+	start_time := time.Now()
+
+	chan_operations := make(chan []Operation3, 1000)
+
+	const batch_len = 100
+
+	var wg sync.WaitGroup
+
+	stat := querrys.Stat_Insert_crypto3()
+	_, err := db.PrepareNamed(stat)
+	if err != nil {
+		logs.Add(logs.INFO, err)
+		return
+	}
+
+	wg.Add(config.NumCPU)
+	for i := 1; i <= config.NumCPU; i++ {
+		go func() {
+			defer wg.Done()
+			for v := range chan_operations {
+
+				_, err := db.NamedExec(stat, v)
+
+				if err != nil {
+					logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД: ", err))
+				}
+
+			}
+		}()
+	}
+
+	var i int
+	batch := make([]Operation3, 0, batch_len)
+	for _, v := range Registry3 {
+		batch = append(batch, v)
+		if (i+1)%batch_len == 0 {
+			chan_operations <- batch
+			batch = make([]Operation3, 0, batch_len)
+		}
+		i++
+	}
+
+	if len(batch) != 0 {
+		chan_operations <- batch
+	}
+
+	close(chan_operations)
+
+	wg.Wait()
+
+	logs.Add(logs.MAIN, fmt.Sprintf("Загрузка crypto 3.0 в Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(Registry3))))
+
+}

@@ -65,17 +65,26 @@ func SetBalanceInOperations() {
 		if ok {
 			operation.ProviderBalance = balance
 		} else {
-			// для колбэка условие
-			if operation.Provider_amount == 0 {
+
+			// это для "без конвертации" и валюты канала = USD
+			if operation.Channel_currency.Name == "USD" {
+				balance, ok = provider_balances.GetBalance(operation, "USDT")
+				if ok && balance.Convertation_id == CNV_NO_CONVERT {
+					operation.ProviderBalance = balance
+				}
+			}
+
+			// для колбэка условие, если баланс так и не нашли
+			if operation.ProviderBalance == nil && operation.Provider_amount == 0 {
 				balance, ok = provider_balances.GetBalance(operation, "")
 				if ok && balance.Convertation_id == CNV_CALLBACK {
 					operation.ProviderBalance = balance
-				} else {
-					countWithout++
 				}
-			} else {
-				countWithout++
 			}
+		}
+
+		if operation.ProviderBalance == nil {
+			countWithout++
 		}
 
 	}
@@ -90,10 +99,19 @@ func SetBalanceCurrencyInOperations() {
 
 		if o.ProviderOperation != nil {
 			o.Balance_currency = o.ProviderOperation.Provider_currency
+
 		} else if o.ProviderBalance != nil &&
 			(o.ProviderBalance.Convertation_id == CNV_CALLBACK ||
 				o.ProviderBalance.Convertation_id == CNV_REESTR) {
+
 			o.Balance_currency = o.ProviderBalance.Balance_currency
+
+		} else if o.ProviderBalance != nil &&
+			o.ProviderBalance.Convertation_id == CNV_NO_CONVERT &&
+			o.Channel_currency.Name == "USD" {
+
+			o.Balance_currency = o.ProviderBalance.Balance_currency
+
 		} else {
 			o.Balance_currency = o.Channel_currency
 		}

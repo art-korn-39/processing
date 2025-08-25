@@ -8,6 +8,7 @@ import (
 // Input formats
 // "2024-05-22T12:45:41+0300"
 // "2024-04-17 21:00:35 +0000 UTC"
+// "2025/03/04 21:40:00"
 func GetDateFromString(s string) time.Time {
 
 	index := strings.Index(s, "+")
@@ -16,6 +17,7 @@ func GetDateFromString(s string) time.Time {
 		s = strings.TrimSpace(s)
 	}
 	s = strings.ReplaceAll(s, "T", " ")
+	s = strings.ReplaceAll(s, "/", "-")
 
 	v, _ := time.Parse(time.DateTime, s)
 

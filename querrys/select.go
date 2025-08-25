@@ -167,6 +167,13 @@ func Stat_Select_merchants() string {
 			FROM merchants`
 }
 
+func Stat_Select_test_merchant_accounts() string {
+	return `SELECT 
+				date_start,date_finish,
+				merchant_id,merchant_account_id,operation_type
+			FROM test_merchant_accounts`
+}
+
 func Stat_Select_conversion() string {
 	return `SELECT 
 				T1.guid,
@@ -245,5 +252,13 @@ func Stat_Select_teams_tradex() string {
 	return `SELECT 
 				guid,name,id,provider_balance_guid,provider_balance_name,provider_balance_nickname
 			FROM teams_tradex
+			`
+}
+
+func Stat_Select_balances_tradex() string {
+	return `SELECT 
+				guid,name,provider1c,payment_type_name,payment_type_id,issuer_country,provider1c,
+				provider_balance_guid,provider_balance_name,provider_balance_nickname,provider_balance_currency
+			FROM balances_tradex
 			`
 }

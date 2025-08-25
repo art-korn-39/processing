@@ -10,13 +10,14 @@ import (
 	"app/querrys"
 	"app/tariff_provider"
 	"app/teams_tradex"
+	"app/test_merchant_accounts"
 	"fmt"
 	"sync"
 	"time"
 )
 
 const (
-	Version = "1.3.1"
+	Version = "1.3.2"
 )
 
 var (
@@ -70,7 +71,7 @@ func ReadSources() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(9)
+	wg.Add(10)
 
 	registry_done := make(chan querrys.Args, 1)
 	go func() {
@@ -116,6 +117,11 @@ func ReadSources() {
 	go func() {
 		defer wg.Done()
 		teams_tradex.Read(storage.Postgres)
+	}()
+
+	go func() {
+		defer wg.Done()
+		test_merchant_accounts.Read(storage.Postgres)
 	}()
 
 	wg.Wait()

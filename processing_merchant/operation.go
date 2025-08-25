@@ -123,7 +123,11 @@ type Operation struct {
 	Tariff_rate_min     float64 `db:"billing__tariff_rate_min"`
 	Tariff_rate_max     float64 `db:"billing__tariff_rate_max"`
 
-	Skip bool
+	Tariff_currency currency.Currency
+
+	Skip       bool
+	IsTestId   int
+	IsTestType string
 }
 
 func (o *Operation) StartingFill() {
@@ -190,6 +194,10 @@ func (o *Operation) StartingFill() {
 	o.Tariff_bof.StartingFill()
 
 	o.Skip = o.Provider_name == "Capitaller transfers"
+
+	if o.IsTestId == 0 {
+		o.IsTestType = "live"
+	}
 
 }
 
@@ -326,7 +334,10 @@ func (o *Operation) SetSRAmount() {
 	}
 
 	// ОКРУГЛЕНИЕ
-	if o.Balance_currency.Exponent {
+	if o.Balance_currency.Crypto {
+		o.Balance_amount = util.Round(o.Balance_amount, 8)
+		o.SR_balance_currency = util.Round(SR_balance_currency, 8)
+	} else if o.Balance_currency.Exponent {
 		o.Balance_amount = util.Round(o.Balance_amount, 0)
 		o.SR_balance_currency = util.Round(SR_balance_currency, 0)
 	} else {
@@ -334,7 +345,9 @@ func (o *Operation) SetSRAmount() {
 		o.SR_balance_currency = util.Round(SR_balance_currency, 2)
 	}
 
-	if o.Channel_currency.Exponent {
+	if o.Channel_currency.Crypto {
+		o.SR_channel_currency = util.Round(SR_channel_currency, 8)
+	} else if o.Channel_currency.Exponent {
 		o.SR_channel_currency = util.Round(SR_channel_currency, 0)
 	} else {
 		o.SR_channel_currency = util.Round(SR_channel_currency, 2)
@@ -400,6 +413,8 @@ func (o *Operation) SetVerification() {
 		o.Verification = VRF_OK
 	} else if o.CheckRates != 0 {
 		o.Verification = VRF_CHECK_TARIFF
+	} else if o.Tariff_currency != o.Balance_currency && o.Tariff_currency.Name != "" {
+		o.Verification = VRF_TARIFF_CURRENCY
 	} else if o.Channel_currency != Balance_currency && Converation != "Колбек" {
 		o.Verification = VRF_CHECK_CURRENCY
 	} else if Converation == "Частичные выплаты" && o.Channel_amount != o.Actual_amount {
@@ -435,6 +450,7 @@ const (
 	VRF_CHECK_RATE            = "Требует уточнения курса"
 	VRF_DIFF_CHAN_AMOUNT      = "Real amount отличается от реестра"
 	VRF_CHECK_CURRENCY        = "Валюта учёта отлична от валюты в Биллинге"
+	VRF_TARIFF_CURRENCY       = "Разные валюты тарифа"
 	VRF_CHECK_TARIFF          = "Несоответствие тарифа"
 	VRF_DRAGON_PAY            = "Исключение ДрагонПей"
 	VRF_CHECK_BILLING         = "Проверь начисления биллинга"
@@ -484,12 +500,27 @@ func (o *Operation) SetDK() {
 		return
 	}
 
+	// заранее определяем точность округления
+	accChannelCurrency := 2
+	if o.Channel_currency.Crypto {
+		accChannelCurrency = 8
+	} else if o.Channel_currency.Exponent {
+		accChannelCurrency = 0
+	}
+
+	accBalanceCurrency := 2
+	if o.Balance_currency.Crypto {
+		accBalanceCurrency = 8
+	} else if o.Balance_currency.Exponent {
+		accBalanceCurrency = 0
+	}
+
 	// DK В ВАЛЮТЕ КОМИССИИ (обычно это валюта баланса)
 	var commission float64
 	if t.AmountInChannelCurrency {
-		commission = o.Channel_amount*t.DK_percent + t.DK_fix
+		commission = util.Round(o.Channel_amount*t.DK_percent+t.DK_fix, accChannelCurrency)
 	} else {
-		commission = o.Balance_amount*t.DK_percent + t.DK_fix
+		commission = util.Round(o.Balance_amount*t.DK_percent+t.DK_fix, accBalanceCurrency)
 	}
 
 	if t.DK_min != 0 && commission < t.DK_min {
@@ -506,17 +537,24 @@ func (o *Operation) SetDK() {
 		o.CompensationRC = commission*o.Rate - o.SR_channel_currency
 	}
 
-	if o.Balance_currency.Exponent {
-		o.CompensationBC = util.Round(o.CompensationBC, 0)
-	} else {
-		o.CompensationBC = util.Round(o.CompensationBC, 2)
-	}
+	o.CompensationBC = util.Round(o.CompensationBC, accBalanceCurrency)
+	o.CompensationRC = util.Round(o.CompensationRC, accChannelCurrency)
 
-	if o.Channel_currency.Exponent {
-		o.CompensationRC = util.Round(o.CompensationRC, 0)
-	} else {
-		o.CompensationRC = util.Round(o.CompensationRC, 2)
-	}
+	// if o.Balance_currency.Crypto {
+	// 	o.CompensationBC = util.Round(o.CompensationBC, 8)
+	// } else if o.Balance_currency.Exponent {
+	// 	o.CompensationBC = util.Round(o.CompensationBC, 0)
+	// } else {
+	// 	o.CompensationBC = util.Round(o.CompensationBC, 2)
+	// }
+
+	// if o.Channel_currency.Crypto {
+	// 	o.CompensationRC = util.Round(o.CompensationRC, 8)
+	// } else if o.Channel_currency.Exponent {
+	// 	o.CompensationRC = util.Round(o.CompensationRC, 0)
+	// } else {
+	// 	o.CompensationRC = util.Round(o.CompensationRC, 2)
+	// }
 
 }
 

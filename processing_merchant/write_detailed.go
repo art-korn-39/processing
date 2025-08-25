@@ -4,6 +4,7 @@ import (
 	"app/config"
 	"app/logs"
 	"app/querrys"
+	"app/util"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -59,6 +60,9 @@ func Write_CSV_Detailed() {
 			defer wg.Done()
 			for i := range channel_indexes {
 				o := storage.Registry[i]
+				if o.IsTestId > 0 {
+					continue
+				}
 				detailed_row := NewDetailedRow(o)
 				row := MakeDetailedRow(detailed_row)
 				channel_rows <- row
@@ -103,7 +107,7 @@ func SetHeaders_detailed(writer *csv.Writer) {
 		"SR Real Currency", "SR_balance_currency", "checkFee", "Проверка",
 		"Crypto_network", "balance_id", "tariff_condition_id", "contract_id",
 		"Старт Тарифа", "Конвертация", "Акт. тариф", "Акт. фикс", "Акт. Мин", "Акт. Макс", "Range min", "Range max",
-		"tariff_rate_percent", "tariff_rate_fix", "tariff_rate_min", "tariff_rate_max",
+		"tariff_rate_percent", "tariff_rate_fix", "tariff_rate_min", "tariff_rate_max", "project id", "project name",
 	}
 	writer.Write(headers)
 }
@@ -131,12 +135,12 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		d.Channel_currency_str,
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Fee_amount), ".", ","),
 		d.Fee_currency_str,
-		strings.ReplaceAll(fmt.Sprintf("%.3f", d.Balance_amount), ".", ","),
+		util.FloatToString(d.Balance_amount, d.Balance_currency.GetAccuracy(3)),
 		d.Balance_currency_str,
 		strings.ReplaceAll(fmt.Sprint(d.Rate), ".", ","),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Provider_registry_amount), ".", ","),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.SR_channel_currency), ".", ","),
-		strings.ReplaceAll(fmt.Sprintf("%.2f", d.SR_balance_currency), ".", ","),
+		util.FloatToString(d.SR_balance_currency, d.Balance_currency.GetAccuracy(2)),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.CheckFee), ".", ","),
 		d.Verification,
 		fmt.Sprint(d.Crypto_network),
@@ -155,6 +159,8 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Tariff_rate_fix), ".", ","),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Tariff_rate_min), ".", ","),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Tariff_rate_max), ".", ","),
+		fmt.Sprint(d.Project_id),
+		d.Project_name,
 	}
 
 	return

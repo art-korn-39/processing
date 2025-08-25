@@ -22,34 +22,28 @@ func Start() {
 		logs.Add(logs.FATAL, err)
 	}
 
-	// err = loadPaymentMethod(cfg, token)
+	// err = load_employees(cfg, token)
 	// if err != nil {
 	// 	logs.Add(logs.ERROR, err)
 	// }
-	// paymentMethodInsertIntoDB(storage.Postgres)
+	// InsertIntoDB_employees(storage.Postgres)
 
-	// err = loadPaymentType(cfg, token)
+	// err = load_merchants(cfg, token)
 	// if err != nil {
 	// 	logs.Add(logs.ERROR, err)
 	// }
-	// paymentTypeInsertIntoDB(storage.Postgres)
+	// InsertIntoDB_merchants(storage.Postgres)
 
-	err = load_employees(cfg, token)
+	// err = load_providers(cfg, token)
+	// if err != nil {
+	// 	logs.Add(logs.ERROR, err)
+	// }
+	// InsertIntoDB_providers(storage.Postgres)
+
+	err = load_provider_solutions(cfg, token)
 	if err != nil {
 		logs.Add(logs.ERROR, err)
 	}
-	InsertIntoDB_employees(storage.Postgres)
-
-	err = load_merchants(cfg, token)
-	if err != nil {
-		logs.Add(logs.ERROR, err)
-	}
-	InsertIntoDB_merchants(storage.Postgres)
-
-	err = load_providers(cfg, token)
-	if err != nil {
-		logs.Add(logs.ERROR, err)
-	}
-	InsertIntoDB_providers(storage.Postgres)
+	InsertIntoDB_provider_solutions(storage.Postgres)
 
 }

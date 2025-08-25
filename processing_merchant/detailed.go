@@ -1,6 +1,9 @@
 package processing_merchant
 
-import "time"
+import (
+	"app/currency"
+	"time"
+)
 
 type Detailed_row struct {
 	Operation_id             int       `db:"operation_id"`
@@ -70,6 +73,11 @@ type Detailed_row struct {
 	Tariff_rate_fix     float64 `db:"tariff_rate_fix"`
 	Tariff_rate_min     float64 `db:"tariff_rate_min"`
 	Tariff_rate_max     float64 `db:"tariff_rate_max"`
+
+	IsTestId   int    `db:"is_test_id"`
+	IsTestType string `db:"is_test_type"`
+
+	Balance_currency currency.Currency
 }
 
 func NewDetailedRow(o *Operation) (d Detailed_row) {
@@ -94,6 +102,7 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.Payment_type = o.Payment_type
 	d.Operation_type = o.Operation_type
 	d.Payment_id = o.Payment_id
+	d.Provider_id = o.Provider_id
 
 	d.Region = o.Country.Region
 	if o.Country_code2 != "" {
@@ -120,6 +129,11 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.Rate = o.Rate
 	d.Crypto_network = o.Crypto_network
 	d.Provider1C = o.Provider1c
+
+	d.Balance_currency = o.Balance_currency
+
+	d.IsTestId = o.IsTestId
+	d.IsTestType = o.IsTestType
 
 	if o.Tariff != nil {
 		t := o.Tariff

@@ -107,6 +107,9 @@ type Operation struct {
 	Merchant        *merchants.Merchant
 
 	Legal_entity_id int `db:"legal_entity_id"`
+
+	IsTestId   int
+	IsTestType string
 }
 
 func (o *Operation) StartingFill() {
@@ -164,6 +167,10 @@ func (o *Operation) StartingFill() {
 		o.Balance_type = "OUT"
 	} else {
 		o.Balance_type = "IN"
+	}
+
+	if o.IsTestId == 0 {
+		o.IsTestType = "live"
 	}
 
 }
@@ -246,7 +253,9 @@ func (o *Operation) SetBRAmount() {
 	}
 
 	// ОКРУГЛЕНИЕ
-	if o.Channel_currency.Exponent {
+	if o.Balance_currency.Crypto {
+		o.BR_balance_currency = util.Round(commission, 8)
+	} else if o.Balance_currency.Exponent {
 		o.BR_balance_currency = util.Round(commission, 0)
 	} else {
 		o.BR_balance_currency = util.Round(commission, 4)
@@ -275,7 +284,9 @@ func (o *Operation) SetExtraBRAmount() {
 	}
 
 	// ОКРУГЛЕНИЕ
-	if o.Channel_currency.Exponent {
+	if o.Balance_currency.Crypto {
+		o.Extra_BR_balance_currency = util.Round(commission, 8)
+	} else if o.Balance_currency.Exponent {
 		o.Extra_BR_balance_currency = util.Round(commission, 0)
 	} else {
 		o.Extra_BR_balance_currency = util.Round(commission, 4)
@@ -371,7 +382,7 @@ func (op *Operation) GetString(name string) string {
 				team := op.ProviderOperation.Team
 				team_ref, ok := teams_tradex.GetTeamByName(team)
 				if ok {
-					return team_ref.Provider_balance_guid
+					return team_ref.Balance_guid
 				}
 			}
 			return ""

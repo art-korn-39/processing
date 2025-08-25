@@ -1,6 +1,7 @@
 package processing_provider
 
 import (
+	"app/currency"
 	"app/logs"
 	"app/querrys"
 	"app/util"
@@ -54,46 +55,11 @@ type Detailed_row struct {
 	Document_id               int       `db:"document_id"`
 	Provider_dragonpay        string    `db:"provider_dragonpay"`
 
-	Provider_BR float64
+	Balance_currency currency.Currency
+	Provider_BR      float64
 
-	// Merchant_id         int    `db:"merchant_id"`
-	// Merchant_account_id int    `db:"merchant_account_id"`
-	// Balance_id          int    `db:"balance_id"`
-	// Company_id          int    `db:"company_id"`
-	// Contract_id         int    `db:"contract_id"`
-	// Provider_id         int    `db:"provider_id"`
-	// Project_name        string `db:"project_name"`
-
-	// Business_type       string
-	// Project_url         string
-	// Payment_method      string
-
-	// Msc_amount       float64 `db:"msc_amount"`
-	// Msc_currency_str string  `db:"msc_currency"`
-
-	// Fee_amount       float64 `db:"fee_amount"`
-	// Fee_currency_str string  `db:"fee_currency"`
-
-	// Rate                     float64 `db:"rate"`
-	// BR_channel_currency      float64 `db:"br_channel_currency"`
-
-	// CheckFee                 float64 `db:"check_fee"`
-	// Provider_registry_amount float64 `db:"provider_registry_amount"`
-
-	// Crypto_network string `db:"crypto_network"`
-	// Convertation   string `db:"convertation"`
-
-	// Provider1C    string `db:"provider_1c"`
-	// Subdivision1C string `db:"subdivision_1c"`
-	// RatedAccount  string `db:"rated_account"`
-
-	// Tariff_condition_id int       `db:"tariff_id"`
-
-	// Tariff_rate_percent float64 `db:"tariff_rate_percent"`
-	// Tariff_rate_fix     float64 `db:"tariff_rate_fix"`
-	// Tariff_rate_min     float64 `db:"tariff_rate_min"`
-	// Tariff_rate_max     float64 `db:"tariff_rate_max"`
-
+	IsTestId   int    `db:"is_test_id"`
+	IsTestType string `db:"is_test_type"`
 }
 
 func NewDetailedRow(o *Operation) (d Detailed_row) {
@@ -142,6 +108,7 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 		d.Rate = o.ProviderOperation.Rate
 	}
 	d.Balance_currency_str = o.Balance_currency.Name
+	d.Balance_currency = o.Balance_currency
 	d.CompensationBR = o.CompensationBR
 	d.Verification = o.Verification
 	d.Region = o.Country.Region
@@ -149,6 +116,9 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	if o.DragonpayOperation != nil {
 		d.Provider_dragonpay = o.DragonpayOperation.Provider1c
 	}
+
+	d.IsTestId = o.IsTestId
+	d.IsTestType = o.IsTestType
 
 	if o.Tariff != nil {
 		t := o.Tariff
