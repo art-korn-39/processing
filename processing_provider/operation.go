@@ -38,6 +38,7 @@ type Operation struct {
 	Provider_payment_id string `db:"provider_payment_id"`
 	Endpoint_id         string `db:"endpoint_id"`
 	Contract_id         int    `db:"contract_id"`
+	Balance_id          int    `db:"balance_id"`
 
 	//Provider_base_name    string
 	Provider_name         string `db:"provider_name"`

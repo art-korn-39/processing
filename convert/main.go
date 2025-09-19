@@ -16,9 +16,9 @@ import (
 )
 
 var (
-	final_registry  map[int]*pr.Operation
+	final_registry  map[int]*pr.Operation //ключ - operation_id
 	ext_registry    []*Base_operation
-	bof_registry    map[string]*Bof_operation
+	bof_registry    map[string]*Bof_operation //ключ - operation_id / provider_payment_id
 	tradex_registry map[string]*Tradex_operation
 
 	is_kgx_tradex   bool
@@ -26,9 +26,7 @@ var (
 	main_setting    *Setting
 	all_settings    map[string]*Setting
 	used_settings   map[string]*Setting
-	// teams           map[string]team_line
-	// providers       []provider_params
-	balances map[Bof_operation]string // кэш балансов полученных методом getBalance()
+	balances        map[Bof_operation]string // кэш балансов полученных методом getBalance()
 )
 
 func init() {
@@ -39,9 +37,12 @@ func init() {
 
 	all_settings = map[string]*Setting{}
 	used_settings = map[string]*Setting{}
-	// teams = map[string]team_line{}
-	// providers = []provider_params{}
 	balances = map[Bof_operation]string{}
+}
+
+type key struct {
+	operation_id int
+	payment_id   string
 }
 
 func Start() {

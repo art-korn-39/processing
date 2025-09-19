@@ -97,25 +97,26 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		//KF.provider = o.Tariff.Provider
 	}
 
-	if o.IsTradex {
-		if o.ProviderOperation != nil {
-			team, ok := teams_tradex.GetTeamByName(o.ProviderOperation.Team)
-			if ok {
-				KF.balance = team.Balance_name
-				providerBalance, ok := provider_balances.GetbalanceByGUID(team.Balance_guid)
-				if ok {
-					KF.id_revise = providerBalance.Balance_code
-					KF.organization = providerBalance.Legal_entity
-					KF.contractor_provider = util.TR(providerBalance.Nickname == "", providerBalance.Contractor, providerBalance.Nickname).(string)
-				}
-			}
-		}
-	} else if o.ProviderBalance != nil {
+	if o.ProviderBalance != nil {
+
 		KF.id_revise = o.ProviderBalance.Balance_code
 		KF.balance = o.ProviderBalance.Name
 		KF.organization = o.ProviderBalance.Legal_entity
 		KF.contractor_provider = util.TR(o.ProviderBalance.Nickname == "", o.ProviderBalance.Contractor, o.ProviderBalance.Nickname).(string)
 		//KF.balance_currency = o.ProviderBalance.Balance_currency
+
+	} else if o.IsTradex && o.ProviderOperation != nil {
+
+		team, ok := teams_tradex.GetTeamByName(o.ProviderOperation.Team)
+		if ok {
+			KF.balance = team.Balance_name
+			providerBalance, ok := provider_balances.GetbalanceByGUID(team.Balance_guid)
+			if ok {
+				KF.id_revise = providerBalance.Balance_code
+				KF.organization = providerBalance.Legal_entity
+				KF.contractor_provider = util.TR(providerBalance.Nickname == "", providerBalance.Contractor, providerBalance.Nickname).(string)
+			}
+		}
 	}
 
 	if o.Merchant != nil {

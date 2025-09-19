@@ -126,7 +126,7 @@ type Operation struct {
 	Tariff_currency currency.Currency
 
 	Skip       bool
-	IsTestId   int
+	IsTestId   int // 0 = live | 1 = live test | 2 = tech test
 	IsTestType string
 }
 
@@ -458,7 +458,7 @@ const (
 	VRF_PARTIAL_PAYMENTS      = "Частичные выплаты"
 	VRF_ENDPOINT_DRAGONPAY    = "Endpoint_id пусто обратитесь к сверке/в саппорт"
 	VRF_EMPTY_TARIFF_ID       = "Заполни tariff_condition_id"
-	VRF_CHECK_TARIFF_ID       = "Проверь  tariff_condition_id"
+	VRF_CHECK_TARIFF_ID       = "Проверь tariff_condition_id"
 	VRF_CHECK_DATE_START      = "Проверь дату старта тарифа"
 )
 

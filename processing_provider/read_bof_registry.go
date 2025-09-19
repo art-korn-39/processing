@@ -153,6 +153,7 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		Merchant_account_id: util.FR(strconv.Atoi(record[map_fileds["merchant_account_id"]-1])).(int),
 		Project_id:          util.FR(strconv.Atoi(record[map_fileds["project_id"]-1])).(int),
 		Legal_entity_id:     util.FR(strconv.Atoi(record[map_fileds["legal_entity_id"]-1])).(int),
+		Balance_id:          util.FR(strconv.Atoi(record[map_fileds["balance_id"]-1])).(int),
 
 		Provider_payment_id:   record[map_fileds["acquirer_id / provider_payment_id"]-1],
 		Payment_type:          record[map_fileds["payment_type_id / payment_method_type"]-1],
@@ -204,7 +205,7 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 	idx = map_fileds["is_test"]
 	if idx > 0 {
 		num, _ := strconv.Atoi(record[idx-1])
-		if num == 1 {
+		if num == 1 && (op.Balance_id == 0 || strings.Contains(op.Provider_name, "[MOCK]")) {
 			op.IsTestId = 2
 			op.IsTestType = "tech test"
 		}

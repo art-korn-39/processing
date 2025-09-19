@@ -1068,6 +1068,10 @@ func add_page_all_fails(f *xlsx.File) {
 			continue
 		}
 
+		if op.IsTestId > 0 {
+			continue
+		}
+
 		if op.Verification == VRF_OK || op.Verification == VRF_VALID_REG_FEE {
 			continue
 		}

@@ -161,10 +161,11 @@ func Read_Detailed(db *sqlx.DB, registry_done chan querrys.Args) {
 
 	stat := `select payment_id,br_balance_currency 
 				from detailed_provider 
-				where transaction_completed_at between $1 and $2`
+				where transaction_completed_at between $1 and $2
+	AND lower(provider_name) LIKE $3`
 
 	var result []*Detailed_row
-	err := db.Select(&result, stat, Args.DateFrom, Args.DateTo)
+	err := db.Select(&result, stat, Args.DateFrom, Args.DateTo, "%%perevodix%")
 	if err != nil {
 		logs.Add(logs.INFO, err)
 		return

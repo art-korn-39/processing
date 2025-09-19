@@ -14,6 +14,7 @@ import (
 func init() {
 	data_maid = data{}
 	data_guid = map[string]*Balance{}
+	data_nickname = map[string]*Balance{}
 }
 
 func Read(db *sqlx.DB) {
@@ -42,6 +43,7 @@ func Read(db *sqlx.DB) {
 
 		data_guid[balance.GUID] = &balance
 
+		data_nickname[balance.Nickname] = &balance
 	}
 
 	logs.Add(logs.INFO, fmt.Sprintf("Чтение балансов провайдеров из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(slice_balances))))

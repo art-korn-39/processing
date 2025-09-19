@@ -61,7 +61,14 @@ func SetBalanceInOperations() {
 			currency = ""
 		}
 
-		balance, ok := provider_balances.GetBalance(operation, currency)
+		var balance *provider_balances.Balance
+		var ok bool
+		if operation.IsTradex && operation.ProviderOperation != nil {
+			balance, ok = provider_balances.GetBalanceByNickname(operation.ProviderOperation.Balance)
+		} else {
+			balance, ok = provider_balances.GetBalance(operation, currency)
+		}
+
 		if ok {
 			operation.ProviderBalance = balance
 		} else {

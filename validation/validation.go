@@ -110,7 +110,7 @@ func fields_bof_registry_provider() []string {
 		"id / operation_id", "transaction_id", "transaction_completed_at",
 		"merchant_id", "merchant_account_id", "project_id", "project_name", "project_url",
 		"provider_name", "merchant_name", "merchant_account_name", "provider_id",
-		"acquirer_id / provider_payment_id", "issuer_country",
+		"acquirer_id / provider_payment_id", "issuer_country", "balance_id",
 		"operation_type", "payment_type_id / payment_method_type",
 		"real_currency / channel_currency", "real_amount / channel_amount",
 		"currency / currency", "provider_currency", "provider_amount",
