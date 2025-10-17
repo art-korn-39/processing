@@ -177,7 +177,7 @@ func (o *Operation) StartingFill() {
 }
 
 func (o *Operation) SetCountry() {
-	o.Country = countries.GetCountry(o.Country_code2, o.Currency.Name)
+	o.Country = countries.GetCountry(o.Country_code2, o.Channel_currency.Name)
 }
 
 func (o *Operation) SetPaymentType() {
@@ -254,12 +254,19 @@ func (o *Operation) SetBRAmount() {
 	}
 
 	// ОКРУГЛЕНИЕ
-	if o.Balance_currency.Crypto {
-		o.BR_balance_currency = util.Round(commission, 8)
-	} else if o.Balance_currency.Exponent {
+	// if o.Balance_currency.Crypto {
+	// 	o.BR_balance_currency = util.Round(commission, 8)
+	// } else if o.Balance_currency.Exponent {
+	// 	o.BR_balance_currency = util.Round(commission, 0)
+	// } else {
+	// 	o.BR_balance_currency = util.Round(commission, 4)
+	// }
+
+	//#1204
+	if o.Balance_currency.Exponent {
 		o.BR_balance_currency = util.Round(commission, 0)
 	} else {
-		o.BR_balance_currency = util.Round(commission, 4)
+		o.BR_balance_currency = util.Round(commission, 8)
 	}
 
 }
@@ -285,12 +292,19 @@ func (o *Operation) SetExtraBRAmount() {
 	}
 
 	// ОКРУГЛЕНИЕ
-	if o.Balance_currency.Crypto {
-		o.Extra_BR_balance_currency = util.Round(commission, 8)
-	} else if o.Balance_currency.Exponent {
+	// if o.Balance_currency.Crypto {
+	// 	o.Extra_BR_balance_currency = util.Round(commission, 8)
+	// } else if o.Balance_currency.Exponent {
+	// 	o.Extra_BR_balance_currency = util.Round(commission, 0)
+	// } else {
+	// 	o.Extra_BR_balance_currency = util.Round(commission, 4)
+	// }
+
+	//#1204
+	if o.Balance_currency.Exponent {
 		o.Extra_BR_balance_currency = util.Round(commission, 0)
 	} else {
-		o.Extra_BR_balance_currency = util.Round(commission, 4)
+		o.Extra_BR_balance_currency = util.Round(commission, 8)
 	}
 
 }

@@ -110,7 +110,7 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		team, ok := teams_tradex.GetTeamByName(o.ProviderOperation.Team)
 		if ok {
 			KF.balance = team.Balance_name
-			providerBalance, ok := provider_balances.GetbalanceByGUID(team.Balance_guid)
+			providerBalance, ok := provider_balances.GetBalanceByGUID(team.Balance_guid)
 			if ok {
 				KF.id_revise = providerBalance.Balance_code
 				KF.organization = providerBalance.Legal_entity

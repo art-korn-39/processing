@@ -137,9 +137,14 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		d.Endpoint_id,
 		util.IsString1251(d.Account_bank_name),
 		d.Operation_created_at.Format(time.DateTime),
-		util.FloatToString(d.Balance_amount, d.Balance_currency.GetAccuracy(2)),
-		util.FloatToString(d.BR_balance_currency, d.Balance_currency.GetAccuracy(4)),
-		util.FloatToString(d.Extra_BR_balance_currency, d.Balance_currency.GetAccuracy(4)),
+		//#1204
+		//util.FloatToString(d.Balance_amount, d.Balance_currency.GetAccuracy(2)),
+		//util.FloatToString(d.BR_balance_currency, d.Balance_currency.GetAccuracy(4)),
+		//util.FloatToString(d.Extra_BR_balance_currency, d.Balance_currency.GetAccuracy(4)),
+		util.FloatToString(d.Balance_amount, 8),
+		util.FloatToString(d.BR_balance_currency, 8),
+		util.FloatToString(d.Extra_BR_balance_currency, 8),
+		//
 		d.Balance_currency_str,
 		util.FloatToString(d.Rate, d.Balance_currency.GetAccuracy(2)),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.CompensationBR), ".", ","),

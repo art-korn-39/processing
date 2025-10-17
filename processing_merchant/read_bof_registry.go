@@ -162,6 +162,7 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		Balance_id:          util.FR(strconv.Atoi(record[map_fileds["balance_id"]-1])).(int),
 		Contract_id:         util.FR(strconv.Atoi(record[map_fileds["contract_id"]-1])).(int),
 		Project_id:          util.FR(strconv.Atoi(record[map_fileds["project_id"]-1])).(int),
+		Provider_id:         util.FR(strconv.Atoi(record[map_fileds["provider_id"]-1])).(int),
 		Tariff_condition_id: util.FR(strconv.Atoi(record[map_fileds["tariff_condition_id"]-1])).(int),
 
 		Provider_payment_id:   record[map_fileds["acquirer_id / provider_payment_id"]-1],
@@ -214,11 +215,6 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 	idx = map_fileds["surcharge_currency"]
 	if idx > 0 {
 		op.Surcharge_currency_str = record[idx-1]
-	}
-
-	idx = map_fileds["provider_id"]
-	if idx > 0 {
-		op.Provider_id, _ = strconv.Atoi(record[idx-1])
 	}
 
 	idx = map_fileds["is_test"]

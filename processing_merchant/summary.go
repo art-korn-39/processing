@@ -52,6 +52,8 @@ type SummaryRowMerchant struct {
 	RR_amount float64   `db:"rr_amount"`
 	RR_date   time.Time `db:"rr_date"`
 
+	Provider_balance_GUID string `db:"provider_balance_guid"`
+
 	HasProviderOperation bool
 }
 
@@ -137,6 +139,7 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 		k.Channel_currency_str = o.Channel_currency.Name
 		k.Balance_currency_str = o.Balance_currency.Name
 		k.RR_date = o.RR_date
+		k.Provider_1c = o.Provider1c
 
 		if o.Tariff != nil {
 			k.Convertation = o.Tariff.Convertation
@@ -144,7 +147,7 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 			k.Tariff_date_start = o.Tariff.DateStart
 			//k.Tariff_id = o.Tariff.Id
 			k.Formula = o.Tariff.Formula
-			k.Provider_1c = o.Tariff.Provider1C
+			//k.Provider_1c = o.Tariff.Provider1C
 			k.Subdivision_1c = o.Tariff.Subdivision1C
 			k.Rated_account = o.Tariff.RatedAccount
 		}
@@ -156,6 +159,10 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 		}
 
 		k.HasProviderOperation = o.ProviderOperation != nil
+
+		if o.ProviderBalance != nil {
+			k.Provider_balance_GUID = o.ProviderBalance.GUID
+		}
 
 		k.SetConvertationID()
 		k.SetID()

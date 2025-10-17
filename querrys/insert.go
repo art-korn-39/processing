@@ -6,13 +6,13 @@ func Stat_Insert_provider_registry() string {
 		operation_id, transaction_completed_at, provider_name, merchant_name, merchant_account_name,
 		project_url, payment_method_type, country, rate, operation_type, amount, transaction_created_at,
 		provider_payment_id, operation_status, account_number, channel_currency, provider_currency, br_amount,
-		transaction_completed_at_day, channel_amount, balance, provider1c, project_id, team
+		transaction_completed_at_day, channel_amount, balance, provider1c, project_id, team, br_fix
 	)
 	VALUES (
 		:operation_id, :transaction_completed_at, :provider_name, :merchant_name, :merchant_account_name,
 		:project_url, :payment_method_type, :country, :rate, :operation_type, :amount, :transaction_created_at,
 		:provider_payment_id, :operation_status, :account_number, :channel_currency, :provider_currency, :br_amount,
-		:transaction_completed_at_day, :channel_amount, :balance, :provider1c, :project_id, :team
+		:transaction_completed_at_day, :channel_amount, :balance, :provider1c, :project_id, :team, :br_fix
 	)
 	
 	ON CONFLICT ON CONSTRAINT pk_id DO UPDATE
@@ -22,7 +22,7 @@ func Stat_Insert_provider_registry() string {
 		transaction_completed_at = EXCLUDED.transaction_completed_at, 
 		transaction_completed_at_day = EXCLUDED.transaction_completed_at_day, 
 		operation_status = EXCLUDED.operation_status, balance = EXCLUDED.balance,
-		project_id = EXCLUDED.project_id, team = EXCLUDED.team, 
+		project_id = EXCLUDED.project_id, team = EXCLUDED.team, br_fix = EXCLUDED.br_fix,
 		transaction_created_at = EXCLUDED.transaction_created_at, provider1c = EXCLUDED.provider1c;`
 }
 
@@ -349,7 +349,7 @@ func Stat_Insert_summary_merchant() string {
 		balance_currency, convertation, tariff_date_start, tariff_id, formula, channel_amount, balance_amount, 
 		sr_channel_currency, sr_balance_currency, count_operations, rate,
 		payment_type_id, payment_method_id, rated_account, provider_1c, subdivision_1c, business_type, project_id,
-		rr_amount, rr_date, schema, convertation_id
+		rr_amount, rr_date, schema, convertation_id, provider_balance_guid
 	)
 	VALUES (
 		:document_id, :document_date, :operation_type, :operation_group, :merchant_id, :merchant_account_id, 
@@ -357,7 +357,7 @@ func Stat_Insert_summary_merchant() string {
 		:convertation, :tariff_date_start, :tariff_id, :formula, :channel_amount, :balance_amount, 
 		:sr_channel_currency, :sr_balance_currency, :count_operations, :rate,
 		:payment_type_id, :payment_method_id, :rated_account, :provider_1c, :subdivision_1c, :business_type, :project_id,
-		:rr_amount, :rr_date, :schema, :convertation_id
+		:rr_amount, :rr_date, :schema, :convertation_id, :provider_balance_guid
 		)`
 }
 

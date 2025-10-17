@@ -101,7 +101,7 @@ func fields_bof_registry_merchant() []string {
 		"real_currency / channel_currency", "real_amount / channel_amount",
 		"fee_currency", "fee_amount", "provider_currency", "provider_amount",
 		"tariff_rate_percent", "tariff_rate_fix", "tariff_rate_min", "tariff_rate_max",
-		"is_test",
+		"is_test", "provider_id",
 	}
 }
 

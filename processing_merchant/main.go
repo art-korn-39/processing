@@ -7,7 +7,9 @@ import (
 	"app/dragonpay"
 	"app/holds"
 	"app/logs"
+	"app/provider_balances"
 	"app/provider_registry"
+	"app/providers_1c"
 	"app/querrys"
 	"app/tariff_merchant"
 	"app/test_merchant_accounts"
@@ -18,7 +20,7 @@ import (
 )
 
 const (
-	Version = "1.5.5"
+	Version = "1.6.0"
 )
 
 var (
@@ -79,7 +81,7 @@ func ReadSources() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(8)
+	wg.Add(10)
 
 	registry_done := make(chan querrys.Args, 3)
 	go func() {
@@ -120,6 +122,16 @@ func ReadSources() {
 	go func() {
 		defer wg.Done()
 		test_merchant_accounts.Read(storage.Postgres)
+	}()
+
+	go func() {
+		defer wg.Done()
+		provider_balances.Read(storage.Postgres)
+	}()
+
+	go func() {
+		defer wg.Done()
+		providers_1c.Read(storage.Postgres)
 	}()
 
 	wg.Wait()

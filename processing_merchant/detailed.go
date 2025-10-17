@@ -139,8 +139,8 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 		t := o.Tariff
 		d.Convertation = t.Convertation
 		d.Provider1C = t.Provider1C
-		d.RatedAccount = t.RatedAccount
-		d.Subdivision1C = t.Subdivision1C
+		//d.RatedAccount = t.RatedAccount
+		//d.Subdivision1C = t.Subdivision1C
 		//d.Tariff_condition_id = t.Id
 		d.Tariff_date_start = t.DateStart
 		d.Act_percent = t.Percent

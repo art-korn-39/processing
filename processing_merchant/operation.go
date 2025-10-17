@@ -6,9 +6,12 @@ import (
 	"app/dragonpay"
 	"app/holds"
 	"app/logs"
+	"app/provider_balances"
 	"app/provider_registry"
+	"app/providers_1c"
 	"app/tariff_merchant"
 	"app/util"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -97,6 +100,7 @@ type Operation struct {
 	IsPerevodix            bool
 	IsMonetix              bool
 	IsQafpay               bool
+	IsSirp                 bool
 	Crypto_network         string
 	Provider1c             string
 
@@ -117,6 +121,7 @@ type Operation struct {
 	DragonpayOperation   *dragonpay.Operation
 	Country              countries.Country
 	Detailed_provider    *detailed_provider
+	ProviderBalance      *provider_balances.Balance
 
 	Tariff_rate_fix     float64 `db:"billing__tariff_rate_fix"`
 	Tariff_rate_percent float64 `db:"billing__tariff_rate_percent"`
@@ -142,6 +147,7 @@ func (o *Operation) StartingFill() {
 	o.IsPerevodix = o.Merchant_id == 73162
 	o.IsMonetix = o.Merchant_id == 648
 	o.IsQafpay = o.Merchant_id == 74032
+	o.IsSirp = slices.Contains([]int{33042, 32142}, o.Provider_id)
 
 	o.Provider_currency = currency.New(o.Provider_currency_str)
 	o.Msc_currency = currency.New(o.Msc_currency_str)
@@ -202,7 +208,7 @@ func (o *Operation) StartingFill() {
 }
 
 func (o *Operation) SetCountry() {
-	o.Country = countries.GetCountry(o.Country_code2, o.Currency.Name)
+	o.Country = countries.GetCountry(o.Country_code2, o.Channel_currency.Name)
 }
 
 func (o *Operation) SetDetailed_provider() {
@@ -275,12 +281,17 @@ func (o *Operation) SetSRAmount() {
 		return
 	}
 
+	br_fix := 0.00
+	if o.ProviderOperation != nil {
+		br_fix = o.ProviderOperation.BR_fix
+	}
+
 	// SR В ВАЛЮТЕ КОМИССИИ (обычно это валюта баланса)
 	var commission float64
 	if t.AmountInChannelCurrency {
-		commission = o.Channel_amount*t.Percent + t.Fix
+		commission = o.Channel_amount*t.Percent + util.TR(o.IsSirp, br_fix, t.Fix).(float64)
 	} else {
-		commission = o.Balance_amount*t.Percent + t.Fix
+		commission = o.Balance_amount*t.Percent + util.TR(o.IsSirp, br_fix, t.Fix).(float64)
 	}
 
 	if t.Min != 0 && commission < t.Min {
@@ -334,16 +345,16 @@ func (o *Operation) SetSRAmount() {
 	}
 
 	// ОКРУГЛЕНИЕ
-	if o.Balance_currency.Crypto {
-		o.Balance_amount = util.Round(o.Balance_amount, 8)
-		o.SR_balance_currency = util.Round(SR_balance_currency, 8)
-	} else if o.Balance_currency.Exponent {
-		o.Balance_amount = util.Round(o.Balance_amount, 0)
-		o.SR_balance_currency = util.Round(SR_balance_currency, 0)
-	} else {
-		o.Balance_amount = util.Round(o.Balance_amount, 2)
-		o.SR_balance_currency = util.Round(SR_balance_currency, 2)
-	}
+	// if o.Balance_currency.Crypto {
+	// 	o.Balance_amount = util.Round(o.Balance_amount, 8)
+	// 	o.SR_balance_currency = util.Round(SR_balance_currency, 8)
+	// } else if o.Balance_currency.Exponent {
+	// 	o.Balance_amount = util.Round(o.Balance_amount, 0)
+	// 	o.SR_balance_currency = util.Round(SR_balance_currency, 0)
+	// } else {
+	// 	o.Balance_amount = util.Round(o.Balance_amount, 2)
+	// 	o.SR_balance_currency = util.Round(SR_balance_currency, 2)
+	// }
 
 	if o.Channel_currency.Crypto {
 		o.SR_channel_currency = util.Round(SR_channel_currency, 8)
@@ -353,28 +364,73 @@ func (o *Operation) SetSRAmount() {
 		o.SR_channel_currency = util.Round(SR_channel_currency, 2)
 	}
 
+	// #1204
+	if o.Balance_currency.Exponent {
+		o.Balance_amount = util.Round(o.Balance_amount, 0)
+		o.SR_balance_currency = util.Round(SR_balance_currency, 0)
+	} else if o.Fee_currency == o.Balance_currency ||
+		(o.Fee_currency.Name == "USD" && o.Balance_currency.Name == "USDT") {
+
+		o.Balance_amount = util.Round(o.Balance_amount, 2)
+		o.SR_balance_currency = util.Round(SR_balance_currency, 2)
+	} else {
+		o.Balance_amount = util.Round(o.Balance_amount, 8)
+		o.SR_balance_currency = util.Round(SR_balance_currency, 8)
+	}
+
+	// if o.Channel_currency.Exponent {
+	// 	o.SR_channel_currency = util.Round(SR_channel_currency, 0)
+	// } else {
+	// 	o.SR_channel_currency = util.Round(SR_channel_currency, 8)
+	// }
+
+}
+
+func (o *Operation) SetProviderBalance() {
+
+	o.ProviderBalance, _ = provider_balances.GetBalanceByProviderAndMA(o.Merchant_account_id, o.Provider_id)
 }
 
 func (o *Operation) SetProvider1c() {
 
-	if o.Tariff != nil && o.Tariff.Convertation == "KGX" && o.ProviderOperation != nil {
-
+	if o.ProviderOperation != nil && o.ProviderOperation.Provider1c != "" {
 		o.Provider1c = o.ProviderOperation.Provider1c
-
-	} else if o.Tariff != nil {
-
+	} else if o.Tariff != nil && o.Tariff.Provider1C != "" {
 		o.Provider1c = o.Tariff.Provider1C
-
+	} else if o.ProviderBalance != nil {
+		provider1c, ok := providers_1c.GetProvider1c(o.ProviderBalance.Contractor_GUID, o.Payment_type)
+		if ok {
+			o.Provider1c = provider1c.Name
+		}
 	}
+
+	//было:
+	// if o.Tariff != nil && o.Tariff.Convertation == "KGX" && o.ProviderOperation != nil {
+
+	// 	o.Provider1c = o.ProviderOperation.Provider1c
+
+	// } else if o.Tariff != nil {
+
+	// 	o.Provider1c = o.Tariff.Provider1C
+
+	// }
 
 }
 
 func (o *Operation) SetCheckFee() {
 
+	// if o.Fee_currency == o.Balance_currency {
+	// 	o.CheckFee = util.BaseRound(o.Fee_amount - o.SR_balance_currency)
+	// } else {
+	// 	o.CheckFee = util.BaseRound(o.Fee_amount - o.SR_channel_currency)
+	// }
+
+	// #1204 убрал округление
+
 	if o.Fee_currency == o.Balance_currency {
-		o.CheckFee = util.BaseRound(o.Fee_amount - o.SR_balance_currency)
+		o.CheckFee = o.Fee_amount - o.SR_balance_currency
 	} else {
-		o.CheckFee = util.BaseRound(o.Fee_amount - o.SR_channel_currency)
+		o.CheckFee = o.Fee_amount - o.SR_channel_currency
 	}
 
 }

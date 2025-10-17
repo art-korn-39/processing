@@ -68,7 +68,7 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 	sheet, _ := f.AddSheet("Детализация")
 
 	headers := []string{"Схема", "Баланс", "balance_id", "Дата", "Проверка", "operation_type",
-		"payment_method_type", "merchant_name", "project_name", "merchant_account_name", "Подразделение", "Рассчетный счет",
+		"payment_method_type", "merchant_name", "project_name", "merchant_account_name", //"Подразделение", "Рассчетный счет",
 		"Поставщик 1С", "real_currency / channel_currency", "Валюта баланса", "Акт. тариф формула", "Range",
 		"Старт тарифа", "tariff_condition_id", "contract_id", "PPрасхолд", "ДатаРасхолдМ", "CryptoNetWork",
 		"ДК тариф формула", "Компенсация BC", "Компенсация RC",
@@ -130,7 +130,7 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		row := sheet.AddRow()
 
 		row.AddCell().SetString(k.tariff.Schema)
-		row.AddCell().SetString(k.balance_name)          //k.tariff.Balance_name)   //0
+		row.AddCell().SetString(k.balance_name_prov)     //k.tariff.Balance_name)   //0
 		row.AddCell().SetInt(k.balance_id)               //1
 		row.AddCell().SetDate(k.document_date)           //2
 		row.AddCell().SetString(k.verification)          //3
@@ -139,8 +139,8 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		row.AddCell().SetString(k.merchant_name)         //6
 		row.AddCell().SetString(k.project_name)          //7
 		row.AddCell().SetString(k.merchant_account_name) //8
-		row.AddCell().SetString(k.tariff.Subdivision1C)  //9
-		row.AddCell().SetString(k.tariff.RatedAccount)   //10
+		//row.AddCell().SetString(k.tariff.Subdivision1C)  //9
+		//row.AddCell().SetString(k.tariff.RatedAccount)   //10
 		row.AddCell().SetString(k.provider1c)            //11
 		row.AddCell().SetString(k.channel_currency.Name) //12
 		row.AddCell().SetString(k.balance_currency.Name) //13 Валюта баланса
@@ -251,7 +251,7 @@ func add_page_detailed_nu(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 	sheet, _ := f.AddSheet("Детализация_НУ")
 
 	headers := []string{"Баланс", "IDBALANCE", "Дата", "Проверка", "operation_type",
-		"payment_method_type", "merchant_name", "merchant_account_name", "Подразделение", "Рассчетный счет",
+		"payment_method_type", "merchant_name", "merchant_account_name", //"Подразделение", "Рассчетный счет",
 		"Поставщик 1С", "real_currency / channel_currency", "Валюта баланса", "Акт. тариф формула", "Range",
 		"Старт тарифа", "tariff_condition_id", "contract_id", "PPрасхолд", "ДатаРасхолдМ", "CryptoNetWork",
 		"ДК тариф формула", "Компенсация BC", "Компенсация RC",
@@ -313,17 +313,17 @@ func add_page_detailed_nu(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		}
 
 		row := sheet.AddRow()
-		row.AddCell().SetString(k.balance_name)   //k.tariff.Balance_name)   //0
-		row.AddCell().SetString(k.balance_id_str) //1
-		row.AddCell().SetDate(k.document_date)    //2
-		row.AddCell().SetString(k.verification)   //3
-		row.AddCell().SetString(k.operation_type) //4
-		row.AddCell().SetString(k.payment_type)   //5
-		row.AddCell().SetString(k.merchant_name)  //6
+		row.AddCell().SetString(k.balance_name_prov) //k.tariff.Balance_name)   //0
+		row.AddCell().SetString(k.balance_id_str)    //1
+		row.AddCell().SetDate(k.document_date)       //2
+		row.AddCell().SetString(k.verification)      //3
+		row.AddCell().SetString(k.operation_type)    //4
+		row.AddCell().SetString(k.payment_type)      //5
+		row.AddCell().SetString(k.merchant_name)     //6
 		//row.AddCell().SetString(k.project_name)          //7
 		row.AddCell().SetString(k.merchant_account_name) //8
-		row.AddCell().SetString(k.tariff.Subdivision1C)  //9
-		row.AddCell().SetString(k.tariff.RatedAccount)   //10
+		//row.AddCell().SetString(k.tariff.Subdivision1C)  //9
+		//row.AddCell().SetString(k.tariff.RatedAccount)   //10
 		row.AddCell().SetString(k.provider1c)            //11
 		row.AddCell().SetString(k.channel_currency.Name) //12
 		row.AddCell().SetString(k.balance_currency.Name) //13 Валюта баланса
@@ -427,9 +427,9 @@ func add_page_detailed_project(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFile
 
 	sheet, _ := f.AddSheet("Детализация_проекты")
 
-	headers := []string{"Схема", "Баланс", "balance_id", "Дата", "Проверка", "operation_type",
-		"payment_method_type", "merchant_name", "project_name", "project id", "merchant_account_name", "Подразделение",
-		"Рассчетный счет", "Поставщик 1С", "real_currency / channel_currency", "Валюта баланса",
+	headers := []string{"Схема", "Баланс", "balance_id", "Дата", "Проверка", "operation_type", "payment_method_type",
+		"merchant_name", "project_name", "project id", "merchant_account_name", //"Подразделение", "Рассчетный счет",
+		"Поставщик 1С", "real_currency / channel_currency", "Валюта баланса",
 		"Акт. тариф формула", "Range",
 		"Старт тарифа", "tariff_condition_id", "contract_id", "PPрасхолд", "ДатаРасхолдМ", "CryptoNetWork",
 		"ДК тариф формула", "Компенсация BC", "Компенсация RC",
@@ -491,7 +491,7 @@ func add_page_detailed_project(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFile
 		row := sheet.AddRow()
 
 		row.AddCell().SetString(k.tariff.Schema)
-		row.AddCell().SetString(k.balance_name)          //k.tariff.Balance_name)   //0
+		row.AddCell().SetString(k.balance_name_prov)     //k.tariff.Balance_name)   //0
 		row.AddCell().SetInt(k.balance_id)               //1
 		row.AddCell().SetDate(k.document_date)           //2
 		row.AddCell().SetString(k.verification)          //3
@@ -501,8 +501,8 @@ func add_page_detailed_project(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFile
 		row.AddCell().SetString(k.project_name)          //7
 		row.AddCell().SetInt(k.project_id)               //7
 		row.AddCell().SetString(k.merchant_account_name) //8
-		row.AddCell().SetString(k.tariff.Subdivision1C)  //9
-		row.AddCell().SetString(k.tariff.RatedAccount)   //10
+		//row.AddCell().SetString(k.tariff.Subdivision1C)  //9
+		//row.AddCell().SetString(k.tariff.RatedAccount)   //10
 		row.AddCell().SetString(k.provider1c)            //11
 		row.AddCell().SetString(k.channel_currency.Name) //12
 		row.AddCell().SetString(k.balance_currency.Name) //13 Валюта баланса
@@ -566,16 +566,16 @@ func add_page_svodno(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 	for k, v := range M {
 
 		key := KeyFields_SummaryInfo{
-			balance_name:     k.balance_name,
-			balance_id:       k.balance_id,
-			document_date:    k.document_date,
-			verification:     k.verification,
-			operation_type:   k.operation_type,
-			merchant_name:    k.merchant_name,
-			tariff:           k.tariff,
-			provider1c:       k.provider1c,
-			channel_currency: k.channel_currency,
-			balance_currency: k.balance_currency,
+			balance_name_prov: k.balance_name_prov,
+			balance_id:        k.balance_id,
+			document_date:     k.document_date,
+			verification:      k.verification,
+			operation_type:    k.operation_type,
+			merchant_name:     k.merchant_name,
+			tariff:            k.tariff,
+			provider1c:        k.provider1c,
+			channel_currency:  k.channel_currency,
+			balance_currency:  k.balance_currency,
 		}
 
 		sf := M1[key]
@@ -639,11 +639,11 @@ func add_page_svodno(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		}
 
 		row := sheet.AddRow()
-		row.AddCell().SetString(k.balance_name)   //k.tariff.Balance_name)   //0
-		row.AddCell().SetInt(k.balance_id)        //1
-		row.AddCell().SetDate(k.document_date)    //2
-		row.AddCell().SetString(k.verification)   //3
-		row.AddCell().SetString(k.operation_type) //4
+		row.AddCell().SetString(k.balance_name_prov) //k.tariff.Balance_name)   //0
+		row.AddCell().SetInt(k.balance_id)           //1
+		row.AddCell().SetDate(k.document_date)       //2
+		row.AddCell().SetString(k.verification)      //3
+		row.AddCell().SetString(k.operation_type)    //4
 		//row.AddCell().SetString(k.payment_type)          //5
 		row.AddCell().SetString(k.merchant_name) //5
 		//row.AddCell().SetString(k.merchant_account_name) //6
@@ -1202,7 +1202,7 @@ func arch_add_page_copy1(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		}
 
 		row := sheet.AddRow()
-		row.AddCell().SetString(k.balance_name) //k.tariff.Balance_name)
+		row.AddCell().SetString(k.balance_name_prov) //k.tariff.Balance_name)
 		row.AddCell().SetString(fmt.Sprint(k.balance_id, "_", k.tariff.Balance_type))
 		row.AddCell().SetDate(k.document_date)
 		row.AddCell().SetString(k.verification)

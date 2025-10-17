@@ -106,8 +106,10 @@ func CalculateCommission() {
 					operation.SetSRAmount()
 					operation.SetRR()
 					operation.SetDK()
-					operation.SetProvider1c()
 				}
+
+				operation.SetProviderBalance()
+				operation.SetProvider1c()
 
 				operation.SetCheckFee()
 				operation.SetVerification()

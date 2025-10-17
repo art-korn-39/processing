@@ -30,6 +30,7 @@ type Operation struct {
 	Balance               string  `db:"balance"`
 	Provider1c            string  `db:"provider1c"`
 	Team                  string  `db:"team"`
+	BR_fix                float64 `db:"br_fix"`
 
 	Partner_id   string
 	Verification string
@@ -57,6 +58,7 @@ func (o *Operation) StartingFill(from_file bool) {
 		o.Channel_currency = currency.New(o.Channel_currency_str)
 		o.Provider_currency = currency.New(o.Provider_currency_str)
 		o.BR_amount = util.Round(o.BR_amount, 4)
+		o.BR_fix = util.Round(o.BR_fix, 4)
 	}
 
 	if o.Amount != 0 {

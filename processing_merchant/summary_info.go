@@ -85,7 +85,8 @@ type KeyFields_SummaryInfo struct {
 	merchant_name         string
 	project_name          string
 	merchant_account_name string
-	balance_name          string
+	balance_name_prov     string
+	balance_name_merch    string
 	merchant_account_id   int
 	tariff_condition_id   int
 
@@ -138,16 +139,21 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		if o.Tariff.Convertation == "KGX" {
 			if o.ProviderOperation != nil {
 				if o.IsPerevodix {
-					KF.balance_name = o.Provider_name // тут уже лежит баланс из реестра провайдера
+					KF.balance_name_merch = o.Provider_name // тут уже лежит баланс из реестра провайдера
 				} else {
 					//KF.balance_name = fmt.Sprintf("%s_%s_%s", o.Tariff.Provider_name, o.Tariff.Company, o.ProviderOperation.Provider_currency.Name)
-					KF.balance_name = fmt.Sprintf("%s_%s_%s", o.ProviderOperation.Balance, o.Tariff.Company, o.ProviderOperation.Provider_currency.Name)
+					KF.balance_name_merch = fmt.Sprintf("%s_%s_%s", o.ProviderOperation.Balance, o.Tariff.Company, o.ProviderOperation.Provider_currency.Name)
 				}
 			}
 		} else {
-			KF.balance_name = o.Tariff.Balance_name
+			KF.balance_name_merch = o.Tariff.Balance_name
 		}
 	}
+
+	if o.ProviderBalance != nil {
+		KF.balance_name_prov = o.ProviderBalance.Name
+	}
+	//F.balance_name_prov = KF.balance_name_merch // пока что откатил
 
 	if o.Tariff_bof != nil {
 		KF.tariff_bof = *o.Tariff_bof

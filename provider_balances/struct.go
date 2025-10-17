@@ -14,6 +14,7 @@ type Balance struct {
 	Extra_balance_guid  string    `db:"extra_balance_guid"`
 	Type                string    `db:"type"` //IN, OUT, IN-OUT
 	Contractor          string    `db:"contractor"`
+	Contractor_GUID     string    `db:"contractor_guid"`
 	Provider_name       string    `db:"provider_name"`
 	Provider_id         int       `db:"provider_id"`
 	Balance_code        string    `db:"balance_code"`
@@ -124,7 +125,7 @@ func GetBalanceByProviderAndMA(ma_id, provider_id int) (*Balance, bool) {
 
 }
 
-func GetbalanceByGUID(guid string) (*Balance, bool) {
+func GetBalanceByGUID(guid string) (*Balance, bool) {
 
 	val, ok := data_guid[guid]
 	return val, ok

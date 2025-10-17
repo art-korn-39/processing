@@ -98,7 +98,7 @@ func Stat_Select_provider_registry() string {
 	return `SELECT 
 			operation_id, transaction_completed_at, operation_type, country, payment_method_type, 
 			merchant_name, rate, amount, channel_amount, channel_currency, provider_currency, br_amount, 
-			balance, provider1c, team, project_url, project_id
+			balance, provider1c, team, project_url, project_id, br_fix
 		FROM provider_registry 
 		WHERE lower(merchant_name) = ANY($1) 
 		AND transaction_completed_at BETWEEN $2 AND $3`
@@ -108,7 +108,7 @@ func Stat_Select_provider_registry_period_only() string {
 	return `SELECT 
 			operation_id, transaction_completed_at, operation_type, country, payment_method_type, 
 			merchant_name, rate, amount, channel_amount, channel_currency, provider_currency, 
-			br_amount, balance, provider1c, team, project_url, project_id
+			br_amount, balance, provider1c, team, project_url, project_id, br_fix
 		FROM provider_registry 
 		WHERE transaction_completed_at BETWEEN $1 AND $2`
 }
@@ -142,7 +142,7 @@ func Stat_Select_provider_balances() string {
 				guid,provider_balance,contractor,provider_name,provider_id,balance_code,
 				legal_entity,merchant_account,merchant_account_id,date_start,nickname,
 				date_finish,convertation,convertation_id,key_record,balance_currency,type,
-				extra_balance_guid
+				extra_balance_guid,contractor_guid
 			FROM provider_balances
 			WHERE provider_id > 0 AND merchant_account_id > 0`
 }
@@ -260,5 +260,15 @@ func Stat_Select_balances_tradex() string {
 				guid,name,provider1c,payment_type_name,payment_type_id,issuer_country,provider1c,
 				provider_balance_guid,provider_balance_name,provider_balance_nickname,provider_balance_currency
 			FROM balances_tradex
+			`
+}
+
+func Stat_Select_providers_1c() string {
+	return `SELECT 
+				guid,name,provider_name,provider_guid,
+				payment_method_name,payment_method_id,
+				payment_type_name,payment_type_id,payment_type_guid,
+				currency
+			FROM providers_1c
 			`
 }

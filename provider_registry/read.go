@@ -173,6 +173,8 @@ func Read_convert_sheet(sheet *xlsx.Sheet, filename string) (ops []Operation, er
 		idx_provider_currency = map_fileds["provider_currency"] - 1
 	}
 
+	idx_br_fix := map_fileds["br_fix"] - 1
+
 	ops = make([]Operation, 0, len(sheet.Rows))
 
 	for i, row := range sheet.Rows {
@@ -252,6 +254,11 @@ func Read_convert_sheet(sheet *xlsx.Sheet, filename string) (ops []Operation, er
 
 		if len(row.Cells) > idx_team && idx_team >= 0 {
 			operation.Team = row.Cells[map_fileds["team"]-1].String()
+		}
+
+		if len(row.Cells) > idx_br_fix && idx_br_fix >= 0 {
+			operation.BR_fix, _ = row.Cells[idx_br_fix].Float()
+			operation.BR_fix = util.TR(math.IsNaN(operation.BR_fix), float64(0), operation.BR_fix).(float64)
 		}
 
 		operation.StartingFill(true)
