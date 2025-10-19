@@ -3,7 +3,9 @@ package convert
 import (
 	"app/config"
 	"app/logs"
+	"app/provider_registry"
 	pr "app/provider_registry"
+	"app/util"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -152,11 +154,14 @@ func makeDetailedRow(op *pr.Operation) []string {
 
 func makeDetailedRowBof(op *Bof_operation) []string {
 
+	// если операция нашлась в final_reg то сюда не пишем, т.к. её запишет другая горутина
 	id, _ := strconv.Atoi(op.Operation_id)
 	_, ok := final_registry[id]
 	if ok {
 		return nil
 	}
+
+	_, opExist := provider_registry.GetOperation(id, op.Transaction_completed_at, op.Channel_amount)
 
 	result := []string{
 		op.Operation_id,
@@ -181,7 +186,7 @@ func makeDetailedRowBof(op *Bof_operation) []string {
 		"", //op.Provider1c,
 		"", //op.Team,
 		"", //op.Operation_status,
-		"Не найдено",
+		util.TR(opExist, "Есть данные по конвертации", "Не найдено").(string),
 	}
 
 	return result

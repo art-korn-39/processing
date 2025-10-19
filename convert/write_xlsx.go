@@ -2,6 +2,8 @@ package convert
 
 import (
 	"app/logs"
+	"app/provider_registry"
+	"app/util"
 	"fmt"
 	"strconv"
 	"time"
@@ -218,6 +220,7 @@ func add_page_absentInProiderRegistry(f *xlsx.File) {
 		"merchant_name", "project_id", "operation_type",
 		"channel_amount", "channel_currency", "issuer_country",
 		"payment_method_type", "transaction_created_at", "transaction_completed_at",
+		"Проверка",
 	}
 
 	style := xlsx.NewStyle()
@@ -251,6 +254,8 @@ func add_page_absentInProiderRegistry(f *xlsx.File) {
 			continue
 		}
 
+		_, opExist := provider_registry.GetOperation(id, v.Transaction_completed_at, v.Channel_amount)
+
 		row := sheet.AddRow()
 
 		row.AddCell().SetString(v.Operation_id)
@@ -281,6 +286,8 @@ func add_page_absentInProiderRegistry(f *xlsx.File) {
 		} else {
 			row.AddCell().SetDate(v.Transaction_completed_at)
 		}
+
+		row.AddCell().SetString(util.TR(opExist, "Есть данные по конвертации", "Не найдено").(string))
 	}
 
 }

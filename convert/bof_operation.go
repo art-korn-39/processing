@@ -10,6 +10,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -236,7 +237,6 @@ func readBofCH(db *sqlx.DB, key_column string) error {
 					case PAYID:
 						bof_registry[v.Provider_payment_id] = &v
 					}
-
 					mu.Unlock()
 				}
 			}
@@ -281,5 +281,34 @@ func getBatchIdChan(key_column string) chan []string {
 	}()
 
 	return ch
+
+}
+
+func getBofArgs() querrys.Args {
+
+	merchants := []string{}
+	var dateFrom, dateTo time.Time
+
+	for _, op := range bof_registry {
+		merchants = append(merchants, op.Merchant_name)
+
+		if dateFrom.IsZero() || dateFrom.Before(op.Transaction_completed_at) {
+			dateFrom = op.Transaction_completed_at
+		}
+
+		if dateTo.IsZero() || dateTo.After(op.Transaction_completed_at) {
+			dateTo = op.Transaction_completed_at
+		}
+
+	}
+
+	merchants = slices.Compact(merchants)
+
+	args := querrys.Args{}
+	args.Merhcant = merchants
+	args.DateFrom = dateFrom.Add(-20 * 24 * time.Hour)
+	args.DateTo = dateTo.Add(4 * 24 * time.Hour)
+
+	return args
 
 }

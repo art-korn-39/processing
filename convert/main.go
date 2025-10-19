@@ -6,19 +6,31 @@ import (
 	"app/exchange_rates"
 	"app/logs"
 	"app/provider_balances"
+	"app/provider_registry"
 	pr "app/provider_registry"
+	"app/querrys"
 	"app/storage"
 	"app/teams_tradex"
 	"fmt"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/jmoiron/sqlx"
 )
 
 var (
-	final_registry  map[int]*pr.Operation //ключ - operation_id
-	ext_registry    []*Base_operation
-	bof_registry    map[string]*Bof_operation //ключ - operation_id / provider_payment_id
+
+	// обработанные операции провайдера у который есть стыковка с операцией в БОФ
+	final_registry map[int]*pr.Operation //ключ - operation_id (int)
+
+	// прочитанные ("сырые") операции из файла провайдера
+	ext_registry []*Base_operation
+
+	// прочитанные BOF операции (из файла или CH)
+	bof_registry map[string]*Bof_operation //ключ - operation_id / provider_payment_id (string)
+
+	// операции из файла(ов) tradex
 	tradex_registry map[string]*Tradex_operation
 
 	is_kgx_tradex   bool
@@ -56,7 +68,10 @@ func Start() {
 	defer storage.Close()
 
 	// найти подходящие настройки маппинга, прочитать реестр провайдера
-	ReadAndConvert(&cfg, storage)
+	ReadAndConvert(&cfg, storage) // декомпозировать!!??
+
+	// получим реестр провайдера из postgres по данным операций БОФ
+	getProviderRegistry(storage.Postgres)
 
 	// запись результата
 	writeResult(cfg, storage.Postgres)
@@ -201,6 +216,18 @@ func handleRecords() error {
 	logs.Add(logs.INFO, fmt.Sprintf("Конвертация строковых полей в структуру БД: %v [без БОФ: %d]", time.Since(start_time), cntWithoutBof))
 
 	return nil
+
+}
+
+func getProviderRegistry(db *sqlx.DB) {
+
+	registry_done := make(chan querrys.Args, 1)
+	defer close(registry_done)
+
+	args := getBofArgs()
+	registry_done <- args
+
+	provider_registry.PSQL_read_registry_async(db, registry_done)
 
 }
 
