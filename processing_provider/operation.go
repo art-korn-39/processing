@@ -8,6 +8,7 @@ import (
 	"app/merchants"
 	"app/provider_balances"
 	"app/provider_registry"
+	"app/providers_1c"
 	"app/tariff_provider"
 	"app/teams_tradex"
 	"app/util"
@@ -94,7 +95,7 @@ type Operation struct {
 	IsTradex     bool
 
 	//Crypto_network string
-	//Provider1c     string
+	Provider1c string
 
 	CompensationBR float64
 
@@ -309,6 +310,33 @@ func (o *Operation) SetExtraBRAmount() {
 
 }
 
+func (o *Operation) SetProvider1c() {
+
+	if o.ProviderOperation != nil && o.ProviderOperation.Provider1c != "" {
+		o.Provider1c = o.ProviderOperation.Provider1c
+		// } else if o.Tariff != nil && o.Tariff.Provider1C != "" {
+		// 	o.Provider1c = o.Tariff.Provider1C
+	} else if o.ProviderBalance != nil {
+		provider1c, ok := providers_1c.GetProvider1c(o.ProviderBalance.Contractor_GUID,
+			o.Payment_type, o.Balance_currency.Name, o.ProviderBalance.GUID, o.Merchant_id)
+		if ok {
+			o.Provider1c = provider1c.Name
+		}
+	}
+
+	//было:
+	// if o.Tariff != nil && o.Tariff.Convertation == "KGX" && o.ProviderOperation != nil {
+
+	// 	o.Provider1c = o.ProviderOperation.Provider1c
+
+	// } else if o.Tariff != nil {
+
+	// 	o.Provider1c = o.Tariff.Provider1C
+
+	// }
+
+}
+
 func (o *Operation) SetVerification() {
 
 	if o.ProviderBalance == nil {
@@ -325,7 +353,7 @@ func (o *Operation) SetVerification() {
 
 const (
 	VRF_OK         = "ОК"
-	VRF_NO_BALANCE = "Не найден баланс"
+	VRF_NO_BALANCE = "Не найден баланс, проверь конвертацию"
 	VRF_NO_TARIFF  = "Не найден тариф"
 	VRF_NO_IN_REG  = "Нет в реестре"
 )

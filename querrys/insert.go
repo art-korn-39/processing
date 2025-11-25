@@ -93,7 +93,7 @@ func Stat_Insert_detailed_provider() string {
 		endpoint_id, account_bank_name, operation_created_at, balance_amount, br_balance_currency,
 		balance_currency, rate, compensation_br, verification,
 		tariff_date_start, act_percent, act_fix, act_min, act_max, range_min, range_max, region, provider_dragonpay,
-		is_test_id, is_test_type
+		is_test_id, is_test_type, provider_1c
 	)
 	VALUES (
 		:document_id, :operation_id,  :provider_payment_id, :transaction_id, :rrn, :payment_id, :provider_id,
@@ -103,7 +103,7 @@ func Stat_Insert_detailed_provider() string {
 		:endpoint_id, :account_bank_name, :operation_created_at, :balance_amount, :br_balance_currency,
 		:balance_currency, :rate, :compensation_br, :verification,
 		:tariff_date_start, :act_percent, :act_fix, :act_min, :act_max, 
-		:range_min, :range_max, :region, :provider_dragonpay, :is_test_id, :is_test_type
+		:range_min, :range_max, :region, :provider_dragonpay, :is_test_id, :is_test_type, :provider_1c
 		)`
 }
 
@@ -342,6 +342,24 @@ func Stat_Insert_crm_provider_solutions() string {
 		payment_method_name_bof = EXCLUDED.payment_method_name_bof`
 }
 
+func Stat_Insert_crm_provider_losses() string {
+	return `INSERT INTO crm_provider_losses (
+		id, solution_name, provider_id, provider_name, provider_id_bof, 
+		provider_name_bof, payment_method_id_bof, payment_method_name_bof 
+	)
+	VALUES (
+		:id, :solution_name, :provider_id, :provider_name, :provider_id_bof, 
+		:provider_name_bof, :payment_method_id_bof, :payment_method_name_bof 
+	)
+
+	ON CONFLICT ON CONSTRAINT pk_crm_provider_losses_id DO UPDATE
+
+	SET solution_name = EXCLUDED.solution_name, provider_id = EXCLUDED.provider_id, 
+		provider_name = EXCLUDED.provider_name, provider_id_bof = EXCLUDED.provider_id_bof,
+		provider_name_bof = EXCLUDED.provider_name_bof, payment_method_id_bof = EXCLUDED.payment_method_id_bof,
+		payment_method_name_bof = EXCLUDED.payment_method_name_bof`
+}
+
 func Stat_Insert_summary_merchant() string {
 	return `INSERT INTO summary_merchant (
 		document_id, document_date, operation_type, operation_group, 
@@ -367,14 +385,14 @@ func Stat_Insert_summary_provider() string {
 		merchant_id, merchant_account_id, business_type,
 		provider_id, country, region, payment_type, channel_currency, 
 		balance_currency, convertation, tariff_date_start, tariff_guid, formula, channel_amount, balance_amount, 
-		br_channel_currency, br_balance_currency, count_operations, rate,
+		br_channel_currency, br_balance_currency, count_operations, rate, provider_1c,
 		payment_type_id,  project_id, rr_amount, rr_date, convertation_id, extra_br_balance_currency
 	)
 	VALUES (
 		:document_id, :document_date, :operation_type, :operation_group, :merchant_id, :merchant_account_id, 
 		:business_type, :provider_id, :country, :region, :payment_type, :channel_currency, :balance_currency, 
 		:convertation, :tariff_date_start, :tariff_guid, :formula, :channel_amount, :balance_amount, 
-		:br_channel_currency, :br_balance_currency, :count_operations, :rate,
+		:br_channel_currency, :br_balance_currency, :count_operations, :rate, :provider_1c,
 		:payment_type_id,  :project_id, :rr_amount, :rr_date, :convertation_id, :extra_br_balance_currency
 		)`
 }

@@ -9,6 +9,7 @@ import (
 	"app/provider_balances"
 	"app/provider_registry"
 	"app/providers_1c"
+	"app/tariff_compensation"
 	"app/tariff_merchant"
 	"app/util"
 	"slices"
@@ -122,6 +123,8 @@ type Operation struct {
 	Country              countries.Country
 	Detailed_provider    *detailed_provider
 	ProviderBalance      *provider_balances.Balance
+	Tariff_referal       *tariff_compensation.Tariff
+	Tariff_compensation  *tariff_compensation.Tariff
 
 	Tariff_rate_fix     float64 `db:"billing__tariff_rate_fix"`
 	Tariff_rate_percent float64 `db:"billing__tariff_rate_percent"`
@@ -388,7 +391,8 @@ func (o *Operation) SetSRAmount() {
 
 func (o *Operation) SetProviderBalance() {
 
-	o.ProviderBalance, _ = provider_balances.GetBalanceByProviderAndMA(o.Merchant_account_id, o.Provider_id)
+	//o.ProviderBalance, _ = provider_balances.GetBalanceByProviderAndMA(o.Merchant_account_id, o.Provider_id)
+	o.ProviderBalance, _ = provider_balances.GetBalance(o, "")
 }
 
 func (o *Operation) SetProvider1c() {
@@ -398,7 +402,8 @@ func (o *Operation) SetProvider1c() {
 	} else if o.Tariff != nil && o.Tariff.Provider1C != "" {
 		o.Provider1c = o.Tariff.Provider1C
 	} else if o.ProviderBalance != nil {
-		provider1c, ok := providers_1c.GetProvider1c(o.ProviderBalance.Contractor_GUID, o.Payment_type)
+		provider1c, ok := providers_1c.GetProvider1c(o.ProviderBalance.Contractor_GUID,
+			o.Payment_type, o.Balance_currency.Name, o.ProviderBalance.GUID, o.Merchant_id)
 		if ok {
 			o.Provider1c = provider1c.Name
 		}
@@ -417,6 +422,18 @@ func (o *Operation) SetProvider1c() {
 
 }
 
+func (o *Operation) SetTariffReferal() {
+
+	o.Tariff_referal = tariff_compensation.FindTariffForOperation(o, true)
+
+}
+
+func (o *Operation) SetTariffCompensation() {
+
+	o.Tariff_referal = tariff_compensation.FindTariffForOperation(o, false)
+
+}
+
 func (o *Operation) SetCheckFee() {
 
 	// if o.Fee_currency == o.Balance_currency {
@@ -425,7 +442,7 @@ func (o *Operation) SetCheckFee() {
 	// 	o.CheckFee = util.BaseRound(o.Fee_amount - o.SR_channel_currency)
 	// }
 
-	// #1204 убрал округление
+	// # 1204 убрал округление
 
 	if o.Fee_currency == o.Balance_currency {
 		o.CheckFee = o.Fee_amount - o.SR_balance_currency
@@ -657,6 +674,8 @@ func (op *Operation) GetInt(name string) int {
 		result = op.Merchant_account_id
 	case "Balance_id":
 		result = op.Balance_id
+	case "Provider_id":
+		result = op.Provider_id
 	default:
 		logs.Add(logs.ERROR, "неизвестное поле int: ", name)
 	}
@@ -679,6 +698,8 @@ func (op *Operation) GetString(name string) string {
 	switch name {
 	case "Operation_type":
 		result = op.Operation_type
+	case "Operation_group":
+		result = op.Operation_group
 	case "Country":
 		result = op.Country.Code2
 	case "Merchant_name":
@@ -689,6 +710,12 @@ func (op *Operation) GetString(name string) string {
 		result = op.Crypto_network
 	case "Provider1c":
 		result = op.Provider1c
+	case "Balance_type":
+		result = "NULL" // пока ниче не отдаем
+	case "Provider_balance_guid":
+		if op.ProviderBalance != nil {
+			result = op.ProviderBalance.GUID
+		}
 	default:
 		logs.Add(logs.ERROR, "неизвестное поле string: ", name)
 	}

@@ -21,14 +21,25 @@ const DUR = 24
 
 // GET + Q best?
 
-func Read_Registry(registry_done chan querrys.Args) {
+func Read_Registry(registry_done chan querrys.Args, channel_readers int) {
+	defer close(registry_done)
+
+	fill_channel := func(registry_done chan querrys.Args, from_cfg bool, channel_readers int) {
+		args := NewQuerryArgs(from_cfg)
+		for i := 1; i <= channel_readers; i++ {
+			registry_done <- args
+		}
+	}
 
 	if config.Get().Registry.Storage == config.Clickhouse {
-		args := NewQuerryArgs(true)
-		registry_done <- args
-		registry_done <- args
-		registry_done <- args
-		close(registry_done)
+
+		fill_channel(registry_done, true, channel_readers)
+
+		// args := NewQuerryArgs(true)
+		// registry_done <- args
+		// registry_done <- args
+		// registry_done <- args
+		//close(registry_done)
 
 		err := CH_ReadRegistry()
 		if err != nil {
@@ -36,7 +47,7 @@ func Read_Registry(registry_done chan querrys.Args) {
 		}
 
 	} else {
-		defer close(registry_done)
+		//defer close(registry_done)
 		Read_CSV_Registry()
 		sort.Slice(
 			storage.Registry,
@@ -44,10 +55,13 @@ func Read_Registry(registry_done chan querrys.Args) {
 				return storage.Registry[i].Transaction_completed_at.Before(storage.Registry[j].Transaction_completed_at)
 			},
 		)
-		args := NewQuerryArgs(false)
-		registry_done <- args
-		registry_done <- args
-		registry_done <- args
+
+		fill_channel(registry_done, false, channel_readers)
+
+		// args := NewQuerryArgs(false)
+		// registry_done <- args
+		// registry_done <- args
+		// registry_done <- args
 	}
 
 }

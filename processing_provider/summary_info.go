@@ -132,6 +132,8 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		} else {
 			KF.provider1c = dragonpay.GetProvider1C(o.Endpoint_id)
 		}
+	} else {
+		KF.provider1c = o.Provider1c
 	}
 
 	return
@@ -148,11 +150,11 @@ func GroupRegistryToSummaryInfo() (group_data map[KeyFields_SummaryInfo]SumFiled
 
 	group_data = map[KeyFields_SummaryInfo]SumFileds{}
 	for _, operation := range storage.Registry {
-		kf := NewKeyFields_SummaryInfo(operation)  // получили структуру с полями группировки
-		sf := group_data[kf]                       // получили текущие агрегатные данные по ним
-		sf.AddValues(operation)                    // увеличили агрегатные данные на значения тек. операции
-		sf.RoundValues(operation.Balance_currency) // снова избавляемся от погрешностей
-		group_data[kf] = sf                        // положили обратно в мапу
+		kf := NewKeyFields_SummaryInfo(operation) // получили структуру с полями группировки
+		sf := group_data[kf]                      // получили текущие агрегатные данные по ним
+		sf.AddValues(operation)                   // увеличили агрегатные данные на значения тек. операции
+		//sf.RoundValues(operation.Balance_currency) // снова избавляемся от погрешностей
+		group_data[kf] = sf // положили обратно в мапу
 	}
 
 	for k, v := range group_data {

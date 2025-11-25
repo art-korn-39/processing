@@ -31,6 +31,7 @@ type SummaryRowProvider struct {
 	Payment_type_id   int       `db:"payment_type_id"`
 	Payment_type      string    `db:"payment_type"`
 	Business_type     string    `db:"business_type"`
+	Provider_1c       string    `db:"provider_1c"`
 
 	//Schema              string    `db:"schema"`
 	//Payment_method_id int       `db:"payment_method_id"`
@@ -109,7 +110,7 @@ func (row *SummaryRowProvider) SetID() {
 
 }
 
-func GroupRegistryToSummaryMerchant() (data []SummaryRowProvider) {
+func GroupRegistryToSummaryProvider() (data []SummaryRowProvider) {
 
 	NewKey := func(o *Operation) (k SummaryRowProvider) {
 		k = SummaryRowProvider{}
@@ -128,6 +129,7 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowProvider) {
 		k.Business_type = o.Business_type
 		k.Channel_currency_str = o.Channel_currency.Name
 		k.Balance_currency_str = o.Balance_currency.Name
+		k.Provider_1c = o.Provider1c
 
 		//k.Balance_id = o.Balance_id
 		//k.Payment_method_id = o.Payment_method_id

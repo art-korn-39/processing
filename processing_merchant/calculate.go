@@ -111,6 +111,13 @@ func CalculateCommission() {
 				operation.SetProviderBalance()
 				operation.SetProvider1c()
 
+				operation.SetTariffReferal()
+				if operation.Tariff_referal != nil {
+
+				}
+
+				operation.SetTariffCompensation()
+
 				operation.SetCheckFee()
 				operation.SetVerification()
 

@@ -22,23 +22,23 @@ func Start() {
 		logs.Add(logs.FATAL, err)
 	}
 
-	// err = load_employees(cfg, token)
-	// if err != nil {
-	// 	logs.Add(logs.ERROR, err)
-	// }
-	// InsertIntoDB_employees(storage.Postgres)
+	err = load_employees(cfg, token)
+	if err != nil {
+		logs.Add(logs.ERROR, err)
+	}
+	InsertIntoDB_employees(storage.Postgres)
 
-	// err = load_merchants(cfg, token)
-	// if err != nil {
-	// 	logs.Add(logs.ERROR, err)
-	// }
-	// InsertIntoDB_merchants(storage.Postgres)
+	err = load_merchants(cfg, token)
+	if err != nil {
+		logs.Add(logs.ERROR, err)
+	}
+	InsertIntoDB_merchants(storage.Postgres)
 
-	// err = load_providers(cfg, token)
-	// if err != nil {
-	// 	logs.Add(logs.ERROR, err)
-	// }
-	// InsertIntoDB_providers(storage.Postgres)
+	err = load_providers(cfg, token)
+	if err != nil {
+		logs.Add(logs.ERROR, err)
+	}
+	InsertIntoDB_providers(storage.Postgres)
 
 	err = load_provider_solutions(cfg, token)
 	if err != nil {

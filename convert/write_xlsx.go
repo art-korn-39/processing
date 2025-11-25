@@ -254,7 +254,7 @@ func add_page_absentInProiderRegistry(f *xlsx.File) {
 			continue
 		}
 
-		_, opExist := provider_registry.GetOperation(id, v.Transaction_completed_at, v.Channel_amount)
+		_, opExist := provider_registry.GetOperation(id, v.Transaction_completed_at.Truncate(24*time.Hour), v.Channel_amount)
 
 		row := sheet.AddRow()
 

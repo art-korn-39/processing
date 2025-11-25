@@ -7,6 +7,7 @@ import (
 	"app/convert"
 	"app/crm_chargeback"
 	"app/crm_dictionary"
+	"app/crm_provider_losses"
 	"app/crypto"
 	"app/decline"
 	"app/dragonpay"
@@ -29,8 +30,10 @@ func main() {
 	var app string
 	var file_config string
 
-	// processing_merchant | processing_provider | convert | sverka
-	// conversion | decline | crypto | dragonpay | aws | crm_chargeback | crm_dictionary | origamix
+	// processing_merchant  | processing_provider | convert 			| sverka
+	// conversion 			| decline 			  | crypto  			| dragonpay | aws | origamix
+	// crm_chargeback 		| crm_dictionary 	  | crm_provider_losses |
+
 	flag.StringVar(&app, "app", "processing_merchant", "")
 	flag.StringVar(&file_config, "file_config", "", "")
 	flag.Parse()
@@ -61,6 +64,8 @@ func main() {
 		crm_chargeback.Start()
 	case "crm_dictionary":
 		crm_dictionary.Start()
+	case "crm_provider_losses":
+		crm_provider_losses.Start()
 	case "convert":
 		convert.Start()
 	case "sverka":

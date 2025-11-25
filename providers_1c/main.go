@@ -11,11 +11,13 @@ import (
 )
 
 var (
+	registry      Registry
 	map_providers map[string]*Provider1c
 )
 
 func init() {
-	map_providers = map[string]*Provider1c{}
+	registry = make(map[string]*LinkedProvider1c, 100000)
+	//map_providers = map[string]*Provider1c{}
 }
 
 func Read(db *sqlx.DB) {
@@ -38,8 +40,15 @@ func Read(db *sqlx.DB) {
 
 	for _, provider1c := range slice_providers1c {
 
-		key := fmt.Sprint(provider1c.Provider_guid, provider1c.Payment_type_name)
-		map_providers[key] = &provider1c
+		// currency := provider1c.Currency
+		// if currency == "USDT" {
+		// 	currency = "USD"
+		// }
+
+		// key := fmt.Sprint(provider1c.Provider_guid, provider1c.Payment_type_name, currency, provider1c.Merchant_id)
+		// map_providers[key] = &provider1c
+
+		registry.Set(provider1c)
 
 	}
 
@@ -47,13 +56,23 @@ func Read(db *sqlx.DB) {
 
 }
 
-func GetProvider1c(contractor_guid, payment_type string) (*Provider1c, bool) {
+func GetProvider1c_temp(contractor_guid, payment_type, currency string, merchant_id int) (*Provider1c, bool) {
 
-	key := fmt.Sprint(contractor_guid, payment_type)
+	if currency == "USDT" {
+		currency = "USD"
+	}
 
-	val, ok := map_providers[key]
+	key1 := fmt.Sprint(contractor_guid, payment_type, currency, merchant_id)
+	key2 := fmt.Sprint(contractor_guid, payment_type, currency, 0)
+
+	val, ok := map_providers[key1]
 	if ok {
 		return val, true
+	} else {
+		val, ok = map_providers[key2]
+		if ok {
+			return val, true
+		}
 	}
 
 	return nil, false

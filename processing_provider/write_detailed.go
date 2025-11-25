@@ -104,7 +104,7 @@ func SetHeaders_detailed(writer *csv.Writer) {
 		"Компенсация BR", "Проверка", "Старт тарифа",
 		"Акт. тариф", "Акт. фикс", "Акт. Мин", "Акт. Макс",
 		"Range min", "Range max",
-		"region", "Поставщик Dragonpay", "Provider BR", "Тип трафика",
+		"region", "Поставщик Dragonpay", "Provider BR", "Тип трафика", "provider 1C",
 	}
 	writer.Write(headers)
 }
@@ -113,7 +113,7 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 
 	row = []string{
 		fmt.Sprint(d.Operation_id),
-		d.Provider_payment_id,
+		util.IsString1251(d.Provider_payment_id),
 		fmt.Sprint(d.Transaction_id),
 		d.RRN,
 		d.Payment_id,
@@ -160,6 +160,7 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		d.Provider_dragonpay,
 		util.FloatToString(d.Provider_BR, d.Balance_currency.GetAccuracy(4)),
 		d.IsTestType,
+		d.Provider_1c,
 	}
 
 	return

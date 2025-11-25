@@ -129,7 +129,7 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		// cell.SetFloat(v.channel_amount)
 		// cell.SetFormat("0.00")
 
-		util.AddCellWithFloat(row, v.balance_amount, k.balance_currency.GetAccuracy(2))
+		util.AddCellWithFloat(row, v.balance_amount, k.balance_currency.GetAccuracy(3))
 		util.AddCellWithFloat(row, v.BR_balance_currency, k.balance_currency.GetAccuracy(4))
 		util.AddCellWithFloat(row, v.surcharge_amount, 2)
 		util.AddCellWithFloat(row, v.Extra_BR_balance_currency, k.balance_currency.GetAccuracy(4))
@@ -156,7 +156,7 @@ func add_page_detail(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		"real_currency / channel_currency", "Валюта баланса", "Кол-во операций",
 		"Сумма в валюте баланса", "BR Balance Currency", "Компенсация BR",
 		"Акт. тариф формула", "Проверка", "Старт тарифа", "Range", "Мерч 1С",
-		"project id", "project name",
+		"project id", "project name", "Поставщик 1С",
 	}
 
 	style := xlsx.NewStyle()
@@ -232,6 +232,7 @@ func add_page_detail(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 		row.AddCell().SetInt(k.project_id)
 		row.AddCell().SetString(k.project_name)
+		row.AddCell().SetString(k.provider1c)
 
 	}
 

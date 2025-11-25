@@ -27,6 +27,8 @@ type Balance struct {
 	Convertation    string `db:"convertation"`
 	Convertation_id int    `db:"convertation_id"`
 
+	Balance_name_fin string `db:"balance_name_fin"`
+
 	Key_record string `db:"key_record"`
 
 	Balance_currency_str string `db:"balance_currency"`

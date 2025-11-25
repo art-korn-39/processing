@@ -137,12 +137,24 @@ func Stat_Select_tariffs_provider() string {
 			FROM tariffs_provider`
 }
 
+func Stat_Select_tariffs_compensations() string {
+	return `SELECT 
+				guid,code,name,affiliate_name,date_start,affiliate_guid,
+				merchant_id,provider_id,currency,payment_type,
+				traffic_type,percent,fix,min,max,date_finish,provider_1c_guid,
+				provider_1c_name,opeation_group,range_min,range_max,
+				turnover_max,turnover_min,provider_balance_guid,provider_balance_name,
+				merchant_account_name,merchant_account_id,comission_type,tariff_type
+			FROM tariffs_compensations
+			WHERE merchant_id = ANY($1)`
+}
+
 func Stat_Select_provider_balances() string {
 	return `SELECT 
 				guid,provider_balance,contractor,provider_name,provider_id,balance_code,
 				legal_entity,merchant_account,merchant_account_id,date_start,nickname,
 				date_finish,convertation,convertation_id,key_record,balance_currency,type,
-				extra_balance_guid,contractor_guid
+				extra_balance_guid,contractor_guid,balance_name_fin
 			FROM provider_balances
 			WHERE provider_id > 0 AND merchant_account_id > 0`
 }
@@ -265,10 +277,20 @@ func Stat_Select_balances_tradex() string {
 
 func Stat_Select_providers_1c() string {
 	return `SELECT 
-				guid,name,provider_name,provider_guid,
-				payment_method_name,payment_method_id,
-				payment_type_name,payment_type_id,payment_type_guid,
-				currency
-			FROM providers_1c
+				p.guid,
+				p.name,
+				p.provider_name,
+				p.provider_guid,
+				p.payment_method_name,
+				p.payment_method_id,
+				p.payment_type_name,
+				p.payment_type_id,
+				p.payment_type_guid,
+				p.currency,
+				p.provider_balance_guid,
+				coalesce(m.merchant_id, 0) as merchant_id
+			FROM providers_1c p
+			LEFT JOIN merchants m
+			on p.merchant_guid = m.contractor_guid
 			`
 }

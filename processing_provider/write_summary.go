@@ -17,13 +17,13 @@ import (
 
 func Write_Summary(s []SummaryRowProvider) {
 
+	PSQL_Insert_SummaryProvider(s)
+
 	if !config.Get().Summary.Usage {
 		return
 	}
 
-	if config.Get().Summary.Storage == config.PSQL {
-		PSQL_Insert_SummaryProvider(s)
-	} else {
+	if config.Get().Summary.Storage == config.File {
 		Write_CSV_SummaryProvider(s)
 	}
 

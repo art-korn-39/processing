@@ -290,13 +290,13 @@ func getBofArgs() querrys.Args {
 	var dateFrom, dateTo time.Time
 
 	for _, op := range bof_registry {
-		merchants = append(merchants, op.Merchant_name)
+		merchants = append(merchants, strings.ToLower(op.Merchant_name))
 
-		if dateFrom.IsZero() || dateFrom.Before(op.Transaction_completed_at) {
+		if dateFrom.IsZero() || dateFrom.After(op.Transaction_completed_at) {
 			dateFrom = op.Transaction_completed_at
 		}
 
-		if dateTo.IsZero() || dateTo.After(op.Transaction_completed_at) {
+		if dateTo.IsZero() || dateTo.Before(op.Transaction_completed_at) {
 			dateTo = op.Transaction_completed_at
 		}
 

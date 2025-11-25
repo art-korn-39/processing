@@ -132,6 +132,16 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		provider1c:            o.Provider1c,
 	}
 
+	// Для KGX собираем balance_name из нескольких полей
+	// Если есть баланс провайдера, то берем Balance_name_fin
+	// Иначе из тарифа Balance_name
+
+	if o.ProviderBalance != nil {
+		KF.balance_name_prov = o.ProviderBalance.Balance_name_fin
+	} else {
+		KF.balance_name_prov = o.Tariff.Balance_name
+	}
+
 	if o.Tariff != nil {
 		KF.tariff = *o.Tariff
 		KF.balance_id_str = fmt.Sprint(o.Balance_id, "_", o.Tariff.Balance_type)
@@ -139,21 +149,14 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		if o.Tariff.Convertation == "KGX" {
 			if o.ProviderOperation != nil {
 				if o.IsPerevodix {
-					KF.balance_name_merch = o.Provider_name // тут уже лежит баланс из реестра провайдера
+					KF.balance_name_prov = o.Provider_name // тут уже лежит баланс из реестра провайдера
 				} else {
 					//KF.balance_name = fmt.Sprintf("%s_%s_%s", o.Tariff.Provider_name, o.Tariff.Company, o.ProviderOperation.Provider_currency.Name)
-					KF.balance_name_merch = fmt.Sprintf("%s_%s_%s", o.ProviderOperation.Balance, o.Tariff.Company, o.ProviderOperation.Provider_currency.Name)
+					KF.balance_name_prov = fmt.Sprintf("%s_%s_%s", o.ProviderOperation.Balance, o.Tariff.Company, o.ProviderOperation.Provider_currency.Name)
 				}
 			}
-		} else {
-			KF.balance_name_merch = o.Tariff.Balance_name
 		}
 	}
-
-	if o.ProviderBalance != nil {
-		KF.balance_name_prov = o.ProviderBalance.Name
-	}
-	//F.balance_name_prov = KF.balance_name_merch // пока что откатил
 
 	if o.Tariff_bof != nil {
 		KF.tariff_bof = *o.Tariff_bof

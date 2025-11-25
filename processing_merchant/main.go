@@ -11,6 +11,7 @@ import (
 	"app/provider_registry"
 	"app/providers_1c"
 	"app/querrys"
+	"app/tariff_compensation"
 	"app/tariff_merchant"
 	"app/test_merchant_accounts"
 	"fmt"
@@ -81,12 +82,14 @@ func ReadSources() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(10)
+	wg.Add(11)
 
-	registry_done := make(chan querrys.Args, 3)
+	channel_readers := 4
+	registry_done := make(chan querrys.Args, channel_readers)
+
 	go func() {
 		defer wg.Done()
-		Read_Registry(registry_done)
+		Read_Registry(registry_done, channel_readers)
 	}()
 
 	go func() {
@@ -97,6 +100,11 @@ func ReadSources() {
 	go func() {
 		defer wg.Done()
 		tariff_merchant.Read_Sources(storage.Postgres, registry_done)
+	}()
+
+	go func() {
+		defer wg.Done()
+		tariff_compensation.Read_Sources(storage.Postgres, registry_done)
 	}()
 
 	go func() {
@@ -148,6 +156,8 @@ func PrepareData() {
 		defer wg.Done()
 
 		IndicateIsTestInRegistry()
+
+		// определение tradex
 
 		// Сортировка
 		tariff_merchant.SortTariffs()

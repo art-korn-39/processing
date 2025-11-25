@@ -161,7 +161,7 @@ func makeDetailedRowBof(op *Bof_operation) []string {
 		return nil
 	}
 
-	_, opExist := provider_registry.GetOperation(id, op.Transaction_completed_at, op.Channel_amount)
+	_, opExist := provider_registry.GetOperation(id, op.Transaction_completed_at.Truncate(24*time.Hour), op.Channel_amount)
 
 	result := []string{
 		op.Operation_id,

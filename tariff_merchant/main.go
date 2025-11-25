@@ -201,9 +201,6 @@ func FindTariffForOperation(op Operation) *Tariff {
 		// второй раз по общей схеме, как и остальные тарифы [ClassicTariffDragonPay = true]
 		isDragonPay := op.GetBool("IsDragonPay") && !op.GetBool("ClassicTariffDragonPay")
 
-		//if (!isDragonPay && t.Merchant_account_id == op.GetInt("Merchant_account_id")) ||
-		//	(isDragonPay && t.Provider_name == "DragonPay") {
-
 		if t.Merchant_account_id == op.GetInt("Merchant_account_id") {
 
 			if isDragonPay && op.GetString("Provider1c") != t.Provider1C {
@@ -231,6 +228,11 @@ func FindTariffForOperation(op Operation) *Tariff {
 						continue
 					}
 				}
+
+				// Для tradex ещё нужен дополнительное условие по валюте баланса, которую возьмем из provider_registry
+				// if op.is_Tradex && op.prov_reg.currency == t.Balance_currency {
+
+				// }
 
 				if t.Payment_type != "" && t.Payment_type != op.GetString("Payment_type") {
 					continue

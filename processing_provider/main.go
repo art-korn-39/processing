@@ -7,6 +7,7 @@ import (
 	"app/merchants"
 	"app/provider_balances"
 	"app/provider_registry"
+	"app/providers_1c"
 	"app/querrys"
 	"app/tariff_provider"
 	"app/teams_tradex"
@@ -55,7 +56,7 @@ func Start() {
 	st = time.Now()
 
 	// 3. Комиссия и холды
-	HandleDataInOperations()
+	CalculateCommission()
 
 	logs.Add(logs.DEBUG, "CalculateCommission: ", time.Since(st))
 	st = time.Now()
@@ -71,7 +72,7 @@ func ReadSources() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(10)
+	wg.Add(11)
 
 	registry_done := make(chan querrys.Args, 1)
 	go func() {
@@ -124,6 +125,11 @@ func ReadSources() {
 		test_merchant_accounts.Read(storage.Postgres)
 	}()
 
+	go func() {
+		defer wg.Done()
+		providers_1c.Read(storage.Postgres)
+	}()
+
 	wg.Wait()
 }
 
@@ -133,26 +139,22 @@ func PrepareData() {
 	tariff_provider.SortTariffs()
 
 	// Заполнение стран
-	SetCountriesInOperations()
+	SetCountries()
 
 	// Подбор операций из реестра провайдера
-	SetProviderOperations()
+	SetProviders()
 
 	// Подбор балансов к операциям
-	SetBalanceInOperations()
+	SetBalances()
 
-	SetBalanceCurrencyInOperations()
+	SetBalanceCurrencies()
 
 	// Подбор тарифов к операциям
-	SelectTariffsInRegistry()
+	SelectTariffs()
 
-	SetMerchantInOperations()
+	SetMerchants()
 
-}
-
-func HandleDataInOperations() {
-
-	CalculateCommission()
+	SetProvider1C()
 
 }
 
@@ -164,7 +166,7 @@ func SaveResult() {
 
 	// Итоговые данные
 	// Делаем сначала, т.к. они id документа проставляют
-	summary := GroupRegistryToSummaryMerchant()
+	summary := GroupRegistryToSummaryProvider()
 	Write_Summary(summary)
 
 	// Детализированные записи

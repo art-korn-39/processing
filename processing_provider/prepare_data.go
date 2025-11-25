@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-func SetCountriesInOperations() {
+func SetCountries() {
 
 	for _, o := range storage.Registry {
 		o.SetCountry()
@@ -23,7 +23,7 @@ func SetCountriesInOperations() {
 
 }
 
-func SetProviderOperations() {
+func SetProviders() {
 
 	start_time := time.Now()
 
@@ -45,7 +45,7 @@ func SetProviderOperations() {
 
 }
 
-func SetBalanceInOperations() {
+func SetBalances() {
 
 	start_time := time.Now()
 
@@ -100,7 +100,7 @@ func SetBalanceInOperations() {
 
 }
 
-func SetBalanceCurrencyInOperations() {
+func SetBalanceCurrencies() {
 
 	for _, o := range storage.Registry {
 
@@ -127,7 +127,7 @@ func SetBalanceCurrencyInOperations() {
 
 }
 
-func SelectTariffsInRegistry() {
+func SelectTariffs() {
 
 	start_time := time.Now()
 
@@ -178,7 +178,7 @@ func SelectTariffsInRegistry() {
 
 }
 
-func SetMerchantInOperations() {
+func SetMerchants() {
 
 	start_time := time.Now()
 
@@ -194,5 +194,19 @@ func SetMerchantInOperations() {
 	}
 
 	logs.Add(logs.INFO, fmt.Sprintf("Подбор мерчантов к операциям: %v [не найдено: %d]", time.Since(start_time), countWithout))
+
+}
+
+func SetProvider1C() {
+
+	//start_time := time.Now()
+
+	//var countWithout int
+
+	for _, operation := range storage.Registry {
+		operation.SetProvider1c()
+	}
+
+	//logs.Add(logs.INFO, fmt.Sprintf("Подбор мерчантов к операциям: %v [не найдено: %d]", time.Since(start_time), countWithout))
 
 }

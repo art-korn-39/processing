@@ -54,6 +54,7 @@ type Detailed_row struct {
 	Region                    string    `db:"region"`
 	Document_id               int       `db:"document_id"`
 	Provider_dragonpay        string    `db:"provider_dragonpay"`
+	Provider_1c               string    `db:"provider_1c"`
 
 	Balance_currency currency.Currency
 	Provider_BR      float64
@@ -112,6 +113,7 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.CompensationBR = o.CompensationBR
 	d.Verification = o.Verification
 	d.Region = o.Country.Region
+	d.Provider_1c = o.Provider1c
 
 	if o.DragonpayOperation != nil {
 		d.Provider_dragonpay = o.DragonpayOperation.Provider1c
