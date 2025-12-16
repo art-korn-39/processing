@@ -20,12 +20,19 @@ const DUR = 24
 
 // GET + Q best?
 
-func Read_Registry(registry_done chan querrys.Args) {
+func Read_Registry(registry_done chan querrys.Args, channel_readers int) {
+	defer close(registry_done)
+
+	fill_channel := func(registry_done chan querrys.Args, from_cfg bool, channel_readers int) {
+		args := NewQuerryArgs(from_cfg)
+		for i := 1; i <= channel_readers; i++ {
+			registry_done <- args
+		}
+	}
 
 	if config.Get().Registry.Storage == config.Clickhouse {
-		registry_done <- NewQuerryArgs(true)
-		registry_done <- NewQuerryArgs(true)
-		close(registry_done)
+
+		fill_channel(registry_done, true, channel_readers)
 
 		err := CH_ReadRegistry()
 		if err != nil {
@@ -33,7 +40,7 @@ func Read_Registry(registry_done chan querrys.Args) {
 		}
 
 	} else {
-		defer close(registry_done)
+
 		Read_CSV_Registry()
 		sort.Slice(
 			storage.Registry,
@@ -41,8 +48,8 @@ func Read_Registry(registry_done chan querrys.Args) {
 				return storage.Registry[i].Transaction_completed_at.Before(storage.Registry[j].Transaction_completed_at)
 			},
 		)
-		registry_done <- NewQuerryArgs(false)
-		registry_done <- NewQuerryArgs(false)
+
+		fill_channel(registry_done, false, channel_readers)
 	}
 
 }
@@ -54,17 +61,24 @@ func NewQuerryArgs(from_cfg bool) (args querrys.Args) {
 	bof_reg := config.Get().Registry
 
 	if from_cfg { // clickhouse
-		//args.Merhcant = bof_reg.Merchant_name
+		args.Provider_id = bof_reg.Provider_id
 		args.DateFrom = bof_reg.DateFrom.Add(-20 * 24 * time.Hour)
 		args.DateTo = bof_reg.DateTo.Add(4 * 24 * time.Hour)
+
 	} else { // file
 		lenght := len(storage.Registry)
 		if lenght > 0 {
-			//row := storage.Registry[0]
-			//args.Merhcant = append(args.Merhcant, strings.ToLower(row.Merchant_name))
 			args.DateFrom = storage.Registry[0].Transaction_completed_at.Add(-3 * 24 * time.Hour)
 			args.DateTo = storage.Registry[lenght-1].Transaction_completed_at.Add(1 * 24 * time.Hour)
 		}
+
+		for _, row := range storage.Registry {
+			args.Merchant_id = append(args.Merchant_id, row.Merchant_id)
+			args.Provider_id = append(args.Provider_id, row.Provider_id)
+		}
+
+		args.Merchant_id = util.Compact(args.Merchant_id)
+		args.Provider_id = util.Compact(args.Provider_id)
 	}
 
 	return
@@ -135,7 +149,7 @@ func Read_CSV_Registry() {
 
 	wg.Wait()
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Registry))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра из файла: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(storage.Registry))))
 
 }
 
@@ -239,7 +253,7 @@ func CH_ReadRegistry() error {
 		o.StartingFill()
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра из Clickhouse: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Registry))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра из Clickhouse: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(storage.Registry))))
 
 	return nil
 

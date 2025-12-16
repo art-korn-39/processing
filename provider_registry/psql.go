@@ -13,7 +13,7 @@ import (
 	"github.com/lib/pq"
 )
 
-func PSQL_read_registry(db *sqlx.DB, registry_done <-chan querrys.Args) {
+func PSQL_read_registry_by_merchant(db *sqlx.DB, registry_done <-chan querrys.Args) {
 
 	if db == nil {
 		return
@@ -22,16 +22,19 @@ func PSQL_read_registry(db *sqlx.DB, registry_done <-chan querrys.Args) {
 	// MERCHANT_NAME + DATE
 	Args := <-registry_done
 
-	if len(Args.Merhcant) == 0 {
-		logs.Add(logs.INFO, `пустой массив "merchant_name" для чтения операций провайдера`)
-		return
-	}
-
 	start_time := time.Now()
 
-	args := []any{pq.Array(Args.Merhcant), Args.DateFrom, Args.DateTo}
+	usePeriodOnly := len(Args.Merchant_id) == 0
 
-	stat := querrys.Stat_Select_provider_registry()
+	var stat string
+	var args []any
+	if usePeriodOnly {
+		stat = querrys.Stat_Select_provider_registry_period_only()
+		args = []any{Args.DateFrom, Args.DateTo}
+	} else {
+		stat = querrys.Stat_Select_provider_registry_by_merchant_id()
+		args = []any{pq.Array(Args.Merchant_id), Args.DateFrom, Args.DateTo}
+	}
 
 	err := db.Select(&rates, stat, args...)
 	if err != nil {
@@ -42,16 +45,16 @@ func PSQL_read_registry(db *sqlx.DB, registry_done <-chan querrys.Args) {
 	for i := range rates {
 		operation := &rates[i]
 
-		operation.StartingFill(true)
+		operation.StartingFill(false)
 
 		registry.Set(*operation)
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(rates))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(rates))))
 
 }
 
-func PSQL_read_registry_async(db *sqlx.DB, registry_done <-chan querrys.Args) {
+func PSQL_read_registry_by_merchant_async(db *sqlx.DB, registry_done <-chan querrys.Args) {
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
@@ -63,22 +66,17 @@ func PSQL_read_registry_async(db *sqlx.DB, registry_done <-chan querrys.Args) {
 	// MERCHANT_NAME + DATE
 	Args := <-registry_done
 
-	// if len(Args.Merhcant) == 0 {
-	// 	logs.Add(logs.INFO, `пустой массив "merchant_name" для чтения операций провайдера`)
-	// 	return
-	// }
-
 	start_time := time.Now()
 
-	channel_dates := util.GetChannelOfDays(Args.DateFrom, Args.DateTo, 24*time.Hour)
+	channel_dates := util.GetChannelOfDays(Args.DateFrom, Args.DateTo, 3*24*time.Hour)
 
-	usePeriodOnly := len(Args.Merhcant) == 0
+	usePeriodOnly := len(Args.Merchant_id) == 0
 
 	var stat string
 	if usePeriodOnly {
 		stat = querrys.Stat_Select_provider_registry_period_only()
 	} else {
-		stat = querrys.Stat_Select_provider_registry()
+		stat = querrys.Stat_Select_provider_registry_by_merchant_id()
 	}
 
 	wg.Add(config.NumCPU)
@@ -91,7 +89,7 @@ func PSQL_read_registry_async(db *sqlx.DB, registry_done <-chan querrys.Args) {
 				if usePeriodOnly {
 					args = []any{period.StartDay, period.EndDay}
 				} else {
-					args = []any{pq.Array(Args.Merhcant), period.StartDay, period.EndDay}
+					args = []any{pq.Array(Args.Merchant_id), period.StartDay, period.EndDay}
 				}
 
 				res := make([]Operation, 0, 10000)
@@ -119,11 +117,11 @@ func PSQL_read_registry_async(db *sqlx.DB, registry_done <-chan querrys.Args) {
 		registry.Set(*operation)
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(rates))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(rates))))
 
 }
 
-func PSQL_read_registry_async_querry(db *sqlx.DB, registry_done <-chan querrys.Args) {
+func PSQL_read_registry_by_provider_async(db *sqlx.DB, registry_done <-chan querrys.Args) {
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
@@ -135,16 +133,23 @@ func PSQL_read_registry_async_querry(db *sqlx.DB, registry_done <-chan querrys.A
 	// MERCHANT_NAME + DATE
 	Args := <-registry_done
 
-	if len(Args.Merhcant) == 0 {
-		logs.Add(logs.INFO, `пустой массив "merchant_name" для чтения операций провайдера`)
-		return
-	}
-
 	start_time := time.Now()
 
-	channel_dates := util.GetChannelOfDays(Args.DateFrom, Args.DateTo, 24*time.Hour)
+	channel_dates := util.GetChannelOfDays(Args.DateFrom, Args.DateTo, 3*24*time.Hour)
 
-	stat := querrys.Stat_Select_provider_registry()
+	usePeriodOnly := len(Args.Provider_id) == 0
+	//useMerchantID := len(Args.Merchant_id) > 0
+
+	var stat string
+	if usePeriodOnly {
+		stat = querrys.Stat_Select_provider_registry_period_only()
+	} else {
+		// if useMerchantID {
+		// 	stat = querrys.Stat_Select_provider_registry()
+		// } else {
+		stat = querrys.Stat_Select_provider_registry_by_provider_id()
+		// }
+	}
 
 	wg.Add(config.NumCPU)
 	for i := 1; i <= config.NumCPU; i++ {
@@ -152,32 +157,19 @@ func PSQL_read_registry_async_querry(db *sqlx.DB, registry_done <-chan querrys.A
 			defer wg.Done()
 			for period := range channel_dates {
 
-				args := []any{pq.Array(Args.Merhcant), period.StartDay, period.EndDay}
+				var args []any
+				if usePeriodOnly {
+					args = []any{period.StartDay, period.EndDay}
+				} else {
+					args = []any{pq.Array(Args.Provider_id), period.StartDay, period.EndDay}
+				}
 
 				res := make([]Operation, 0, 10000)
 
-				rows, err := db.Queryx(stat, args...)
+				err := db.Select(&res, stat, args...)
 				if err != nil {
-					logs.Add(logs.FATAL, err)
+					logs.Add(logs.INFO, err)
 					return
-				}
-
-				for rows.Next() {
-
-					var r Operation
-					if err := rows.StructScan(&r); err != nil {
-						logs.Add(logs.FATAL, err)
-						return
-					}
-
-					r.StartingFill(false)
-
-					mu.Lock()
-					registry.Set(r)
-					mu.Unlock()
-
-					res = append(res, r)
-
 				}
 
 				mu.Lock()
@@ -189,6 +181,14 @@ func PSQL_read_registry_async_querry(db *sqlx.DB, registry_done <-chan querrys.A
 
 	wg.Wait()
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера из Postgres async Q: %v [%s строк]", time.Since(start_time), util.FormatInt(len(rates))))
+	for i := range rates {
+		operation := &rates[i]
+
+		operation.StartingFill(false)
+
+		registry.Set(*operation)
+	}
+
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(rates))))
 
 }

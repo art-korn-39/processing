@@ -1,5 +1,6 @@
 package providers_1c
 
+// 176 bytes
 type Provider1c struct {
 	Guid                  string `db:"guid"`
 	Name                  string `db:"name"`

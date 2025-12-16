@@ -62,7 +62,7 @@ func readFiles(db *sqlx.DB, folder string) (files []*file.FileInfo, err error) {
 		atomic.AddInt64(&files_readed, 1)
 
 		for _, o := range operations {
-			registry[o.Id] = o
+			registry[o.Id] = &o
 		}
 
 		file.Rows = len(operations)

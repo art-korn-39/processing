@@ -46,7 +46,7 @@ func Read(db *sqlx.DB) {
 
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение teams tradex из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(slice_teams))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение teams tradex: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(slice_teams))))
 
 }
 

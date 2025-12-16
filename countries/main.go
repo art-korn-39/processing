@@ -41,7 +41,7 @@ func Read_Data(db *sqlx.DB) {
 		data_currency[country.Currency] = country
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение стран из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(data_code2))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение стран: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(data_code2))))
 
 }
 

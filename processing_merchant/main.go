@@ -1,18 +1,19 @@
 package processing_merchant
 
 import (
-	"app/config"
 	"app/countries"
 	"app/crypto"
 	"app/dragonpay"
-	"app/holds"
 	"app/logs"
 	"app/provider_balances"
 	"app/provider_registry"
+	"app/providers"
 	"app/providers_1c"
 	"app/querrys"
+	"app/rr_merchant"
 	"app/tariff_compensation"
 	"app/tariff_merchant"
+	"app/teams_tradex"
 	"app/test_merchant_accounts"
 	"fmt"
 	"strings"
@@ -21,7 +22,7 @@ import (
 )
 
 const (
-	Version = "1.6.0"
+	Version = "1.7.0"
 )
 
 var (
@@ -55,7 +56,7 @@ func Start() {
 
 	// 2. Проверка файла реестра БОФ
 	if BofRegistryNotValid() {
-		logs.Add(logs.FATAL, strings.ToUpper("Некорректный файл из БОФ"))
+		logs.Add(logs.FATAL, strings.ToUpper("Некорректный файл из БОФ (файл был перезаписан, id операций не актуальны)"))
 	}
 
 	// 3. Подготовка данных
@@ -64,9 +65,8 @@ func Start() {
 	logs.Add(logs.DEBUG, "PrepareData: ", time.Since(st))
 	st = time.Now()
 
-	// 4. Комиссия и холды
+	// 4. Расчёты
 	CalculateCommission()
-	HandleHolds()
 
 	logs.Add(logs.DEBUG, "CalculateCommission: ", time.Since(st))
 	st = time.Now()
@@ -82,9 +82,9 @@ func ReadSources() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(11)
+	wg.Add(14)
 
-	channel_readers := 4
+	channel_readers := 5
 	registry_done := make(chan querrys.Args, channel_readers)
 
 	go func() {
@@ -94,7 +94,7 @@ func ReadSources() {
 
 	go func() {
 		defer wg.Done()
-		provider_registry.Read_Registry(storage.Postgres, registry_done)
+		provider_registry.Read_Registry(storage.Postgres, registry_done, true)
 	}()
 
 	go func() {
@@ -104,7 +104,7 @@ func ReadSources() {
 
 	go func() {
 		defer wg.Done()
-		tariff_compensation.Read_Sources(storage.Postgres, registry_done)
+		tariff_compensation.Read_Sources(storage.Postgres, true)
 	}()
 
 	go func() {
@@ -114,12 +114,12 @@ func ReadSources() {
 
 	go func() {
 		defer wg.Done()
-		crypto.Read_Registry(storage.Postgres)
+		crypto.Read_Registry(storage.Postgres, registry_done)
 	}()
 
 	go func() {
 		defer wg.Done()
-		dragonpay.Read_Registry(storage.Postgres, false)
+		dragonpay.Read_Registry(storage.Postgres, false, registry_done)
 	}()
 
 	go func() {
@@ -142,44 +142,22 @@ func ReadSources() {
 		providers_1c.Read(storage.Postgres)
 	}()
 
-	wg.Wait()
-}
-
-func PrepareData() {
-
-	var wg sync.WaitGroup
-
-	wg.Add(2)
-
-	// 2. Тарифы
 	go func() {
 		defer wg.Done()
-
-		IndicateIsTestInRegistry()
-
-		// определение tradex
-
-		// Сортировка
-		tariff_merchant.SortTariffs()
-		holds.Sort()
-
-		// Подбор тарифов к операциям
-		SelectTariffsInRegistry()
+		providers.Read(storage.Postgres)
 	}()
 
-	// 2. Курсы валют
 	go func() {
 		defer wg.Done()
+		teams_tradex.Read(storage.Postgres)
+	}()
 
-		// Группировка курсов валют
-		provider_registry.GroupRates()
-
-		// Сортировка курсов валют
-		provider_registry.SortRates()
+	go func() {
+		defer wg.Done()
+		rr_merchant.Read(storage.Postgres)
 	}()
 
 	wg.Wait()
-
 }
 
 func SaveResult() {
@@ -207,44 +185,5 @@ func SaveResult() {
 	}()
 
 	wg.Wait()
-
-}
-
-func IndicateIsTestInRegistry() {
-
-	start_time := time.Now()
-
-	channel_indexes := make(chan int, 1000)
-
-	var wg sync.WaitGroup
-
-	wg.Add(config.NumCPU)
-	for i := 1; i <= config.NumCPU; i++ {
-		go func() {
-			defer wg.Done()
-
-			for index := range channel_indexes {
-
-				operation := storage.Registry[index]
-
-				operation.mu.Lock()
-				if test_merchant_accounts.Skip(operation.Document_date, operation.Merchant_account_id, operation.Operation_type) {
-					operation.IsTestId = 1
-					operation.IsTestType = "live test"
-				}
-				operation.mu.Unlock()
-
-			}
-		}()
-	}
-
-	for i := range storage.Registry {
-		channel_indexes <- i
-	}
-	close(channel_indexes)
-
-	wg.Wait()
-
-	logs.Add(logs.INFO, fmt.Sprintf("Определение тестового трафика: %v", time.Since(start_time)))
 
 }

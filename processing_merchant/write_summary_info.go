@@ -49,17 +49,13 @@ func Write_XLSX_SummaryInfo(M map[KeyFields_SummaryInfo]SumFileds) {
 	add_page_all_fails(f)
 	add_page_check_tariff_id(f, M)
 
-	//add_page_svodno(f, M)
-	//add_page_3_checkRate(f, M)
-	//add_page_5_no_Perevodix_KGX_verification(f)
-
 	err := f.Save(config.Get().SummaryInfo.Filename)
 	if err != nil {
 		logs.Add(logs.INFO, "Не удалось сохранить данные в Excel файл: ошибка совместного доступа к файлу")
 		return
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Сохранение данных в Excel файл: %v", time.Since(start_time)))
+	logs.Add(logs.INFO, fmt.Sprintf("Сохранение данных в Excel файл: %v", util.FormatDuration(time.Since(start_time))))
 
 }
 
@@ -73,9 +69,9 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		"Старт тарифа", "tariff_condition_id", "contract_id", "PPрасхолд", "ДатаРасхолдМ", "CryptoNetWork",
 		"ДК тариф формула", "Компенсация BC", "Компенсация RC",
 		"real_amount / channel_amount", "real_amount, fee", "Сумма в валюте баланса",
-		"SR Balance Currency", "ChecFee", "Кол-во операций", "Сумма холда", "СуммаХолдаМ",
+		"SR Balance Currency", "ChecFee", "Кол-во операций", "СуммаХолдаМ",
 		"К возврату на баланс, оборот", "К возврату на баланс, комиссия", "Surcharge amount", "BOF fee_amount",
-		"issuer country"}
+		"issuer country", "referal_name", "SR_referal", "RR_amount", "RR_date_unhold"}
 
 	style := xlsx.NewStyle()
 	style.Fill.FgColor = "5B9BD5"
@@ -234,7 +230,6 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		// cell.SetFloat(v.fee_amount)
 		// cell.SetFormat("0.00")
 
-		util.AddCellWithFloat(row, v.RR_amount, 2)
 		util.AddCellWithFloat(row, v.hold_amount, 2)
 		util.AddCellWithFloat(row, v.BalanceRefund_turnover, 2)
 		util.AddCellWithFloat(row, v.BalanceRefund_fee, 2)
@@ -242,6 +237,16 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		util.AddCellWithFloat(row, v.fee_amount, 2)
 
 		row.AddCell().SetString(k.country)
+
+		row.AddCell().SetString(k.referal_name)
+		util.AddCellWithFloat(row, v.SR_referal, 8)
+		util.AddCellWithFloat(row, v.RR_amount, 2)
+
+		if k.RR_date.IsZero() { //16
+			row.AddCell().SetString("")
+		} else {
+			row.AddCell().SetDate(k.RR_date)
+		}
 	}
 
 }

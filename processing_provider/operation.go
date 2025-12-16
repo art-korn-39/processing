@@ -9,6 +9,8 @@ import (
 	"app/provider_balances"
 	"app/provider_registry"
 	"app/providers_1c"
+	"app/rr_provider"
+	"app/tariff_compensation"
 	"app/tariff_provider"
 	"app/teams_tradex"
 	"app/util"
@@ -87,6 +89,7 @@ type Operation struct {
 	BR_balance_currency       float64
 	Extra_BR_balance_currency float64
 	Operation_actual_amount   float64
+	BR_Compensation           float64
 
 	Verification string
 	IsDragonPay  bool
@@ -94,19 +97,20 @@ type Operation struct {
 	IsPerevodix  bool
 	IsTradex     bool
 
-	//Crypto_network string
+	RR_amount float64
+	RR_date   time.Time
+
 	Provider1c string
 
-	CompensationBR float64
-
-	ProviderOperation  *provider_registry.Operation
-	Tariff             *tariff_provider.Tariff
-	Extra_tariff       *tariff_provider.Tariff
-	DragonpayOperation *dragonpay.Operation
-	//Hold              *holds.Hold
-	Country         countries.Country
-	ProviderBalance *provider_balances.Balance
-	Merchant        *merchants.Merchant
+	ProviderOperation   *provider_registry.Operation
+	Tariff              *tariff_provider.Tariff
+	Extra_tariff        *tariff_provider.Tariff
+	Tariff_compensation *tariff_compensation.Tariff
+	DragonpayOperation  *dragonpay.Operation
+	Country             countries.Country
+	ProviderBalance     *provider_balances.Balance
+	Merchant            *merchants.Merchant
+	RR_provider         *rr_provider.Tariff
 
 	Legal_entity_id int `db:"legal_entity_id"`
 
@@ -203,6 +207,70 @@ const (
 	CNV_CALLBACK   int = 3
 )
 
+func (o *Operation) SetBalance() {
+
+	// для операции с конвертом = "реестр" должна быть операция в "Provider_registry"
+	currency := o.Channel_currency.Name
+	if o.ProviderOperation != nil {
+		currency = o.ProviderOperation.Provider_currency.Name
+	} else if o.Provider_amount > 0 {
+		currency = ""
+	}
+
+	var balance *provider_balances.Balance
+	var ok bool
+	if o.IsTradex && o.ProviderOperation != nil {
+		balance, ok = provider_balances.GetBalanceByNickname(o.ProviderOperation.Balance)
+	} else {
+		balance, ok = provider_balances.GetBalance(o, currency)
+	}
+
+	if ok {
+		o.ProviderBalance = balance
+	} else {
+
+		// это для "без конвертации" и валюты канала = USD
+		if o.Channel_currency.Name == "USD" {
+			balance, ok = provider_balances.GetBalance(o, "USDT")
+			if ok && balance.Convertation_id == CNV_NO_CONVERT {
+				o.ProviderBalance = balance
+			}
+		}
+
+		// для колбэка условие, если баланс так и не нашли
+		if o.ProviderBalance == nil && o.Provider_amount == 0 {
+			balance, ok = provider_balances.GetBalance(o, "")
+			if ok && balance.Convertation_id == CNV_CALLBACK {
+				o.ProviderBalance = balance
+			}
+		}
+	}
+
+}
+
+func (o *Operation) SetBalanceCurrency() {
+
+	if o.ProviderOperation != nil {
+		o.Balance_currency = o.ProviderOperation.Provider_currency
+
+	} else if o.ProviderBalance != nil &&
+		(o.ProviderBalance.Convertation_id == CNV_CALLBACK ||
+			o.ProviderBalance.Convertation_id == CNV_REESTR) {
+
+		o.Balance_currency = o.ProviderBalance.Balance_currency
+
+	} else if o.ProviderBalance != nil &&
+		o.ProviderBalance.Convertation_id == CNV_NO_CONVERT &&
+		o.Channel_currency.Name == "USD" {
+
+		o.Balance_currency = o.ProviderBalance.Balance_currency
+
+	} else {
+		o.Balance_currency = o.Channel_currency
+	}
+
+}
+
 func (o *Operation) SetBalanceAmount() {
 
 	if o.ProviderOperation != nil && o.ProviderBalance != nil {
@@ -292,15 +360,6 @@ func (o *Operation) SetExtraBRAmount() {
 		commission = t.Max
 	}
 
-	// ОКРУГЛЕНИЕ
-	// if o.Balance_currency.Crypto {
-	// 	o.Extra_BR_balance_currency = util.Round(commission, 8)
-	// } else if o.Balance_currency.Exponent {
-	// 	o.Extra_BR_balance_currency = util.Round(commission, 0)
-	// } else {
-	// 	o.Extra_BR_balance_currency = util.Round(commission, 4)
-	// }
-
 	//#1204
 	if o.Balance_currency.Exponent {
 		o.Extra_BR_balance_currency = util.Round(commission, 0)
@@ -324,16 +383,45 @@ func (o *Operation) SetProvider1c() {
 		}
 	}
 
-	//было:
-	// if o.Tariff != nil && o.Tariff.Convertation == "KGX" && o.ProviderOperation != nil {
+}
 
-	// 	o.Provider1c = o.ProviderOperation.Provider1c
+func (o *Operation) SetRR() {
 
-	// } else if o.Tariff != nil {
+	if o.RR_provider == nil {
+		return
+	}
 
-	// 	o.Provider1c = o.Tariff.Provider1C
+	if o.Operation_group != "IN" {
+		return
+	}
 
-	// }
+	// o.RR_date = o.Document_date.AddDate(0, 0, o.Tariff.RR_days)
+	// o.RR_amount = o.Balance_amount * o.Tariff.RR_percent / 100
+
+	//if o.RR_merchant != nil {
+	o.RR_date = o.Document_date.AddDate(0, 0, o.RR_provider.Amount_days)
+	o.RR_amount = o.Balance_amount * o.RR_provider.Percent / 100
+	//}
+
+}
+
+func (o *Operation) SetBRCompensation() {
+
+	if o.Tariff_compensation == nil {
+		return
+	}
+
+	t := o.Tariff_compensation
+
+	amount := o.Balance_amount*t.Percent/100 + t.Fix
+
+	if t.Min != 0 && amount < t.Min {
+		amount = t.Min
+	} else if t.Max != 0 && amount > t.Max {
+		amount = t.Max
+	}
+
+	o.BR_Compensation = amount
 
 }
 
@@ -372,7 +460,7 @@ func (op *Operation) GetBool(name string) bool {
 	case "IsDragonPay":
 		result = op.IsDragonPay
 	default:
-		logs.Add(logs.ERROR, "неизвестное поле bool: ", name)
+		logs.Add(logs.FATAL, "неизвестное поле bool: ", name)
 	}
 	return result
 }
@@ -386,7 +474,7 @@ func (op *Operation) GetTime(name string) time.Time {
 	case "Transaction_created_at":
 		result = op.Transaction_created_at
 	default:
-		logs.Add(logs.ERROR, "неизвестное поле time: ", name)
+		logs.Add(logs.FATAL, "неизвестное поле time: ", name)
 	}
 	return result
 }
@@ -397,10 +485,12 @@ func (op *Operation) GetInt(name string) int {
 		result = op.Merchant_account_id
 	case "Provider_id":
 		result = op.Provider_id
+	case "Merchant_id":
+		result = op.Merchant_id
 	case "Legal_entity_id":
 		result = op.Legal_entity_id
 	default:
-		logs.Add(logs.ERROR, "неизвестное поле int: ", name)
+		logs.Add(logs.FATAL, "неизвестное поле int: ", name)
 	}
 	return result
 }
@@ -411,7 +501,7 @@ func (op *Operation) GetFloat(name string) float64 {
 	case "Channel_amount":
 		result = op.Channel_amount
 	default:
-		logs.Add(logs.ERROR, "неизвестное поле float: ", name)
+		logs.Add(logs.FATAL, "неизвестное поле float: ", name)
 	}
 	return result
 }
@@ -419,7 +509,7 @@ func (op *Operation) GetFloat(name string) float64 {
 func (op *Operation) GetString(name string) string {
 	var result string
 	switch name {
-	case "Balance_guid":
+	case "Provider_balance_guid":
 		if op.IsTradex {
 			if op.ProviderOperation != nil {
 				team := op.ProviderOperation.Team
@@ -452,6 +542,8 @@ func (op *Operation) GetString(name string) string {
 		result = op.Merchant_account_name
 	case "Operation_group":
 		result = op.Operation_group
+	case "Operation_type":
+		result = op.Operation_type
 	case "Payment_method":
 		result = op.Payment_method
 	case "Payment_type":
@@ -460,6 +552,8 @@ func (op *Operation) GetString(name string) string {
 		result = op.Country.Region
 	case "Project_name":
 		result = op.Project_name
+	case "Balance_currency":
+		result = op.Balance_currency.Name
 	case "Business_type":
 		result = op.Business_type
 	case "Traffic_type":
@@ -471,7 +565,7 @@ func (op *Operation) GetString(name string) string {
 			result = op.ProviderOperation.Team
 		}
 	default:
-		logs.Add(logs.ERROR, "неизвестное поле string: ", name)
+		logs.Add(logs.FATAL, "неизвестное поле string: ", name)
 	}
 	return result
 }

@@ -20,14 +20,17 @@ func Start() {
 	}
 	defer storage.Close()
 
+	// реестр провайдера
 	full_registry := convert.ReadAndConvert(&cfg, storage)
 
 	sortRegistry(full_registry)
 
 	provider, start, finish := getArguments(full_registry)
 
+	// получаем операции из detailed provider по провайдеру за период
 	detailed := PSQL_read_registry(storage.Postgres, provider, start, finish)
 
+	// сравниваем br и channel_amount
 	differ_table := compare(full_registry, detailed)
 
 	writeResult(&cfg, differ_table)

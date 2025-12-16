@@ -59,7 +59,7 @@ func Read(db *sqlx.DB) {
 
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение тестовых МА из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(slice))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение тестовых МА: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(slice))))
 
 }
 

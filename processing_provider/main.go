@@ -9,6 +9,8 @@ import (
 	"app/provider_registry"
 	"app/providers_1c"
 	"app/querrys"
+	"app/rr_provider"
+	"app/tariff_compensation"
 	"app/tariff_provider"
 	"app/teams_tradex"
 	"app/test_merchant_accounts"
@@ -18,7 +20,7 @@ import (
 )
 
 const (
-	Version = "1.3.2"
+	Version = "1.3.5"
 )
 
 var (
@@ -50,7 +52,11 @@ func Start() {
 	st = time.Now()
 
 	// 2. Подготовка данных
-	PrepareData()
+	// сортировка
+	tariff_provider.SortTariffs()
+
+	// заполнение ссылочных полей
+	FillRefFieldsInRegistry()
 
 	logs.Add(logs.DEBUG, "PrepareData: ", time.Since(st))
 	st = time.Now()
@@ -72,17 +78,24 @@ func ReadSources() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(11)
+	wg.Add(13)
 
-	registry_done := make(chan querrys.Args, 1)
+	channel_readers := 3
+	registry_done := make(chan querrys.Args, channel_readers)
+
 	go func() {
 		defer wg.Done()
-		Read_Registry(registry_done)
+		Read_Registry(registry_done, channel_readers)
 	}()
 
 	go func() {
 		defer wg.Done()
-		provider_registry.Read_Registry(storage.Postgres, registry_done)
+		provider_registry.Read_Registry(storage.Postgres, registry_done, false)
+	}()
+
+	go func() {
+		defer wg.Done()
+		tariff_compensation.Read_Sources(storage.Postgres, false)
 	}()
 
 	go func() {
@@ -107,7 +120,7 @@ func ReadSources() {
 
 	go func() {
 		defer wg.Done()
-		dragonpay.Read_Registry(storage.Postgres, false)
+		dragonpay.Read_Registry(storage.Postgres, false, registry_done)
 	}()
 
 	go func() {
@@ -130,32 +143,12 @@ func ReadSources() {
 		providers_1c.Read(storage.Postgres)
 	}()
 
+	go func() {
+		defer wg.Done()
+		rr_provider.Read(storage.Postgres)
+	}()
+
 	wg.Wait()
-}
-
-func PrepareData() {
-
-	// Сортировка
-	tariff_provider.SortTariffs()
-
-	// Заполнение стран
-	SetCountries()
-
-	// Подбор операций из реестра провайдера
-	SetProviders()
-
-	// Подбор балансов к операциям
-	SetBalances()
-
-	SetBalanceCurrencies()
-
-	// Подбор тарифов к операциям
-	SelectTariffs()
-
-	SetMerchants()
-
-	SetProvider1C()
-
 }
 
 func SaveResult() {

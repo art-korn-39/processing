@@ -8,23 +8,19 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 )
 
-func Read_PSQL_Tariffs(db *sqlx.DB, registry_done <-chan querrys.Args) {
+func Read_PSQL_Tariffs(db *sqlx.DB, processing_merchant bool) {
 
 	if db == nil {
 		return
 	}
 
-	// MERCHANT_NAME + DATE
-	Args := <-registry_done
-
 	start_time := time.Now()
 
 	stat := querrys.Stat_Select_tariffs_compensations()
 
-	err := db.Select(&data, stat, pq.Array(Args.Merchant_id))
+	err := db.Select(&data, stat, processing_merchant)
 	if err != nil {
 		logs.Add(logs.INFO, err)
 		return
@@ -36,6 +32,6 @@ func Read_PSQL_Tariffs(db *sqlx.DB, registry_done <-chan querrys.Args) {
 
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение прочих тарифов из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(data))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение прочих тарифов: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(data))))
 
 }

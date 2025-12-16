@@ -32,6 +32,6 @@ func Read_PSQL_Tariffs(db *sqlx.DB) {
 
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение тарифов провайдера из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(data))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение тарифов провайдера: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(data))))
 
 }

@@ -2,6 +2,7 @@ package processing_merchant
 
 import (
 	"app/countries"
+	"app/crypto"
 	"app/currency"
 	"app/dragonpay"
 	"app/holds"
@@ -9,6 +10,7 @@ import (
 	"app/provider_balances"
 	"app/provider_registry"
 	"app/providers_1c"
+	"app/rr_merchant"
 	"app/tariff_compensation"
 	"app/tariff_merchant"
 	"app/util"
@@ -90,20 +92,25 @@ type Operation struct {
 
 	Actual_amount float64 `db:"actual_amount"`
 
-	Rate                   float64
-	SR_channel_currency    float64
-	SR_balance_currency    float64
-	CheckFee, CheckRates   float64
-	Verification           string
-	Verification_Tariff    string
-	IsDragonPay            bool
-	ClassicTariffDragonPay bool
-	IsPerevodix            bool
-	IsMonetix              bool
-	IsQafpay               bool
-	IsSirp                 bool
-	Crypto_network         string
-	Provider1c             string
+	Rate                 float64
+	SR_channel_currency  float64
+	SR_balance_currency  float64
+	SR_referal           float64
+	CheckFee, CheckRates float64
+	Verification         string
+	Verification_Tariff  string
+
+	IsDragonPay              bool
+	ClassicTariffDragonPay   bool
+	IsTradex                 bool
+	IsPerevodix              bool
+	IsMonetix                bool
+	IsQafpay                 bool
+	IsSirp                   bool
+	IsCrypto                 bool
+	TakeProvider1cFromTariff bool
+
+	Provider1c string
 
 	RR_amount float64
 	RR_date   time.Time
@@ -115,6 +122,7 @@ type Operation struct {
 	hold_date   time.Time
 
 	ProviderOperation    *provider_registry.Operation
+	CryptoOperation      *crypto.Operation
 	Tariff_bof           *tariff_merchant.Tariff
 	Tariff               *tariff_merchant.Tariff
 	Tariff_dragonpay_mid *tariff_merchant.Tariff
@@ -125,6 +133,7 @@ type Operation struct {
 	ProviderBalance      *provider_balances.Balance
 	Tariff_referal       *tariff_compensation.Tariff
 	Tariff_compensation  *tariff_compensation.Tariff
+	RR_merchant          *rr_merchant.Tariff
 
 	Tariff_rate_fix     float64 `db:"billing__tariff_rate_fix"`
 	Tariff_rate_percent float64 `db:"billing__tariff_rate_percent"`
@@ -151,6 +160,8 @@ func (o *Operation) StartingFill() {
 	o.IsMonetix = o.Merchant_id == 648
 	o.IsQafpay = o.Merchant_id == 74032
 	o.IsSirp = slices.Contains([]int{33042, 32142}, o.Provider_id)
+	o.TakeProvider1cFromTariff = slices.Contains([]int{30126, 30136, 34942}, o.Provider_id)
+	o.IsCrypto = o.Provider_id == 8342
 
 	o.Provider_currency = currency.New(o.Provider_currency_str)
 	o.Msc_currency = currency.New(o.Msc_currency_str)
@@ -210,18 +221,34 @@ func (o *Operation) StartingFill() {
 
 }
 
-func (o *Operation) SetCountry() {
-	o.Country = countries.GetCountry(o.Country_code2, o.Channel_currency.Name)
-}
+// func (o *Operation) SetCountry() {
+// 	o.Country = countries.GetCountry(o.Country_code2, o.Channel_currency.Name)
+// }
 
-func (o *Operation) SetDetailed_provider() {
-	o.Detailed_provider = data_detailed_provider[o.Operation_id]
+// func (o *Operation) SetDetailed_provider() {
+// 	o.Detailed_provider = data_detailed_provider[o.Operation_id]
+// }
+
+func (o *Operation) SetBalanceCurrency() {
+
+	if o.Tariff == nil {
+		return
+	}
+
+	t := o.Tariff
+
+	o.Balance_currency = t.Balance_currency
+
+	if t.Convertation == "KGX" && o.ProviderOperation != nil {
+		o.Balance_currency = o.ProviderOperation.Provider_currency
+	}
+
 }
 
 func (o *Operation) SetBalanceAmount() {
 
 	t := o.Tariff
-	o.Balance_currency = t.Balance_currency
+	//o.Balance_currency = t.Balance_currency
 
 	rate := float64(1)
 	balance_amount := float64(0)
@@ -239,15 +266,16 @@ func (o *Operation) SetBalanceAmount() {
 	} else if t.Convertation == "Реестр" || t.Convertation == "KGX" {
 
 		// Поиск в мапе операций провайдера по ID
-		ProviderOperation, ok := provider_registry.GetOperation(o.Operation_id, o.Document_date, o.Channel_amount)
-		o.ProviderOperation = ProviderOperation
-		if ok {
-			balance_amount = ProviderOperation.Amount
-			rate = ProviderOperation.Rate
+		//ProviderOperation, ok := provider_registry.GetOperation(o.Operation_id, o.Document_date, o.Channel_amount)
+		//o.ProviderOperation = ProviderOperation
+
+		if o.ProviderOperation != nil {
+			balance_amount = o.ProviderOperation.Amount
+			rate = o.ProviderOperation.Rate
 
 			if t.Convertation == "KGX" {
-				o.Provider_name = ProviderOperation.Balance //!!!
-				o.Balance_currency = ProviderOperation.Provider_currency
+				o.Provider_name = o.ProviderOperation.Balance //!!!
+				//o.Balance_currency = o.ProviderOperation.Provider_currency
 			}
 
 			// Поиск в детализированных провайдера для тарифов не реестр/KGX
@@ -255,7 +283,8 @@ func (o *Operation) SetBalanceAmount() {
 			(o.IsPerevodix || o.IsMonetix || o.IsQafpay) {
 
 			//o.Detailed_provider, ok = data_detailed_provider[o.Operation_id]
-			if ok {
+
+			if o.Detailed_provider != nil {
 				balance_amount = o.Detailed_provider.Balance_amount
 			}
 
@@ -348,16 +377,6 @@ func (o *Operation) SetSRAmount() {
 	}
 
 	// ОКРУГЛЕНИЕ
-	// if o.Balance_currency.Crypto {
-	// 	o.Balance_amount = util.Round(o.Balance_amount, 8)
-	// 	o.SR_balance_currency = util.Round(SR_balance_currency, 8)
-	// } else if o.Balance_currency.Exponent {
-	// 	o.Balance_amount = util.Round(o.Balance_amount, 0)
-	// 	o.SR_balance_currency = util.Round(SR_balance_currency, 0)
-	// } else {
-	// 	o.Balance_amount = util.Round(o.Balance_amount, 2)
-	// 	o.SR_balance_currency = util.Round(SR_balance_currency, 2)
-	// }
 
 	if o.Channel_currency.Crypto {
 		o.SR_channel_currency = util.Round(SR_channel_currency, 8)
@@ -367,7 +386,7 @@ func (o *Operation) SetSRAmount() {
 		o.SR_channel_currency = util.Round(SR_channel_currency, 2)
 	}
 
-	// #1204
+	// # 1204
 	if o.Balance_currency.Exponent {
 		o.Balance_amount = util.Round(o.Balance_amount, 0)
 		o.SR_balance_currency = util.Round(SR_balance_currency, 0)
@@ -381,23 +400,18 @@ func (o *Operation) SetSRAmount() {
 		o.SR_balance_currency = util.Round(SR_balance_currency, 8)
 	}
 
-	// if o.Channel_currency.Exponent {
-	// 	o.SR_channel_currency = util.Round(SR_channel_currency, 0)
-	// } else {
-	// 	o.SR_channel_currency = util.Round(SR_channel_currency, 8)
-	// }
-
 }
 
-func (o *Operation) SetProviderBalance() {
+// func (o *Operation) SetProviderBalance() {
 
-	//o.ProviderBalance, _ = provider_balances.GetBalanceByProviderAndMA(o.Merchant_account_id, o.Provider_id)
-	o.ProviderBalance, _ = provider_balances.GetBalance(o, "")
-}
+// 	o.ProviderBalance, _ = provider_balances.GetBalance(o, "")
+// }
 
 func (o *Operation) SetProvider1c() {
 
-	if o.ProviderOperation != nil && o.ProviderOperation.Provider1c != "" {
+	if o.TakeProvider1cFromTariff && o.Tariff != nil && o.Tariff.Provider1C != "" {
+		o.Provider1c = o.Tariff.Provider1C
+	} else if o.ProviderOperation != nil && o.ProviderOperation.Provider1c != "" {
 		o.Provider1c = o.ProviderOperation.Provider1c
 	} else if o.Tariff != nil && o.Tariff.Provider1C != "" {
 		o.Provider1c = o.Tariff.Provider1C
@@ -409,29 +423,52 @@ func (o *Operation) SetProvider1c() {
 		}
 	}
 
-	//было:
-	// if o.Tariff != nil && o.Tariff.Convertation == "KGX" && o.ProviderOperation != nil {
-
-	// 	o.Provider1c = o.ProviderOperation.Provider1c
-
-	// } else if o.Tariff != nil {
-
-	// 	o.Provider1c = o.Tariff.Provider1C
-
-	// }
-
 }
 
 func (o *Operation) SetTariffReferal() {
 
-	o.Tariff_referal = tariff_compensation.FindTariffForOperation(o, true)
+	o.Tariff_referal = tariff_compensation.FindTariffForOperation(o, true, true)
 
 }
 
-func (o *Operation) SetTariffCompensation() {
+func (o *Operation) SetSRReferal() {
 
-	o.Tariff_referal = tariff_compensation.FindTariffForOperation(o, false)
+	t := o.Tariff_referal
 
+	if t == nil {
+		return
+	}
+
+	var balance_amount float64
+	if t.ComissionType == "turnover" {
+		balance_amount = o.Balance_amount
+	} else {
+		if o.Detailed_provider != nil {
+			balance_amount = o.SR_balance_currency - o.Detailed_provider.BR_amount
+		} else {
+			return
+		}
+	}
+
+	commission := balance_amount*t.Percent + t.Fix
+
+	if t.Min != 0 && commission < t.Min {
+		commission = t.Min
+	} else if t.Max != 0 && commission > t.Max {
+		commission = t.Max
+	}
+
+	// ОКРУГЛЕНИЕ
+
+	o.SR_referal = util.Round(commission, 8)
+
+	// if o.Balance_currency.Crypto {
+	// 	o.SR_referal = util.Round(commission, 8)
+	// } else if o.Channel_currency.Exponent {
+	// 	o.SR_referal = util.Round(commission, 0)
+	// } else {
+	// 	o.SR_referal = util.Round(commission, 2)
+	// }
 }
 
 func (o *Operation) SetCheckFee() {
@@ -469,7 +506,11 @@ func (o *Operation) SetVerification() {
 
 	// если реестр и валюты одинаковые, то вылетает "требует уточ. курса"
 	if o.Tariff == nil {
-		o.Verification = VRF_NO_TARIFF
+		if o.IsTradex && o.ProviderOperation == nil {
+			o.Verification = VRF_NO_IN_REG // для tradex указываем "нет в реестре"
+		} else {
+			o.Verification = VRF_NO_TARIFF
+		}
 	} else if Converation == "Реестр" || Converation == "KGX" {
 		if o.Balance_amount == 0 {
 			o.Verification = VRF_NO_IN_REG // нет курса и операции провайдера
@@ -537,20 +578,25 @@ const (
 
 func (o *Operation) SetRR() {
 
-	if o.Tariff == nil {
+	if o.RR_merchant == nil {
 		return
 	}
 
-	if o.Operation_type != "sale" {
+	if o.Operation_group != "IN" {
 		return
 	}
 
-	o.RR_date = o.Document_date.AddDate(0, 0, o.Tariff.RR_days)
-	o.RR_amount = o.Balance_amount * o.Tariff.RR_percent / 100
+	// o.RR_date = o.Document_date.AddDate(0, 0, o.Tariff.RR_days)
+	// o.RR_amount = o.Balance_amount * o.Tariff.RR_percent / 100
+
+	//if o.RR_merchant != nil {
+	o.RR_date = o.Document_date.AddDate(0, 0, o.RR_merchant.Amount_days)
+	o.RR_amount = o.Balance_amount * o.RR_merchant.Percent / 100
+	//}
 
 }
 
-func (o *Operation) SetHold() {
+func (o *Operation) SetHoldAmount() {
 
 	if o.Hold == nil {
 		return
@@ -613,30 +659,24 @@ func (o *Operation) SetDK() {
 	o.CompensationBC = util.Round(o.CompensationBC, accBalanceCurrency)
 	o.CompensationRC = util.Round(o.CompensationRC, accChannelCurrency)
 
-	// if o.Balance_currency.Crypto {
-	// 	o.CompensationBC = util.Round(o.CompensationBC, 8)
-	// } else if o.Balance_currency.Exponent {
-	// 	o.CompensationBC = util.Round(o.CompensationBC, 0)
-	// } else {
-	// 	o.CompensationBC = util.Round(o.CompensationBC, 2)
-	// }
-
-	// if o.Channel_currency.Crypto {
-	// 	o.CompensationRC = util.Round(o.CompensationRC, 8)
-	// } else if o.Channel_currency.Exponent {
-	// 	o.CompensationRC = util.Round(o.CompensationRC, 0)
-	// } else {
-	// 	o.CompensationRC = util.Round(o.CompensationRC, 2)
-	// }
-
 }
 
 func (op *Operation) Get_Channel_currency() currency.Currency {
 	return op.Channel_currency
 }
 
+func (op *Operation) Get_Provider_currency() currency.Currency {
+	if op.ProviderOperation != nil {
+		return op.ProviderOperation.Provider_currency
+	}
+	return currency.Currency{}
+}
+
 func (op *Operation) Get_Tariff_balance_currency() currency.Currency {
-	return op.Tariff.Balance_currency
+	if op.Tariff != nil {
+		return op.Tariff.Balance_currency
+	}
+	return currency.Currency{}
 }
 
 func (op *Operation) GetBool(name string) bool {
@@ -646,10 +686,12 @@ func (op *Operation) GetBool(name string) bool {
 		result = op.IsPerevodix
 	case "IsDragonPay":
 		result = op.IsDragonPay
+	case "IsTradex":
+		result = op.IsTradex
 	case "ClassicTariffDragonPay":
 		result = op.ClassicTariffDragonPay
 	default:
-		logs.Add(logs.ERROR, "неизвестное поле bool: ", name)
+		logs.Add(logs.FATAL, "неизвестное поле bool: ", name)
 	}
 	return result
 }
@@ -662,7 +704,7 @@ func (op *Operation) GetTime(name string) time.Time {
 	case "Transaction_completed_at":
 		result = op.Transaction_completed_at
 	default:
-		logs.Add(logs.ERROR, "неизвестное поле time: ", name)
+		logs.Add(logs.FATAL, "неизвестное поле time: ", name)
 	}
 	return result
 }
@@ -676,8 +718,10 @@ func (op *Operation) GetInt(name string) int {
 		result = op.Balance_id
 	case "Provider_id":
 		result = op.Provider_id
+	case "Merchant_id":
+		result = op.Merchant_id
 	default:
-		logs.Add(logs.ERROR, "неизвестное поле int: ", name)
+		logs.Add(logs.FATAL, "неизвестное поле int: ", name)
 	}
 	return result
 }
@@ -688,7 +732,7 @@ func (op *Operation) GetFloat(name string) float64 {
 	case "Channel_amount":
 		result = op.Channel_amount
 	default:
-		logs.Add(logs.ERROR, "неизвестное поле float: ", name)
+		logs.Add(logs.FATAL, "неизвестное поле float: ", name)
 	}
 	return result
 }
@@ -707,9 +751,13 @@ func (op *Operation) GetString(name string) string {
 	case "Payment_type":
 		result = op.Payment_type
 	case "Crypto_network":
-		result = op.Crypto_network
+		if op.CryptoOperation != nil {
+			return op.CryptoOperation.Network
+		}
 	case "Provider1c":
 		result = op.Provider1c
+	case "Balance_currency":
+		result = op.Balance_currency.Name
 	case "Balance_type":
 		result = "NULL" // пока ниче не отдаем
 	case "Provider_balance_guid":
@@ -717,7 +765,7 @@ func (op *Operation) GetString(name string) string {
 			result = op.ProviderBalance.GUID
 		}
 	default:
-		logs.Add(logs.ERROR, "неизвестное поле string: ", name)
+		logs.Add(logs.FATAL, "неизвестное поле string: ", name)
 	}
 	return result
 }

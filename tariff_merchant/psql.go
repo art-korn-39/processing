@@ -36,6 +36,6 @@ func Read_PSQL_Tariffs(db *sqlx.DB, registry_done <-chan querrys.Args) {
 
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение тарифов мерчантов из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(data))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение тарифов мерчантов: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(data))))
 
 }

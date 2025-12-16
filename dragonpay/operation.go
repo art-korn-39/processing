@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// 208 bytes
 type Operation struct {
 	Id           int       `db:"operation_id"`
 	Provider1c   string    `db:"provider"`

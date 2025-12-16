@@ -3,10 +3,12 @@ package querrys
 import "time"
 
 type Args struct {
-	Merhcant    []string
-	Merchant_id []int
-	DateFrom    time.Time
-	DateTo      time.Time
+	Merchant_id      []int
+	Provider_id      []int
+	DateFrom         time.Time
+	DateTo           time.Time
+	Created_DateFrom time.Time
+	Created_DateTo   time.Time
 }
 
 func Stat_Select_reports() string {
@@ -78,6 +80,7 @@ func Stat_Select_reports_by_id() string {
 		IFNULL(operation__provider_payment_id, '') AS provider_payment_id,
 		IFNULL(operation__merchant_account_id, 0) AS merchant_account_id,
 		IFNULL(billing__provider_id, 0) AS provider_id,
+		IFNULL(billing__merchant_id, 0) AS merchant_id,
 		IFNULL(billing__project_id, 0) AS project_id, 
 		date_add(HOUR, 3, billing__billing_operation_created_at) AS transaction_created_at,
 		date_add(HOUR, 3, billing__billing_operation_created_at) AS transaction_completed_at,
@@ -94,13 +97,23 @@ func Stat_Select_reports_by_id() string {
 		toString(operation__$2) IN ('$1')`
 }
 
-func Stat_Select_provider_registry() string {
+func Stat_Select_provider_registry_by_merchant_id() string {
 	return `SELECT 
 			operation_id, transaction_completed_at, operation_type, country, payment_method_type, 
 			merchant_name, rate, amount, channel_amount, channel_currency, provider_currency, br_amount, 
 			balance, provider1c, team, project_url, project_id, br_fix
 		FROM provider_registry 
-		WHERE lower(merchant_name) = ANY($1) 
+		WHERE (merchant_id = ANY($1) OR merchant_id = 0)
+		AND transaction_completed_at BETWEEN $2 AND $3`
+}
+
+func Stat_Select_provider_registry_by_provider_id() string {
+	return `SELECT 
+			operation_id, transaction_completed_at, operation_type, country, payment_method_type, 
+			merchant_name, rate, amount, channel_amount, channel_currency, provider_currency, br_amount, 
+			balance, provider1c, team, project_url, project_id, br_fix
+		FROM provider_registry 
+		WHERE (provider_id = ANY($1) OR provider_id = 0)
 		AND transaction_completed_at BETWEEN $2 AND $3`
 }
 
@@ -146,24 +159,37 @@ func Stat_Select_tariffs_compensations() string {
 				turnover_max,turnover_min,provider_balance_guid,provider_balance_name,
 				merchant_account_name,merchant_account_id,comission_type,tariff_type
 			FROM tariffs_compensations
-			WHERE merchant_id = ANY($1)`
+			WHERE is_merchant = $1`
 }
 
 func Stat_Select_provider_balances() string {
 	return `SELECT 
 				guid,provider_balance,contractor,provider_name,provider_id,balance_code,
 				legal_entity,merchant_account,merchant_account_id,date_start,nickname,
-				date_finish,convertation,convertation_id,key_record,balance_currency,type,
-				extra_balance_guid,contractor_guid,balance_name_fin
+				date_finish,convertation,convertation_id,balance_currency,type,
+				extra_balance_guid,contractor_guid,balance_name_fin,subdivision_name,
+				subdivision_guid
 			FROM provider_balances
 			WHERE provider_id > 0 AND merchant_account_id > 0`
+	//provider_id = ANY($1)
 }
 
 func Stat_Select_crypto() string {
 	return `SELECT 
 				operation_id,network,created_at,created_at_day,operation_type,
-				payment_amount,payment_currency,crypto_amount,crypto_currency
-			FROM crypto`
+				payment_amount,payment_currency,crypto_amount,crypto_currency,
+				transfer_fee_rate_usdt
+			FROM crypto
+			WHERE created_at_day BETWEEN $1 AND $2`
+}
+
+func Stat_Select_crypto_operation() string {
+	return `SELECT 
+				operation_id,network,created_at,created_at_day,operation_type,
+				payment_amount,payment_currency,crypto_amount,crypto_currency,
+				transfer_fee_rate_usdt
+			FROM crypto
+			WHERE operation_id = $1`
 }
 
 func Stat_Select_countries() string {
@@ -177,6 +203,24 @@ func Stat_Select_merchants() string {
 				contractor_name,contractor_guid,merchant_name,
 				merchant_id,project_name,project_id,project_url
 			FROM merchants`
+}
+
+func Stat_Select_rr_merchant() string {
+	return `SELECT 
+				contract_name, contract_guid, merchant_id, provider_id, date_start, date_finish,
+				balance_name, balance_guid, merchant_account_id, merchant_account_name,
+				amount_days, percent, limit_amount
+			FROM rr_merchant
+			ORDER BY date_start DESC, date_finish ASC`
+}
+
+func Stat_Select_rr_provider() string {
+	return `SELECT 
+				contract_name, contract_guid, provider_id, date_start, date_finish,
+				balance_name, balance_guid, merchant_account_id, merchant_account_name,
+				amount_days, percent, limit_amount
+			FROM rr_provider
+			ORDER BY date_start DESC, date_finish ASC`
 }
 
 func Stat_Select_test_merchant_accounts() string {
@@ -215,7 +259,16 @@ func Stat_Select_dragonpay() string {
 	return `SELECT 
 				operation_id,provider,create_date,settle_date,refno,
 				currency,amount,endpoint_id,fee_amount,description,message
-			FROM dragonpay`
+			FROM dragonpay
+			WHERE create_date BETWEEN $1 AND $2`
+}
+
+func Stat_Select_dragonpay_operation() string {
+	return `SELECT 
+				operation_id,provider,create_date,settle_date,refno,
+				currency,amount,endpoint_id,fee_amount,description,message
+			FROM dragonpay
+			WHERE operation_id = $1`
 }
 
 func Stat_Select_dragonpay_handbook() string {
@@ -292,5 +345,16 @@ func Stat_Select_providers_1c() string {
 			FROM providers_1c p
 			LEFT JOIN merchants m
 			on p.merchant_guid = m.contractor_guid
+			`
+}
+
+func Stat_Select_providers() string {
+	return `SELECT 
+				p.contractor_guid,
+				p.contractor_name,
+				p.provider_name,
+				p.provider_id,
+				p.is_tradex
+			FROM providers p
 			`
 }

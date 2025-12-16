@@ -19,6 +19,9 @@ type Detailed_row struct {
 	Payment_id                string    `db:"payment_id"`
 	Provider_name             string    `db:"provider_name"`
 	Provider_id               int       `db:"provider_id"`
+	Merchant_id               int       `db:"merchant_id"`
+	Balance_id                int       `db:"balance_id"`
+	Merchant_account_id       int       `db:"merchant_account_id"`
 	Merchant_account_name     string    `db:"merchant_account_name"`
 	Merchant_name             string    `db:"merchant_name"`
 	Project_id                int       `db:"project_id"`
@@ -42,7 +45,7 @@ type Detailed_row struct {
 	Extra_BR_balance_currency float64   `db:"extra_br_balance_currency"`
 	Balance_currency_str      string    `db:"balance_currency"`
 	Rate                      float64   `db:"rate"`
-	CompensationBR            float64   `db:"compensation_br"`
+	CompensationBR            float64   `db:"compensation_br"` // УДАЛИТЬ!
 	Verification              string    `db:"verification"`
 	Tariff_date_start         time.Time `db:"tariff_date_start"`
 	Act_percent               float64   `db:"act_percent"`
@@ -55,6 +58,10 @@ type Detailed_row struct {
 	Document_id               int       `db:"document_id"`
 	Provider_dragonpay        string    `db:"provider_dragonpay"`
 	Provider_1c               string    `db:"provider_1c"`
+	RR_amount                 float64   `db:"rr_amount"`
+	RR_date                   time.Time `db:"rr_date"`
+	Is_perevodix              bool      `db:"is_perevodix"`
+	BR_Compensation           float64   `db:"br_compensation"`
 
 	Balance_currency currency.Currency
 	Provider_BR      float64
@@ -68,12 +75,16 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d = Detailed_row{}
 
 	d.Operation_id = o.Operation_id
+	d.Document_id = o.Document_id
 	d.Provider_payment_id = o.Provider_payment_id
 	d.Transaction_id = o.Transaction_id
+	d.Merchant_account_id = o.Merchant_account_id
 	d.RRN = o.RRN
 	d.Payment_id = o.Payment_id
 	d.Provider_name = o.Provider_name
 	d.Provider_id = o.Provider_id
+	d.Merchant_id = o.Merchant_id
+	d.Balance_id = o.Balance_id
 	d.Merchant_name = o.Merchant_name
 	d.Merchant_account_name = o.Merchant_account_name
 	d.Project_id = o.Project_id
@@ -103,21 +114,25 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.Balance_amount = o.Balance_amount
 	d.BR_balance_currency = o.BR_balance_currency
 	d.Extra_BR_balance_currency = o.Extra_BR_balance_currency
-	if o.Channel_currency.Name == o.Balance_currency.Name {
+	if o.Channel_currency == o.Balance_currency {
 		d.Rate = 1
 	} else if o.ProviderOperation != nil {
 		d.Rate = o.ProviderOperation.Rate
 	}
 	d.Balance_currency_str = o.Balance_currency.Name
 	d.Balance_currency = o.Balance_currency
-	d.CompensationBR = o.CompensationBR
+	d.BR_Compensation = o.BR_Compensation
 	d.Verification = o.Verification
 	d.Region = o.Country.Region
 	d.Provider_1c = o.Provider1c
+	d.Is_perevodix = o.IsPerevodix
 
 	if o.DragonpayOperation != nil {
 		d.Provider_dragonpay = o.DragonpayOperation.Provider1c
 	}
+
+	d.RR_amount = o.RR_amount
+	d.RR_date = o.RR_date
 
 	d.IsTestId = o.IsTestId
 	d.IsTestType = o.IsTestType
@@ -137,15 +152,7 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 		d.Provider_BR = o.ProviderOperation.BR_amount
 	}
 
-	// d.Document_id = o.Document_id
-	// d.Merchant_id = o.Merchant_id
-	// d.Merchant_account_id = o.Merchant_account_id
-	// d.Company_id = o.Company_id
-	// d.Project_name = o.Project_name
-	// d.Payment_method = o.Payment_method
-	// d.Business_type = o.Business_type
-	// d.Project_url = o.Project_url
-	// d.Crypto_network = o.Crypto_network
+	//
 
 	return d
 }
@@ -163,11 +170,10 @@ func Read_Detailed(db *sqlx.DB, registry_done chan querrys.Args) {
 
 	stat := `select payment_id,br_balance_currency 
 				from detailed_provider 
-				where transaction_completed_at between $1 and $2
-	AND lower(provider_name) LIKE $3`
+				where is_perevodix AND transaction_completed_at between $1 and $2 `
 
 	var result []*Detailed_row
-	err := db.Select(&result, stat, Args.DateFrom, Args.DateTo, "%%perevodix%")
+	err := db.Select(&result, stat, Args.DateFrom, Args.DateTo)
 	if err != nil {
 		logs.Add(logs.INFO, err)
 		return
@@ -178,6 +184,6 @@ func Read_Detailed(db *sqlx.DB, registry_done chan querrys.Args) {
 		storage.Detailed[v.Payment_id] = v
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение detailed_provider из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Detailed))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение detailed_provider: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(storage.Detailed))))
 
 }

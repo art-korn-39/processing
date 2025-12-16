@@ -96,6 +96,8 @@ func Read_XLSX_Tariffs() {
 
 			tariff := Tariff{}
 
+			tariff.IsFile = true
+
 			tariff.Balance_name = row.Cells[map_fileds["баланс"]-1].String()
 			tariff.Merchant = row.Cells[map_fileds["мерчант"]-1].String()
 			tariff.Merchant_account_name = row.Cells[map_fileds["man"]-1].String()
@@ -168,7 +170,7 @@ func Read_XLSX_Tariffs() {
 
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение тарифов: %v", time.Since(start_time)))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение тарифов из файла: %v", util.FormatDuration(time.Since(start_time))))
 
 }
 
@@ -190,51 +192,62 @@ func FindTariffForOperation(op Operation) *Tariff {
 		operation_date = op.GetTime("Transaction_completed_at")
 	}
 
+	// для dragonpay ищем тариф два раза
+	// первый раз по отдельной схеме - через Provider1C и без MAID [ClassicTariffDragonPay = false]
+	// второй раз по общей схеме, как и остальные тарифы [ClassicTariffDragonPay = true]
+	isDragonPay := op.GetBool("IsDragonPay") && !op.GetBool("ClassicTariffDragonPay")
+	merchant_account_id := op.GetInt("Merchant_account_id")
+	provider1c := op.GetString("Provider1c")
+	balance_id := op.GetInt("Balance_id")
+	operation_type := op.GetString("Operation_type")
+	network := op.GetString("Crypto_network")
+	channel_currency := op.Get_Channel_currency()
+	provider_currency := op.Get_Provider_currency()
+	payment_type := op.GetString("Payment_type")
+	channel_amount := op.GetFloat("Channel_amount")
+	isTradex := op.GetBool("IsTradex")
+
 	for _, t := range data {
 
 		if t.DateStart.IsZero() {
 			continue
 		}
 
-		// для dragonpay ищем тариф два раза
-		// первый раз по отдельной схеме - через Provider1C и без MAID [ClassicTariffDragonPay = false]
-		// второй раз по общей схеме, как и остальные тарифы [ClassicTariffDragonPay = true]
-		isDragonPay := op.GetBool("IsDragonPay") && !op.GetBool("ClassicTariffDragonPay")
+		if t.Merchant_account_id == merchant_account_id {
 
-		if t.Merchant_account_id == op.GetInt("Merchant_account_id") {
-
-			if isDragonPay && op.GetString("Provider1c") != t.Provider1C {
+			if isDragonPay && provider1c != t.Provider1C {
 				continue
 			}
 
-			if t.Balance_id != 0 && op.GetInt("Balance_id") != t.Balance_id {
+			if t.Balance_id != 0 && balance_id != t.Balance_id {
 				continue
 			}
 
 			if t.DateStartMA.Before(operation_date) &&
 				(t.DateFinishMA.After(operation_date) || t.DateFinishMA.IsZero()) &&
 				t.DateStart.Before(operation_date) &&
-				t.Operation_type == op.GetString("Operation_type") {
+				t.Operation_type == operation_type {
 
 				// тип сети будет колонка в тарифе и проверять на неё
-				network := op.GetString("Crypto_network")
 				if t.IsCrypto && !(network == t.NetworkType || t.NetworkType == "") {
 					continue
 				}
 
-				channel_currency := op.Get_Channel_currency()
 				if channel_currency != t.Balance_currency && t.Convertation == "Без конверта" {
 					if !(channel_currency.Name == "USD" && (t.Balance_currency.Name == "USDT" || t.Balance_currency.Name == "WMZ")) {
 						continue
 					}
 				}
 
-				// Для tradex ещё нужен дополнительное условие по валюте баланса, которую возьмем из provider_registry
-				// if op.is_Tradex && op.prov_reg.currency == t.Balance_currency {
+				// Для tradex ещё нужен дополнительное условие по валюте баланса
+				// которую возьмем из provider_registry
+				if !t.IsFile {
+					if isTradex && provider_currency != t.Balance_currency {
+						continue
+					}
+				}
 
-				// }
-
-				if t.Payment_type != "" && t.Payment_type != op.GetString("Payment_type") {
+				if t.Payment_type != "" && t.Payment_type != payment_type {
 					continue
 				}
 
@@ -242,7 +255,6 @@ func FindTariffForOperation(op Operation) *Tariff {
 				if t.RangeMIN != 0 || t.RangeMAX != 0 {
 
 					// определелям попадание в диапазон тарифа если он заполнен
-					channel_amount := op.GetFloat("Channel_amount")
 					if channel_amount > t.RangeMIN &&
 						channel_amount <= t.RangeMAX {
 						return t

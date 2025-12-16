@@ -1,8 +1,8 @@
 package processing_merchant
 
 import (
-	"app/config"
 	"app/logs"
+	"app/util"
 	"fmt"
 	"strconv"
 	"time"
@@ -22,6 +22,7 @@ type SummaryRowMerchant struct {
 	Merchant_account_id int       `db:"merchant_account_id"`
 	Balance_id          int       `db:"balance_id"`
 	Provider_id         int       `db:"provider_id"`
+	Referal_guid        string    `db:"referal_guid"`
 	Country             string    `db:"country"`
 	Region              string    `db:"region"`
 	Project_id          int       `db:"project_id"`
@@ -43,6 +44,7 @@ type SummaryRowMerchant struct {
 	SR_channel_currency float64 `db:"sr_channel_currency"`
 	Balance_amount      float64 `db:"balance_amount"`
 	SR_balance_currency float64 `db:"sr_balance_currency"`
+	SR_referal          float64 `db:"sr_referal"`
 
 	Rate           float64 `db:"rate"`
 	Rated_account  string  `db:"rated_account"`
@@ -65,6 +67,7 @@ func (row *SummaryRowMerchant) AddValues(o *Operation) {
 	row.SR_channel_currency = row.SR_channel_currency + o.SR_channel_currency
 	row.SR_balance_currency = row.SR_balance_currency + o.SR_balance_currency
 	row.RR_amount = row.RR_amount + o.RR_amount
+	row.SR_referal = row.SR_referal + o.SR_referal
 
 }
 
@@ -128,8 +131,6 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 		k.Merchant_account_id = o.Merchant_account_id
 		k.Balance_id = o.Balance_id
 		k.Provider_id = o.Provider_id
-		k.Country = o.Country.Code2
-		//k.Region = o.Region
 		k.Project_id = o.Project_id
 		k.Payment_type = o.Payment_type
 		k.Payment_type_id = o.Payment_type_id
@@ -140,14 +141,13 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 		k.Balance_currency_str = o.Balance_currency.Name
 		k.RR_date = o.RR_date
 		k.Provider_1c = o.Provider1c
+		k.Country = o.Country.Code2
 
 		if o.Tariff != nil {
 			k.Convertation = o.Tariff.Convertation
 			k.Schema = o.Tariff.Schema
 			k.Tariff_date_start = o.Tariff.DateStart
-			//k.Tariff_id = o.Tariff.Id
 			k.Formula = o.Tariff.Formula
-			//k.Provider_1c = o.Tariff.Provider1C
 			k.Subdivision_1c = o.Tariff.Subdivision1C
 			k.Rated_account = o.Tariff.RatedAccount
 		}
@@ -158,6 +158,10 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 			k.Tariff_id = o.Tariff.Id
 		}
 
+		if o.Tariff_referal != nil {
+			k.Referal_guid = o.Tariff_referal.Affiliate_guid
+		}
+
 		k.HasProviderOperation = o.ProviderOperation != nil
 
 		if o.ProviderBalance != nil {
@@ -166,10 +170,6 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 
 		k.SetConvertationID()
 		k.SetID()
-		return
-	}
-
-	if !config.Get().Summary.Usage {
 		return
 	}
 
@@ -197,13 +197,14 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 		k.SR_channel_currency = v.SR_channel_currency
 		k.SR_balance_currency = v.SR_balance_currency
 		k.RR_amount = v.RR_amount
+		k.SR_referal = v.SR_referal
 
 		k.SetRate()
 
 		data = append(data, k)
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Группировка в итоговые данные: %v [%d строк]", time.Since(start_time), len(data)))
+	logs.Add(logs.INFO, fmt.Sprintf("Группировка в итоговые данные: %v [%d строк]", util.FormatDuration(time.Since(start_time)), len(data)))
 
 	return
 

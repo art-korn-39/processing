@@ -5,6 +5,7 @@ import (
 	"app/currency"
 	"app/logs"
 	"app/tariff_merchant"
+	"app/util"
 	"fmt"
 	"time"
 )
@@ -25,6 +26,7 @@ type SumFileds struct {
 	BalanceRefund_turnover float64
 	BalanceRefund_fee      float64
 	Surcharge_amount       float64
+	SR_referal             float64
 }
 
 func (sf *SumFileds) AddValues(o *Operation) {
@@ -42,6 +44,7 @@ func (sf *SumFileds) AddValues(o *Operation) {
 	sf.CompensationRC = sf.CompensationRC + o.CompensationRC
 	sf.BalanceRefund_turnover = sf.BalanceRefund_turnover + o.Channel_amount - o.Actual_amount
 	sf.Surcharge_amount = sf.Surcharge_amount + o.Surcharge_amount
+	sf.SR_referal = sf.SR_referal + o.SR_referal
 }
 
 func (sf *SumFileds) AddValuesFromSF(sf2 SumFileds) {
@@ -59,6 +62,7 @@ func (sf *SumFileds) AddValuesFromSF(sf2 SumFileds) {
 	sf.CompensationRC = sf.CompensationRC + sf2.CompensationRC
 	sf.BalanceRefund_turnover = sf.BalanceRefund_turnover + sf2.BalanceRefund_turnover
 	sf.Surcharge_amount = sf.Surcharge_amount + sf2.Surcharge_amount
+	sf.SR_referal = sf.SR_referal + sf2.SR_referal
 }
 
 func (sf *SumFileds) SetBalanceRefund(convertation string, percent float64) {
@@ -83,12 +87,13 @@ type KeyFields_SummaryInfo struct {
 	country               string
 	payment_type          string
 	merchant_name         string
+	referal_name          string
 	project_name          string
 	merchant_account_name string
 	balance_name_prov     string
-	balance_name_merch    string
-	merchant_account_id   int
-	tariff_condition_id   int
+	//balance_name_merch    string
+	merchant_account_id int
+	tariff_condition_id int
 
 	channel_currency currency.Currency
 	balance_currency currency.Currency
@@ -126,7 +131,6 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		channel_currency:      o.Channel_currency,
 		balance_currency:      o.Balance_currency,
 		tariff_currency:       o.Tariff_currency,
-		crypto_network:        o.Crypto_network,
 		RR_date:               o.RR_date,
 		hold_date:             o.hold_date,
 		provider1c:            o.Provider1c,
@@ -136,9 +140,11 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 	// Если есть баланс провайдера, то берем Balance_name_fin
 	// Иначе из тарифа Balance_name
 
-	if o.ProviderBalance != nil {
+	if o.Tariff != nil && o.Tariff.IsFile { // если тарифы из файла, то баланс берем оттуда (дичь)
+		KF.balance_name_prov = o.Tariff.Balance_name
+	} else if o.ProviderBalance != nil {
 		KF.balance_name_prov = o.ProviderBalance.Balance_name_fin
-	} else {
+	} else if o.Tariff != nil {
 		KF.balance_name_prov = o.Tariff.Balance_name
 	}
 
@@ -151,7 +157,6 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 				if o.IsPerevodix {
 					KF.balance_name_prov = o.Provider_name // тут уже лежит баланс из реестра провайдера
 				} else {
-					//KF.balance_name = fmt.Sprintf("%s_%s_%s", o.Tariff.Provider_name, o.Tariff.Company, o.ProviderOperation.Provider_currency.Name)
 					KF.balance_name_prov = fmt.Sprintf("%s_%s_%s", o.ProviderOperation.Balance, o.Tariff.Company, o.ProviderOperation.Provider_currency.Name)
 				}
 			}
@@ -162,8 +167,16 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		KF.tariff_bof = *o.Tariff_bof
 	}
 
+	if o.Tariff_referal != nil {
+		KF.referal_name = o.Tariff_referal.Affiliate_name
+	}
+
 	if o.Tariff_dragonpay_mid != nil {
 		KF.tariff_dragonpay_mid = *o.Tariff_dragonpay_mid
+	}
+
+	if o.CryptoOperation != nil {
+		KF.crypto_network = o.CryptoOperation.Network
 	}
 
 	return
@@ -195,7 +208,7 @@ func GroupRegistryToSummaryInfo() (group_data map[KeyFields_SummaryInfo]SumFiled
 		group_data[k] = v
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Группировка в данные Excel: %v", time.Since(start_time)))
+	logs.Add(logs.INFO, fmt.Sprintf("Группировка в данные Excel: %v", util.FormatDuration(time.Since(start_time))))
 
 	return
 

@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lib/pq"
 	"golang.org/x/text/encoding/charmap"
 )
 
@@ -89,7 +88,7 @@ func Write_CSV_Detailed() {
 		}
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Сохранение детализированных данных в файл: %v", time.Since(start_time)))
+	logs.Add(logs.INFO, fmt.Sprintf("Сохранение детализированных данных в файл: %v", util.FormatDuration(time.Since(start_time))))
 
 }
 
@@ -98,8 +97,7 @@ func SetHeaders_detailed(writer *csv.Writer) {
 		"merchant_id", "merchant_name",
 		"operation_id", "merchant_account_id", "payment_id",
 		"payment_method", "operation_type", "merchant_account_name", "issuer_country",
-		"Поставщик", //"Подразделение", "Расчетный счет",
-		"transaction_completed_at",
+		"Поставщик", "transaction_completed_at",
 		"provider_name", "provider_amount", "provider_currency",
 		"real_amount / channel_amount", "real_currency / channel_currency",
 		"fee_amount", "fee_currency",
@@ -108,6 +106,7 @@ func SetHeaders_detailed(writer *csv.Writer) {
 		"Crypto_network", "balance_id", "tariff_condition_id", "contract_id",
 		"Старт Тарифа", "Конвертация", "Акт. тариф", "Акт. фикс", "Акт. Мин", "Акт. Макс", "Range min", "Range max",
 		"tariff_rate_percent", "tariff_rate_fix", "tariff_rate_min", "tariff_rate_max", "project id", "project name",
+		"referal_name", "SR_referal", "RR_amount", "RR_date_unhold",
 	}
 	writer.Write(headers)
 }
@@ -125,8 +124,6 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		d.Merchant_account_name,
 		d.Country,
 		d.Provider1C,
-		//d.Subdivision1C,
-		//d.RatedAccount,
 		d.Transaction_completed_at.Format(time.DateTime),
 		d.Provider_name,
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Provider_amount), ".", ","),
@@ -169,6 +166,10 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.Tariff_rate_max), ".", ","),
 		fmt.Sprint(d.Project_id),
 		d.Project_name,
+		d.Referal_name,
+		strings.ReplaceAll(fmt.Sprintf("%.8f", d.SR_referal), ".", ","),
+		strings.ReplaceAll(fmt.Sprintf("%.2f", d.RR_amount), ".", ","),
+		d.RR_date.Format(time.DateTime),
 	}
 
 	return
@@ -187,7 +188,7 @@ func PSQL_Insert_Detailed() {
 	const batch_len = 1000
 
 	var wg sync.WaitGroup
-	var once sync.Once
+	//var once sync.Once
 
 	stat := querrys.Stat_Insert_detailed()
 	_, err := storage.Postgres.PrepareNamed(stat)
@@ -202,30 +203,35 @@ func PSQL_Insert_Detailed() {
 			defer wg.Done()
 			for v := range channel {
 
-				tx, _ := storage.Postgres.Beginx()
-
-				sliceID := make([]int, 0, len(v))
-				for _, row := range v {
-					sliceID = append(sliceID, row.Operation_id)
-				}
-
-				_, err = tx.Exec("delete from detailed where operation_id = ANY($1);", pq.Array(sliceID))
+				_, err := storage.Postgres.NamedExec(stat, v)
 				if err != nil {
-					once.Do(func() { logs.Add(logs.INFO, err) })
-					tx.Rollback()
-					return
+					logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД (detailed): ", err))
 				}
 
-				_, err := tx.NamedExec(stat, v)
-				if err != nil {
-					once.Do(func() { logs.Add(logs.INFO, err) })
-					tx.Rollback()
-					return
-				} else if logs.Testing {
-					tx.Rollback()
-				} else {
-					tx.Commit()
-				}
+				// tx, _ := storage.Postgres.Beginx()
+
+				// sliceID := make([]int, 0, len(v))
+				// for _, row := range v {
+				// 	sliceID = append(sliceID, row.Operation_id)
+				// }
+
+				// _, err = tx.Exec("delete from detailed where operation_id = ANY($1);", pq.Array(sliceID))
+				// if err != nil {
+				// 	once.Do(func() { logs.Add(logs.INFO, err) })
+				// 	tx.Rollback()
+				// 	return
+				// }
+
+				// _, err := tx.NamedExec(stat, v)
+				// if err != nil {
+				// 	once.Do(func() { logs.Add(logs.INFO, err) })
+				// 	tx.Rollback()
+				// 	return
+				// } else if logs.Testing {
+				// 	tx.Rollback()
+				// } else {
+				// 	tx.Commit()
+				// }
 
 			}
 		}()
@@ -249,6 +255,6 @@ func PSQL_Insert_Detailed() {
 
 	wg.Wait()
 
-	logs.Add(logs.INFO, fmt.Sprintf("Загрузка детализированных данных в Postgres: %v", time.Since(start_time)))
+	logs.Add(logs.INFO, fmt.Sprintf("Загрузка детализированных данных в Postgres: %v", util.FormatDuration(time.Since(start_time))))
 
 }

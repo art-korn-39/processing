@@ -46,7 +46,7 @@ func Read(db *sqlx.DB) {
 		data_nickname[balance.Nickname] = &balance
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение балансов провайдеров из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(slice_balances))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение балансов провайдеров: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(slice_balances))))
 
 }
 

@@ -4,6 +4,7 @@ import (
 	"app/config"
 	"app/logs"
 	"app/querrys"
+	"app/util"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -52,7 +53,6 @@ func Write_CSV_SummaryProvider(s []SummaryRowProvider) {
 
 	headers := []string{
 		"document_date", "merchant_id", "merchant_account_id", "provider_id",
-		//"balance_id",
 		"operation_group", "operation_type", "country", "region",
 		"date start", "formula", "payment_type", "convertation",
 		"count_operations",
@@ -172,6 +172,6 @@ func PSQL_Insert_SummaryProvider(s []SummaryRowProvider) {
 
 	wg.Wait()
 
-	logs.Add(logs.INFO, fmt.Sprintf("Загрузка итоговых данных в Postgres: %v", time.Since(start_time)))
+	logs.Add(logs.INFO, fmt.Sprintf("Загрузка итоговых данных в Postgres: %v", util.FormatDuration(time.Since(start_time))))
 
 }

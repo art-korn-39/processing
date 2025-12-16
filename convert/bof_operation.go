@@ -10,7 +10,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -25,6 +24,7 @@ type Bof_operation struct {
 	Transaction_created_at   time.Time `db:"transaction_created_at"`
 	Transaction_completed_at time.Time `db:"transaction_completed_at"`
 	Provider_id              int       `db:"provider_id"`
+	Merchant_id              int       `db:"merchant_id"`
 	Project_id               int       `db:"project_id"`
 	Provider_name            string    `db:"provider_name"`
 	Merchant_name            string    `db:"merchant_name"`
@@ -181,9 +181,9 @@ func readBofFile(filename string, key_column string) error {
 func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *Bof_operation) {
 
 	op = &Bof_operation{
-
 		Operation_id:             record[map_fileds["id / operation_id"]-1],
 		Provider_id:              util.FR(strconv.Atoi(record[map_fileds["provider_id"]-1])).(int),
+		Merchant_id:              util.FR(strconv.Atoi(record[map_fileds["merchant_id"]-1])).(int),
 		Project_id:               util.FR(strconv.Atoi(record[map_fileds["project_id"]-1])).(int),
 		Provider_payment_id:      record[map_fileds["acquirer_id / provider_payment_id"]-1],
 		Merchant_account_id:      util.FR(strconv.Atoi(record[map_fileds["merchant_account_id"]-1])).(int),
@@ -195,8 +195,6 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *B
 		Operation_type:           record[map_fileds["operation_type"]-1],
 		Payment_type:             record[map_fileds["payment_type_id / payment_method_type"]-1],
 		Country_code2:            record[map_fileds["issuer_country"]-1],
-		//Status:                   record[map_fileds["operation_status"]-1],
-		//Project_url:              record[map_fileds["project_url"]-1],
 
 		Channel_currency_str: record[map_fileds["real_currency / channel_currency"]-1],
 		Channel_amount:       util.FR(strconv.ParseFloat(record[map_fileds["real_amount / channel_amount"]-1], 64)).(float64),
@@ -286,11 +284,13 @@ func getBatchIdChan(key_column string) chan []string {
 
 func getBofArgs() querrys.Args {
 
-	merchants := []string{}
+	merchant_id := []int{}
+	provider_id := []int{}
 	var dateFrom, dateTo time.Time
 
 	for _, op := range bof_registry {
-		merchants = append(merchants, strings.ToLower(op.Merchant_name))
+		merchant_id = append(merchant_id, op.Merchant_id)
+		provider_id = append(merchant_id, op.Provider_id)
 
 		if dateFrom.IsZero() || dateFrom.After(op.Transaction_completed_at) {
 			dateFrom = op.Transaction_completed_at
@@ -302,10 +302,12 @@ func getBofArgs() querrys.Args {
 
 	}
 
-	merchants = slices.Compact(merchants)
+	merchant_id = util.Compact(merchant_id)
+	provider_id = util.Compact(provider_id)
 
 	args := querrys.Args{}
-	args.Merhcant = merchants
+	args.Merchant_id = merchant_id
+	args.Provider_id = provider_id
 	args.DateFrom = dateFrom.Add(-20 * 24 * time.Hour)
 	args.DateTo = dateTo.Add(4 * 24 * time.Hour)
 

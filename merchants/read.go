@@ -28,7 +28,7 @@ func Read(db *sqlx.DB) {
 
 	stat := querrys.Stat_Select_merchants()
 
-	slice_merchants := []Merchant{}
+	slice_merchants := []*Merchant{}
 
 	err := db.Select(&slice_merchants, stat)
 	if err != nil {
@@ -38,10 +38,10 @@ func Read(db *sqlx.DB) {
 
 	for _, merchant := range slice_merchants {
 
-		data[merchant.Project_id] = &merchant
+		data[merchant.Project_id] = merchant
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение мерчантов из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(data))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение мерчантов: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(data))))
 
 }
 

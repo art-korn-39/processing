@@ -7,6 +7,8 @@ import (
 	"app/merchants"
 	"app/provider_balances"
 	"app/provider_registry"
+	"app/rr_provider"
+	"app/tariff_compensation"
 	"app/tariff_provider"
 	"app/util"
 	"fmt"
@@ -14,6 +16,99 @@ import (
 	"sync/atomic"
 	"time"
 )
+
+func FillRefFieldsInRegistry() {
+
+	start_time := time.Now()
+
+	channel_indexes := make(chan int, 1000)
+
+	var wg sync.WaitGroup
+
+	var countWithoutTariff int64
+
+	wg.Add(config.NumCPU)
+	for i := 1; i <= config.NumCPU; i++ {
+		go func() {
+			defer wg.Done()
+
+			for index := range channel_indexes {
+
+				op := storage.Registry[index]
+
+				op.mu.Lock()
+
+				// страна
+				op.SetCountry()
+
+				// операция провайдера
+				op.ProviderOperation, _ = provider_registry.GetOperation(op.Operation_id, op.Document_date, op.Channel_amount)
+				if op.ProviderOperation != nil {
+					if op.ProviderOperation.Team != "" {
+						op.IsTradex = true
+					}
+				}
+
+				// баланс провайдера
+				op.SetBalance()
+
+				// валюта баланса
+				op.SetBalanceCurrency()
+
+				if !op.IsPerevodix {
+
+					// dragonpay: payment_type
+					if op.IsDragonPay {
+						op.DragonpayOperation = dragonpay.GetOperation(op.Operation_id)
+						if op.DragonpayOperation == nil {
+							op.DragonpayOperation = dragonpay.PSQL_get_operation(storage.Postgres, op.Operation_id)
+						}
+						if op.DragonpayOperation != nil {
+							op.Payment_type, op.Payment_type_id = dragonpay.GetPaymentType(op.DragonpayOperation.Endpoint_id)
+						} else {
+							op.Payment_type, op.Payment_type_id = dragonpay.GetPaymentType(op.Endpoint_id)
+						}
+					}
+
+					// тариф
+					op.Tariff = tariff_provider.FindTariffForOperation(op, "Provider_balance_guid")
+					if op.Tariff == nil {
+						atomic.AddInt64(&countWithoutTariff, 1)
+					}
+
+					// дополнительный тариф
+					op.Extra_tariff = tariff_provider.FindTariffForOperation(op, "Extra_balance_guid")
+
+				}
+
+				// мерчант
+				op.Merchant, _ = merchants.GetByProjectID(op.Project_id)
+
+				// поставщик 1С
+				op.SetProvider1c()
+
+				// РР провайдера
+				op.RR_provider = rr_provider.FindRRForOperation(op)
+
+				// подбор тарифа компенсации
+				op.Tariff_compensation = tariff_compensation.FindTariffForOperation(op, false, false)
+
+				op.mu.Unlock()
+
+			}
+		}()
+	}
+
+	for i := range storage.Registry {
+		channel_indexes <- i
+	}
+	close(channel_indexes)
+
+	wg.Wait()
+
+	logs.Add(logs.INFO, fmt.Sprintf("Заполнение ссылок в операциях: %v [без тарифов: %s]", util.FormatDuration(time.Since(start_time)), util.FormatInt(countWithoutTariff)))
+
+}
 
 func SetCountries() {
 
@@ -157,7 +252,7 @@ func SelectTariffs() {
 					}
 				}
 
-				operation.Tariff = tariff_provider.FindTariffForOperation(operation, "Balance_guid")
+				operation.Tariff = tariff_provider.FindTariffForOperation(operation, "Provider_balance_guid")
 				if operation.Tariff == nil {
 					atomic.AddInt64(&countWithoutTariff, 1)
 				}

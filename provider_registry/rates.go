@@ -3,6 +3,7 @@ package provider_registry
 import (
 	"app/currency"
 	"app/logs"
+	"app/util"
 	"fmt"
 	"sort"
 	"time"
@@ -81,6 +82,6 @@ func GroupRates() {
 
 	rates = res
 
-	logs.Add(logs.INFO, fmt.Sprintf("Группировка курсов валют: %v [%d строк]", time.Since(start_time), len(res)))
+	logs.Add(logs.INFO, fmt.Sprintf("Группировка курсов валют: %v [%d строк]", util.FormatDuration(time.Since(start_time)), len(res)))
 
 }

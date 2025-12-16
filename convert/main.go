@@ -227,7 +227,7 @@ func getProviderRegistry(db *sqlx.DB) {
 	args := getBofArgs()
 	registry_done <- args
 
-	provider_registry.PSQL_read_registry_async(db, registry_done)
+	provider_registry.PSQL_read_registry_by_provider_async(db, registry_done)
 
 }
 

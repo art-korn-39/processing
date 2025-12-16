@@ -35,19 +35,13 @@ func Read_Registry(registry_done chan querrys.Args, channel_readers int) {
 
 		fill_channel(registry_done, true, channel_readers)
 
-		// args := NewQuerryArgs(true)
-		// registry_done <- args
-		// registry_done <- args
-		// registry_done <- args
-		//close(registry_done)
-
 		err := CH_ReadRegistry()
 		if err != nil {
 			logs.Add(logs.FATAL, err)
 		}
 
 	} else {
-		//defer close(registry_done)
+
 		Read_CSV_Registry()
 		sort.Slice(
 			storage.Registry,
@@ -57,11 +51,6 @@ func Read_Registry(registry_done chan querrys.Args, channel_readers int) {
 		)
 
 		fill_channel(registry_done, false, channel_readers)
-
-		// args := NewQuerryArgs(false)
-		// registry_done <- args
-		// registry_done <- args
-		// registry_done <- args
 	}
 
 }
@@ -73,19 +62,23 @@ func NewQuerryArgs(from_cfg bool) (args querrys.Args) {
 	bof_reg := config.Get().Registry
 
 	if from_cfg { // clickhouse
-		args.Merhcant = bof_reg.Merchant_name
 		args.Merchant_id = bof_reg.Merchant_id
 		args.DateFrom = bof_reg.DateFrom.Add(-20 * 24 * time.Hour)
 		args.DateTo = bof_reg.DateTo.Add(4 * 24 * time.Hour)
 	} else { // file
 		lenght := len(storage.Registry)
 		if lenght > 0 {
-			row := storage.Registry[0]
-			args.Merhcant = append(args.Merhcant, strings.ToLower(row.Merchant_name))
-			args.Merchant_id = append(args.Merchant_id, row.Merchant_id)
 			args.DateFrom = storage.Registry[0].Transaction_completed_at.Add(-3 * 24 * time.Hour)
 			args.DateTo = storage.Registry[lenght-1].Transaction_completed_at.Add(1 * 24 * time.Hour)
 		}
+
+		for _, row := range storage.Registry {
+			args.Merchant_id = append(args.Merchant_id, row.Merchant_id)
+			args.Provider_id = append(args.Provider_id, row.Provider_id)
+		}
+
+		args.Merchant_id = util.Compact(args.Merchant_id)
+		args.Provider_id = util.Compact(args.Provider_id)
 	}
 
 	return
@@ -159,7 +152,7 @@ func Read_CSV_Registry() {
 
 	wg.Wait()
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Registry))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра из файла: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(storage.Registry))))
 
 }
 
@@ -204,6 +197,12 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		Tariff_rate_max:     util.FR(strconv.ParseFloat(record[map_fileds["tariff_rate_max"]-1], 64)).(float64),
 	}
 
+	num, _ := strconv.Atoi(record[map_fileds["is_test"]-1])
+	if num == 1 && (op.Balance_id == 0 || strings.Contains(op.Provider_name, "[MOCK]")) {
+		op.IsTestId = 2
+		op.IsTestType = "tech test"
+	}
+
 	idx := map_fileds["created_at / operation_created_at"]
 	if idx > 0 {
 		op.Operation_created_at = util.GetDateFromString(record[idx-1])
@@ -229,15 +228,6 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 	idx = map_fileds["surcharge_currency"]
 	if idx > 0 {
 		op.Surcharge_currency_str = record[idx-1]
-	}
-
-	idx = map_fileds["is_test"]
-	if idx > 0 {
-		num, _ := strconv.Atoi(record[idx-1])
-		if num == 1 && (op.Balance_id == 0 || strings.Contains(op.Provider_name, "[MOCK]")) {
-			op.IsTestId = 2
-			op.IsTestType = "tech test"
-		}
 	}
 
 	idx = map_fileds["tariff_currency"]
@@ -271,7 +261,7 @@ func CH_ReadRegistry() error {
 		o.StartingFill()
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра из Clickhouse: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Registry))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра из Clickhouse: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(storage.Registry))))
 
 	return nil
 
@@ -334,7 +324,7 @@ func CH_ReadRegistry_async() error {
 
 	wg.Wait()
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра из Clickhouse async: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Registry))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра из Clickhouse async: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(storage.Registry))))
 
 	return nil
 }
@@ -385,7 +375,7 @@ func CH_ReadRegistry_async2() error {
 
 	wg.Wait()
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра из Clickhouse async NO GET: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Registry))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра из Clickhouse async NO GET: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(storage.Registry))))
 
 	return nil
 }
@@ -446,7 +436,7 @@ func CH_ReadRegistry_async_querry() error {
 
 	wg.Wait()
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра из Clickhouse async NO GET + Q: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Registry))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра из Clickhouse async NO GET + Q: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(storage.Registry))))
 
 	return nil
 }
@@ -523,7 +513,7 @@ func CH_ReadRegistry_async_querry_cap() error {
 
 	wg.Wait()
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра из Clickhouse async GET + Q: %v [%s строк]", time.Since(start_time), util.FormatInt(len(storage.Registry))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра из Clickhouse async GET + Q: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(storage.Registry))))
 
 	return nil
 }

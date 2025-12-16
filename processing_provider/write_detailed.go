@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lib/pq"
 	"golang.org/x/text/encoding/charmap"
 )
 
@@ -87,7 +86,7 @@ func Write_CSV_Detailed() {
 		}
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Сохранение детализированных данных в файл: %v", time.Since(start_time)))
+	logs.Add(logs.INFO, fmt.Sprintf("Сохранение детализированных данных в файл: %v", util.FormatDuration(time.Since(start_time))))
 
 }
 
@@ -103,8 +102,8 @@ func SetHeaders_detailed(writer *csv.Writer) {
 		"Сумма в валюте баланса", "BR в валюте баланса", "Доп BR", "Валюта баланса", "Курс",
 		"Компенсация BR", "Проверка", "Старт тарифа",
 		"Акт. тариф", "Акт. фикс", "Акт. Мин", "Акт. Макс",
-		"Range min", "Range max",
-		"region", "Поставщик Dragonpay", "Provider BR", "Тип трафика", "provider 1C",
+		"Range min", "Range max", "region", "Поставщик Dragonpay", "Provider BR",
+		"Тип трафика", "provider 1C", "RR_amount", "RR_date_unhold", "BR compensation",
 	}
 	writer.Write(headers)
 }
@@ -161,6 +160,9 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		util.FloatToString(d.Provider_BR, d.Balance_currency.GetAccuracy(4)),
 		d.IsTestType,
 		d.Provider_1c,
+		strings.ReplaceAll(fmt.Sprintf("%.2f", d.RR_amount), ".", ","),
+		d.RR_date.Format(time.DateTime),
+		strings.ReplaceAll(fmt.Sprintf("%.2f", d.BR_Compensation), ".", ","),
 	}
 
 	return
@@ -176,10 +178,9 @@ func PSQL_Insert_Detailed() {
 
 	channel := make(chan []Detailed_row, 500)
 
-	const batch_len = 1000
+	const batch_len = 1200
 
 	var wg sync.WaitGroup
-	var once sync.Once
 
 	stat := querrys.Stat_Insert_detailed_provider()
 	_, err := storage.Postgres.PrepareNamed(stat)
@@ -194,29 +195,9 @@ func PSQL_Insert_Detailed() {
 			defer wg.Done()
 			for v := range channel {
 
-				tx, _ := storage.Postgres.Beginx()
-
-				sliceID := make([]int, 0, len(v))
-				for _, row := range v {
-					sliceID = append(sliceID, row.Operation_id)
-				}
-
-				_, err = tx.Exec("delete from detailed_provider where operation_id = ANY($1);", pq.Array(sliceID))
+				_, err := storage.Postgres.NamedExec(stat, v)
 				if err != nil {
-					once.Do(func() { logs.Add(logs.INFO, err) })
-					tx.Rollback()
-					return
-				}
-
-				_, err := tx.NamedExec(stat, v)
-				if err != nil {
-					once.Do(func() { logs.Add(logs.INFO, err) })
-					tx.Rollback()
-					return
-				} else if logs.Testing {
-					tx.Rollback()
-				} else {
-					tx.Commit()
+					logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД (detailed_provider): ", err))
 				}
 
 			}
@@ -241,6 +222,6 @@ func PSQL_Insert_Detailed() {
 
 	wg.Wait()
 
-	logs.Add(logs.INFO, fmt.Sprintf("Загрузка детализированных данных в Postgres: %v", time.Since(start_time)))
+	logs.Add(logs.INFO, fmt.Sprintf("Загрузка детализированных данных в Postgres: %v", util.FormatDuration(time.Since(start_time))))
 
 }

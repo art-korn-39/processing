@@ -22,7 +22,7 @@ type Operation struct {
 	Loss_provider_balance  string    `json:"lossproviderbalancecode" db:"loss_provider_balance"`
 	Revisor_id             string    `json:"revisorid" db:"revisor_id"`
 	Loss_occurence_date    time.Time `json:"lossoccurencedate" db:"loss_occurence_date"`
-	Loss_recolection_date  time.Time `json:"lossrecolectiondate" db:"loss_recolection_date"`
+	Loss_recolection_date  time.Time `json:"lossrecollectiondate" db:"loss_recolection_date"`
 	Loss_sum               float64   `json:"losssum" db:"loss_sum"`
 	Our_loss_sum           float64   `json:"ourlosssumfact" db:"our_loss_sum"`
 	Write_off_date         time.Time `json:"writeoffdate" db:"write_off_date"`
@@ -47,5 +47,5 @@ func (op *Operation) fill() {
 	op.Currency_name = op.Currency["Alpha3Code"]
 	op.Status_name = op.Status["Name"]
 	op.Loss_type_name = op.LossType["Name"]
-	op.Loss_type_name = op.LossType["Name"]
+	op.Loss_potential_status_name = op.LossPotentialStatus["Name"]
 }

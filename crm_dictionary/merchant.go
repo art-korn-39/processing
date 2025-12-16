@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -53,7 +52,7 @@ func (m *Merchant) getIDs() ([]int, error) {
 		return []int{}, nil
 	}
 
-	s = slices.Compact(s)
+	s = util.Compact(s)
 
 	result := []int{}
 	for _, v := range s {

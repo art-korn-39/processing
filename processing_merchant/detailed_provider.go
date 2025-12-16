@@ -32,17 +32,20 @@ func PSQL_read_detailed_provider(db *sqlx.DB, registry_done chan querrys.Args) {
 		return
 	}
 
+	// переписать на merchant_id, когда будет будет заполнено поле
+
 	Args := <-registry_done
 
 	start_time := time.Now()
 
-	stat := `select operation_id,balance_amount,rate,br_balance_currency 
-			from detailed_provider
-			where lower(merchant_name) = ANY($1) AND transaction_completed_at BETWEEN $2 AND $3`
+	stat := `SELECT operation_id,balance_amount,rate,br_balance_currency 
+			FROM detailed_provider
+			WHERE (merchant_id = ANY($1) OR merchant_id = 0) 
+			AND transaction_completed_at BETWEEN $2 AND $3`
 
 	slice_detailed := []detailed_provider{}
 
-	err := db.Select(&slice_detailed, stat, pq.Array(Args.Merhcant), Args.DateFrom, Args.DateTo)
+	err := db.Select(&slice_detailed, stat, pq.Array(Args.Merchant_id), Args.DateFrom, Args.DateTo)
 	if err != nil {
 		logs.Add(logs.INFO, err)
 		return
@@ -54,6 +57,6 @@ func PSQL_read_detailed_provider(db *sqlx.DB, registry_done chan querrys.Args) {
 
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение detailed_provider операций из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(slice_detailed))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение detailed_provider операций: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(slice_detailed))))
 
 }

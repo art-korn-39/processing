@@ -41,7 +41,7 @@ type Tariff struct {
 
 	Provider_1c_guid string `db:"provider_1c_guid"`
 	Provider_1c_name string `db:"provider_1c_name"`
-	Opeation_group   string `db:"opeation_group"`
+	Operation_group  string `db:"opeation_group"`
 
 	Provider_balance_guid string `db:"provider_balance_guid"`
 	Provider_balance_name string `db:"provider_balance_name"`
@@ -67,6 +67,10 @@ type Tariff struct {
 }
 
 func (t *Tariff) StartingFill() {
+
+	if t.Provider_balance_guid == "00000000-0000-0000-0000-000000000000" {
+		t.Provider_balance_guid = ""
+	}
 
 	t.Is_referal = t.Tariff_type == "referal"
 

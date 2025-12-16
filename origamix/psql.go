@@ -38,7 +38,7 @@ func PSQL_read_registry(db *sqlx.DB) {
 		Registry[operation.Operation_id] = operation
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение операций origamix из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(Registry))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение операций origamix из Postgres: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(Registry))))
 
 }
 

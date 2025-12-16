@@ -22,10 +22,12 @@ type Detailed_row struct {
 
 	Provider_name         string `db:"provider_name"`
 	Merchant_name         string `db:"merchant_name"`
+	Referal_name          string `db:"referal_name"`
 	Merchant_account_name string `db:"merchant_account_name"`
 	Account_bank_name     string `db:"account_bank_name"`
 	Project_name          string `db:"project_name"`
 	Payment_type          string `db:"payment_type"`
+	Payment_method        string `db:"payment_method"`
 	Country               string `db:"country"`
 	Region                string `db:"region"`
 
@@ -46,11 +48,16 @@ type Detailed_row struct {
 	Balance_amount       float64 `db:"balance_amount"`
 	Balance_currency_str string  `db:"balance_currency"`
 
-	Rate                     float64 `db:"rate"`
-	SR_channel_currency      float64 `db:"sr_channel_currency"`
-	SR_balance_currency      float64 `db:"sr_balance_currency"`
+	Rate                float64 `db:"rate"`
+	SR_channel_currency float64 `db:"sr_channel_currency"`
+	SR_balance_currency float64 `db:"sr_balance_currency"`
+	SR_referal          float64 `db:"sr_referal"`
+
 	CheckFee                 float64 `db:"check_fee"`
 	Provider_registry_amount float64 `db:"provider_registry_amount"`
+
+	RR_amount float64   `db:"rr_amount"`
+	RR_date   time.Time `db:"rr_date"`
 
 	Verification   string `db:"verification"`
 	Crypto_network string `db:"crypto_network"`
@@ -100,11 +107,13 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.Account_bank_name = o.Account_bank_name
 	d.Project_name = o.Project_name
 	d.Payment_type = o.Payment_type
+	d.Payment_method = o.Payment_method
 	d.Operation_type = o.Operation_type
 	d.Payment_id = o.Payment_id
 	d.Provider_id = o.Provider_id
 
 	d.Region = o.Country.Region
+
 	if o.Country_code2 != "" {
 		d.Country = o.Country_code2
 	} else {
@@ -123,11 +132,13 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.Balance_currency_str = o.Balance_currency.Name
 	d.SR_balance_currency = o.SR_balance_currency
 	d.SR_channel_currency = o.SR_channel_currency
+	d.SR_referal = o.SR_referal
+	d.RR_amount = o.RR_amount
+	d.RR_date = o.RR_date
 
 	d.CheckFee = o.CheckFee
 	d.Verification = o.Verification
 	d.Rate = o.Rate
-	d.Crypto_network = o.Crypto_network
 	d.Provider1C = o.Provider1c
 
 	d.Balance_currency = o.Balance_currency
@@ -135,13 +146,14 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.IsTestId = o.IsTestId
 	d.IsTestType = o.IsTestType
 
+	if o.CryptoOperation != nil {
+		d.Crypto_network = o.CryptoOperation.Network
+	}
+
 	if o.Tariff != nil {
 		t := o.Tariff
 		d.Convertation = t.Convertation
 		d.Provider1C = t.Provider1C
-		//d.RatedAccount = t.RatedAccount
-		//d.Subdivision1C = t.Subdivision1C
-		//d.Tariff_condition_id = t.Id
 		d.Tariff_date_start = t.DateStart
 		d.Act_percent = t.Percent
 		d.Act_fix = t.Fix
@@ -163,6 +175,10 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 		d.Tariff_rate_fix = t.Fix
 		d.Tariff_rate_min = t.Min
 		d.Tariff_rate_max = t.Max
+	}
+
+	if o.Tariff_referal != nil {
+		d.Referal_name = o.Tariff_referal.Affiliate_name
 	}
 
 	if o.ProviderOperation != nil {

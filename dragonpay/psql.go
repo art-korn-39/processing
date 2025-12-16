@@ -11,10 +11,15 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func PSQL_read_registry(db *sqlx.DB, handbookOnly bool) {
+func PSQL_read_registry(db *sqlx.DB, handbookOnly bool, registry_done chan querrys.Args) {
 
 	if db == nil {
 		return
+	}
+
+	var Args querrys.Args
+	if registry_done != nil {
+		Args = <-registry_done
 	}
 
 	start_time := time.Now()
@@ -37,7 +42,7 @@ func PSQL_read_registry(db *sqlx.DB, handbookOnly bool) {
 
 	stat = querrys.Stat_Select_dragonpay()
 	slice_operations := []Operation{}
-	err = db.Select(&slice_operations, stat)
+	err = db.Select(&slice_operations, stat, Args.DateFrom, Args.DateTo)
 	if err != nil {
 		logs.Add(logs.INFO, err)
 		return
@@ -47,9 +52,30 @@ func PSQL_read_registry(db *sqlx.DB, handbookOnly bool) {
 
 		operation.Currency = currency.New(operation.Currency_str)
 
-		registry[operation.Id] = operation
+		registry[operation.Id] = &operation
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение операций dragonpay из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(registry))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение операций dragonpay: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(registry))))
+
+}
+
+func PSQL_get_operation(db *sqlx.DB, id int) *Operation {
+
+	if db == nil {
+		return nil
+	}
+
+	stat := querrys.Stat_Select_dragonpay_operation()
+
+	var operation Operation
+
+	err := db.Get(&operation, stat)
+	if err != nil {
+		return nil
+	}
+
+	registry[operation.Id] = &operation
+
+	return &operation
 
 }

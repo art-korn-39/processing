@@ -24,7 +24,7 @@ func Read_CSV_files(folder string) {
 
 	read_files(filenames)
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение криптовалютных операций: %v", time.Since(start_time)))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение криптовалютных операций из файлов: %v", util.FormatDuration(time.Since(start_time))))
 
 }
 
@@ -66,7 +66,7 @@ func read_files(filenames []string) {
 
 					mu.Lock()
 					for _, o := range operations {
-						Registry[o.Id] = o
+						Registry[o.Id] = &o
 					}
 					mu.Unlock()
 				}

@@ -3,18 +3,19 @@ package dragonpay
 import (
 	"app/config"
 	"app/logs"
+	"app/querrys"
 	"app/storage"
 
 	"github.com/jmoiron/sqlx"
 )
 
 var (
-	registry map[int]Operation
+	registry map[int]*Operation
 	handbook map[string]Accord
 )
 
 func init() {
-	registry = make(map[int]Operation, 1000)
+	registry = make(map[int]*Operation, 1000)
 	handbook = make(map[string]Accord, 200)
 }
 
@@ -32,7 +33,7 @@ func Start() {
 	}
 	defer db.Close()
 
-	PSQL_read_registry(db, true)
+	PSQL_read_registry(db, true, nil)
 
 	files, err := readFiles(db, config.Get().Dragonpay.Filename)
 	if err != nil {
@@ -50,9 +51,9 @@ func Start() {
 
 }
 
-func Read_Registry(db *sqlx.DB, handbookOnly bool) {
+func Read_Registry(db *sqlx.DB, handbookOnly bool, registry_done chan querrys.Args) {
 
-	PSQL_read_registry(db, handbookOnly)
+	PSQL_read_registry(db, handbookOnly, registry_done)
 
 }
 
@@ -60,7 +61,7 @@ func GetOperation(id int) *Operation {
 	if id != 0 {
 		op, ok := registry[id]
 		if ok {
-			return &op
+			return op
 		}
 	}
 	return nil

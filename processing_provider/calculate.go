@@ -3,6 +3,7 @@ package processing_provider
 import (
 	"app/config"
 	"app/logs"
+	"app/util"
 	"fmt"
 	"sync"
 	"time"
@@ -27,11 +28,11 @@ func CalculateCommission() {
 
 				operation.mu.Lock()
 
-				//operation.SetCountry()
-
 				operation.SetBalanceAmount()
 				operation.SetBRAmount()
 				operation.SetExtraBRAmount()
+				operation.SetRR()
+				operation.SetBRCompensation()
 
 				operation.SetVerification()
 
@@ -48,6 +49,6 @@ func CalculateCommission() {
 
 	wg.Wait()
 
-	logs.Add(logs.INFO, fmt.Sprintf("Расчёт комиссии: %v", time.Since(start_time)))
+	logs.Add(logs.INFO, fmt.Sprintf("Расчёт комиссии: %v", util.FormatDuration(time.Since(start_time))))
 
 }

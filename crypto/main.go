@@ -3,18 +3,19 @@ package crypto
 import (
 	"app/config"
 	"app/logs"
+	"app/querrys"
 	"app/storage"
 
 	"github.com/jmoiron/sqlx"
 )
 
 var (
-	Registry  map[int]Operation
+	Registry  map[int]*Operation
 	Registry3 map[string]Operation3
 )
 
 func init() {
-	Registry = make(map[int]Operation, 300000)
+	Registry = make(map[int]*Operation, 300000)
 	Registry3 = make(map[string]Operation3, 300000)
 }
 
@@ -38,10 +39,10 @@ func Start() {
 
 }
 
-func Read_Registry(db *sqlx.DB) {
+func Read_Registry(db *sqlx.DB, registry_done chan querrys.Args) {
 
 	if config.Get().Crypto.Storage == config.PSQL {
-		PSQL_read_registry(db)
+		PSQL_read_registry(db, registry_done)
 	} else {
 		Read_CSV_files(config.Get().Crypto.Filename)
 	}
@@ -50,4 +51,14 @@ func Read_Registry(db *sqlx.DB) {
 
 func GetNetwork(id int) string {
 	return Registry[id].Network
+}
+
+func GetOperation(id int) *Operation {
+	if id != 0 {
+		op, ok := Registry[id]
+		if ok {
+			return op
+		}
+	}
+	return nil
 }

@@ -47,3 +47,15 @@ func GetDateFromString2(s string) time.Time {
 func TruncateToDay(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
 }
+
+func FormatDuration(t time.Duration) time.Duration {
+	return t.Round(100 * time.Millisecond)
+}
+
+func LastDayOfMonth(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month()+1, 1, 0, 0, 0, 0, t.Location()).AddDate(0, 0, -1)
+}
+
+func EndOfDay(t time.Time) time.Time {
+	return t.Truncate(24 * time.Hour).Add(24*time.Hour - time.Second)
+}

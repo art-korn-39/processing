@@ -18,9 +18,10 @@ type SumFileds struct {
 	balance_amount            float64
 	BR_balance_currency       float64
 	Extra_BR_balance_currency float64
-	compensationBR            float64
+	BR_compensation           float64
 	channel_amount            float64
 	surcharge_amount          float64
+	RR_amount                 float64
 }
 
 func (sf *SumFileds) AddValues(o *Operation) {
@@ -28,18 +29,20 @@ func (sf *SumFileds) AddValues(o *Operation) {
 	sf.balance_amount = sf.balance_amount + o.Balance_amount
 	sf.BR_balance_currency = sf.BR_balance_currency + o.BR_balance_currency
 	sf.Extra_BR_balance_currency = sf.Extra_BR_balance_currency + o.Extra_BR_balance_currency
-	sf.compensationBR = sf.compensationBR + o.CompensationBR
+	sf.BR_compensation = sf.BR_compensation + o.BR_Compensation
 	sf.channel_amount = sf.channel_amount + o.Channel_amount
 	sf.surcharge_amount = sf.surcharge_amount + o.Surcharge_amount
+	sf.RR_amount = sf.RR_amount + o.RR_amount
 }
 
 func (sf *SumFileds) RoundValues(balance_currency currency.Currency) {
 	sf.balance_amount = util.Round(sf.balance_amount, balance_currency.GetAccuracy(2))                       //2
 	sf.BR_balance_currency = util.Round(sf.BR_balance_currency, balance_currency.GetAccuracy(4))             //4
 	sf.Extra_BR_balance_currency = util.Round(sf.Extra_BR_balance_currency, balance_currency.GetAccuracy(4)) //4
-	sf.compensationBR = util.Round(sf.compensationBR, 2)
+	sf.BR_compensation = util.Round(sf.BR_compensation, 2)
 	sf.channel_amount = util.Round(sf.channel_amount, 2)
 	sf.surcharge_amount = util.Round(sf.surcharge_amount, 2)
+	sf.RR_amount = util.Round(sf.RR_amount, 2)
 }
 
 type KeyFields_SummaryInfo struct {
@@ -47,54 +50,50 @@ type KeyFields_SummaryInfo struct {
 	organization string
 	id_revise    string
 
-	document_date time.Time
-	//provider       string
-	provider_name  string
-	verification   string
-	operation_type string
-	//country               string
+	document_date         time.Time
+	provider_name         string
+	verification          string
+	operation_type        string
+	operation_group       string
 	payment_type          string
 	merchant_account_name string
 	merchant_name         string
 	region                string
-	//account_bank_name     string
-	channel_currency    currency.Currency
-	balance_currency    currency.Currency
-	tariff              tariff_provider.Tariff
-	contractor_provider string
-	contractor_merchant string
-	project_name        string
-	project_id          int
-	provider1c          string
-	isDragonpay         bool
-	isTestId            int
+	channel_currency      currency.Currency
+	balance_currency      currency.Currency
+	tariff                tariff_provider.Tariff
+	contractor_provider   string
+	contractor_merchant   string
+	project_name          string
+	project_id            int
+	provider1c            string
+	subdivision_name      string
+	RR_date               time.Time
+	isDragonpay           bool
+	isTestId              int
+	team_tradex           string
 }
 
 func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 	KF = KeyFields_SummaryInfo{
-		document_date:  o.Document_date,
-		provider_name:  o.Provider_name,
-		verification:   o.Verification,
-		operation_type: o.Operation_type,
-		//country:               o.Country_code2,
+		document_date:         o.Document_date,
+		provider_name:         o.Provider_name,
+		verification:          o.Verification,
+		operation_type:        o.Operation_type,
+		operation_group:       o.Operation_group,
 		payment_type:          o.Payment_type,
 		merchant_name:         o.Merchant_name,
 		merchant_account_name: o.Merchant_account_name,
 		region:                o.Country.Region,
-		//account_bank_name:     o.Account_bank_name,
-		channel_currency: o.Channel_currency,
-		balance_currency: o.Balance_currency,
-		isDragonpay:      o.IsDragonPay,
-		isTestId:         o.IsTestId,
+		channel_currency:      o.Channel_currency,
+		balance_currency:      o.Balance_currency,
+		RR_date:               o.RR_date,
+		isDragonpay:           o.IsDragonPay,
+		isTestId:              o.IsTestId,
 	}
-
-	// if KF.country == "" {
-	// 	KF.country = o.Country.Code2
-	// }
 
 	if o.Tariff != nil {
 		KF.tariff = *o.Tariff
-		//KF.provider = o.Tariff.Provider
 	}
 
 	if o.ProviderBalance != nil {
@@ -103,6 +102,7 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		KF.balance = o.ProviderBalance.Name
 		KF.organization = o.ProviderBalance.Legal_entity
 		KF.contractor_provider = util.TR(o.ProviderBalance.Nickname == "", o.ProviderBalance.Contractor, o.ProviderBalance.Nickname).(string)
+		KF.subdivision_name = o.ProviderBalance.Subdivision_name
 		//KF.balance_currency = o.ProviderBalance.Balance_currency
 
 	} else if o.IsTradex && o.ProviderOperation != nil {
@@ -117,6 +117,11 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 				KF.contractor_provider = util.TR(providerBalance.Nickname == "", providerBalance.Contractor, providerBalance.Nickname).(string)
 			}
 		}
+
+	}
+
+	if o.ProviderOperation != nil {
+		KF.team_tradex = o.ProviderOperation.Team
 	}
 
 	if o.Merchant != nil {
@@ -161,7 +166,7 @@ func GroupRegistryToSummaryInfo() (group_data map[KeyFields_SummaryInfo]SumFiled
 		group_data[k] = v
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Группировка в данные Excel: %v", time.Since(start_time)))
+	logs.Add(logs.INFO, fmt.Sprintf("Группировка в данные Excel: %v", util.FormatDuration(time.Since(start_time))))
 
 	return
 

@@ -2,76 +2,13 @@ package processing_merchant
 
 import (
 	"app/config"
-	"app/crypto"
-	"app/dragonpay"
-	"app/holds"
 	"app/logs"
-	"app/tariff_merchant"
 	"app/util"
 	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
 )
-
-func SelectTariffsInRegistry() {
-
-	start_time := time.Now()
-
-	var wg sync.WaitGroup
-
-	channel_indexes := make(chan int, 10000)
-
-	var countWithoutTariff int64
-
-	wg.Add(config.NumCPU)
-	for i := 1; i <= config.NumCPU; i++ {
-		go func() {
-			defer wg.Done()
-			for index := range channel_indexes {
-				operation := storage.Registry[index]
-
-				if operation.IsTestId > 0 {
-					continue
-				}
-
-				if operation.IsDragonPay {
-					operation.DragonpayOperation = dragonpay.GetOperation(operation.Operation_id)
-					if operation.DragonpayOperation != nil {
-						operation.Payment_type, operation.Payment_type_id = dragonpay.GetPaymentType(operation.DragonpayOperation.Endpoint_id)
-						operation.Provider1c = dragonpay.GetProvider1C(operation.DragonpayOperation.Endpoint_id)
-					} else {
-						operation.Payment_type, operation.Payment_type_id = dragonpay.GetPaymentType(operation.Endpoint_id)
-						operation.Provider1c = dragonpay.GetProvider1C(operation.Endpoint_id)
-					}
-				}
-
-				operation.Crypto_network = crypto.GetNetwork(operation.Operation_id)
-
-				operation.Tariff = tariff_merchant.FindTariffForOperation(operation)
-				if operation.Tariff == nil {
-					atomic.AddInt64(&countWithoutTariff, 1)
-				}
-
-				if operation.IsDragonPay {
-					operation.ClassicTariffDragonPay = true
-					operation.Tariff_dragonpay_mid = tariff_merchant.FindTariffForOperation(operation)
-				}
-
-			}
-		}()
-	}
-
-	for i := range storage.Registry {
-		channel_indexes <- i
-	}
-	close(channel_indexes)
-
-	wg.Wait()
-
-	logs.Add(logs.INFO, fmt.Sprintf("Подбор тарифов: %v [без тарифов: %s]", time.Since(start_time), util.FormatInt(countWithoutTariff)))
-
-}
 
 func CalculateCommission() {
 
@@ -98,25 +35,15 @@ func CalculateCommission() {
 
 				operation.mu.Lock()
 
-				operation.SetCountry()
-				operation.SetDetailed_provider()
-
 				if operation.Tariff != nil {
 					operation.SetBalanceAmount()
 					operation.SetSRAmount()
-					operation.SetRR()
 					operation.SetDK()
 				}
 
-				operation.SetProviderBalance()
-				operation.SetProvider1c()
-
-				operation.SetTariffReferal()
-				if operation.Tariff_referal != nil {
-
-				}
-
-				operation.SetTariffCompensation()
+				operation.SetRR()
+				operation.SetSRReferal()
+				operation.SetHoldAmount()
 
 				operation.SetCheckFee()
 				operation.SetVerification()
@@ -137,44 +64,77 @@ func CalculateCommission() {
 
 	wg.Wait()
 
-	logs.Add(logs.INFO, fmt.Sprintf("Расчёт комиссии: %v [check fee: %s]", time.Since(start_time), util.FormatInt(check_fee_counter)))
+	logs.Add(logs.INFO, fmt.Sprintf("Расчёт комиссии: %v [check fee: %s]", util.FormatDuration(time.Since(start_time)), util.FormatInt(check_fee_counter)))
 
 }
 
-func HandleHolds() {
+// func HandleHolds() {
 
-	// if len(holds.Data) == 0 {
-	// 	return
-	// }
+// 	// if len(holds.Data) == 0 {
+// 	// 	return
+// 	// }
 
-	for i := range storage.Registry {
-		operation := storage.Registry[i]
+// 	for i := range storage.Registry {
+// 		operation := storage.Registry[i]
 
-		hold, ok := holds.FindHoldForOperation(operation.Balance_currency, operation.Transaction_completed_at)
-		if !ok {
-			continue
-		}
-
-		operation.mu.Lock()
-
-		operation.Hold = hold
-		operation.SetHold()
-
-		operation.mu.Unlock()
-
-	}
-
-}
-
-// func FindHoldForOperation(op *Operation) (*holds.Hold, bool) {
-
-// 	for _, h := range holds.Data {
-
-// 		if h.Currency == op.Balance_currency && h.DateStart.Before(op.Transaction_completed_at) {
-// 			return &h, true
+// 		hold, ok := holds.FindHoldForOperation(operation.Balance_currency, operation.Transaction_completed_at)
+// 		if !ok {
+// 			continue
 // 		}
+
+// 		operation.mu.Lock()
+
+// 		operation.Hold = hold
+// 		operation.SetHold()
+
+// 		operation.mu.Unlock()
 
 // 	}
 
-// 	return nil, false
+// }
+
+// func SelectTariffsInRegistry() {
+
+// 	start_time := time.Now()
+
+// 	var wg sync.WaitGroup
+
+// 	channel_indexes := make(chan int, 10000)
+
+// 	var countWithoutTariff int64
+
+// 	wg.Add(config.NumCPU)
+// 	for i := 1; i <= config.NumCPU; i++ {
+// 		go func() {
+// 			defer wg.Done()
+// 			for index := range channel_indexes {
+// 				operation := storage.Registry[index]
+
+// 				if operation.IsTestId > 0 {
+// 					continue
+// 				}
+
+// 				operation.Tariff = tariff_merchant.FindTariffForOperation(operation)
+// 				if operation.Tariff == nil {
+// 					atomic.AddInt64(&countWithoutTariff, 1)
+// 				}
+
+// 				if operation.IsDragonPay {
+// 					operation.ClassicTariffDragonPay = true
+// 					operation.Tariff_dragonpay_mid = tariff_merchant.FindTariffForOperation(operation)
+// 				}
+
+// 			}
+// 		}()
+// 	}
+
+// 	for i := range storage.Registry {
+// 		channel_indexes <- i
+// 	}
+// 	close(channel_indexes)
+
+// 	wg.Wait()
+
+// 	logs.Add(logs.INFO, fmt.Sprintf("Подбор тарифов: %v [без тарифов: %s]", time.Since(start_time), util.FormatInt(countWithoutTariff)))
+
 // }

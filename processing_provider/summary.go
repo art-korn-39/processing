@@ -1,8 +1,8 @@
 package processing_provider
 
 import (
-	"app/config"
 	"app/logs"
+	"app/util"
 	"fmt"
 	"strconv"
 	"time"
@@ -16,12 +16,13 @@ type SummaryRowProvider struct {
 	Convertation_id int       `db:"convertation_id"`
 	Convertation    string    `db:"convertation"`
 
-	Operation_type      string `db:"operation_type"`
-	Operation_group     string `db:"operation_group"`
-	Merchant_id         int    `db:"merchant_id"`
-	Merchant_account_id int    `db:"merchant_account_id"`
+	Merchant_id         int `db:"merchant_id"`
+	Merchant_account_id int `db:"merchant_account_id"`
+	Balance_id          int `db:"balance_id"`
+	Provider_id         int `db:"provider_id"`
 
-	Provider_id       int       `db:"provider_id"`
+	Operation_type    string    `db:"operation_type"`
+	Operation_group   string    `db:"operation_group"`
 	Country           string    `db:"country"`
 	Region            string    `db:"region"`
 	Project_id        int       `db:"project_id"`
@@ -33,11 +34,6 @@ type SummaryRowProvider struct {
 	Business_type     string    `db:"business_type"`
 	Provider_1c       string    `db:"provider_1c"`
 
-	//Schema              string    `db:"schema"`
-	//Payment_method_id int       `db:"payment_method_id"`
-	//Balance_id          int       `db:"balance_id"`
-	//Account_bank_name string `db:"account_bank_name"`
-
 	Channel_currency_str string `db:"channel_currency"`
 	Balance_currency_str string `db:"balance_currency"`
 
@@ -48,6 +44,7 @@ type SummaryRowProvider struct {
 	Balance_amount            float64 `db:"balance_amount"`
 	BR_balance_currency       float64 `db:"br_balance_currency"`
 	Extra_BR_balance_currency float64 `db:"extra_br_balance_currency"`
+	BR_compensation           float64 `db:"br_compensation"`
 
 	Rate float64 `db:"rate"`
 
@@ -62,9 +59,8 @@ func (row *SummaryRowProvider) AddValues(o *Operation) {
 	row.Balance_amount = row.Balance_amount + o.Balance_amount
 	row.BR_balance_currency = row.BR_balance_currency + o.BR_balance_currency
 	row.Extra_BR_balance_currency = row.Extra_BR_balance_currency + o.Extra_BR_balance_currency
-
-	//row.BR_channel_currency = row.BR_channel_currency + o.BR_channel_currency
-	//row.RR_amount = row.RR_amount + o.RR_amount
+	row.BR_compensation = row.BR_compensation + o.BR_Compensation
+	row.RR_amount = row.RR_amount + o.RR_amount
 
 }
 
@@ -81,14 +77,6 @@ func (row *SummaryRowProvider) SetRate() {
 	}
 
 }
-
-// func (row *SummaryRowProvider) SetConvertationID() {
-// 	if row.Convertation == "Реестр" { //|| row.Schema == "KGX" {
-// 		row.Convertation_id = 2
-// 	} else if row.Convertation == "Без конверта" { //|| row.Schema == "Crypto" {
-// 		row.Convertation_id = 1
-// 	}
-// }
 
 func (row *SummaryRowProvider) SetID() {
 
@@ -121,6 +109,7 @@ func GroupRegistryToSummaryProvider() (data []SummaryRowProvider) {
 		k.Merchant_id = o.Merchant_id
 		k.Merchant_account_id = o.Merchant_account_id
 		k.Provider_id = o.Provider_id
+		k.Balance_id = o.Balance_id
 		k.Country = o.Country.Code2
 		k.Region = o.Region
 		k.Project_id = o.Project_id
@@ -130,11 +119,7 @@ func GroupRegistryToSummaryProvider() (data []SummaryRowProvider) {
 		k.Channel_currency_str = o.Channel_currency.Name
 		k.Balance_currency_str = o.Balance_currency.Name
 		k.Provider_1c = o.Provider1c
-
-		//k.Balance_id = o.Balance_id
-		//k.Payment_method_id = o.Payment_method_id
-		//k.Account_bank_name = o.Account_bank_name
-		//k.RR_date = o.RR_date
+		k.RR_date = o.RR_date
 
 		if o.Tariff != nil {
 			k.Tariff_date_start = o.Tariff.DateStart
@@ -148,10 +133,6 @@ func GroupRegistryToSummaryProvider() (data []SummaryRowProvider) {
 		}
 
 		k.SetID()
-		return
-	}
-
-	if !config.Get().Summary.Usage {
 		return
 	}
 
@@ -183,7 +164,7 @@ func GroupRegistryToSummaryProvider() (data []SummaryRowProvider) {
 		data = append(data, k)
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Группировка в итоговые данные: %v [%d строк]", time.Since(start_time), len(data)))
+	logs.Add(logs.INFO, fmt.Sprintf("Группировка в итоговые данные: %v [%d строк]", util.FormatDuration(time.Since(start_time)), len(data)))
 
 	return
 

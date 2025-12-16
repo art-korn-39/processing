@@ -3,6 +3,7 @@ package holds
 import (
 	"app/currency"
 	"app/logs"
+	"app/util"
 	"app/validation"
 	"errors"
 	"fmt"
@@ -76,6 +77,6 @@ func ReadSheet(sheet *xlsx.Sheet) {
 
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение условий холдов: %v [%d строк]", time.Since(start_time), len(data)))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение условий холдов из файла: %v [%d строк]", util.FormatDuration(time.Since(start_time)), len(data)))
 
 }

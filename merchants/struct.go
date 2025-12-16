@@ -1,5 +1,6 @@
 package merchants
 
+// 96 bytes
 type Merchant struct {
 	Contractor_name string `db:"contractor_name"`
 	Contractor_guid string `db:"contractor_guid"`

@@ -7,6 +7,7 @@ import (
 
 type data map[int]*LinkedBalance
 
+// 368 bytes
 type Balance struct {
 	Name                string    `db:"provider_balance"`
 	Nickname            string    `db:"nickname"`
@@ -24,12 +25,13 @@ type Balance struct {
 	Date_start          time.Time `db:"date_start"`
 	Date_finish         time.Time `db:"date_finish"`
 
+	Subdivision_name string `db:"subdivision_name"`
+	Subdivision_guid string `db:"subdivision_guid"`
+
 	Convertation    string `db:"convertation"`
 	Convertation_id int    `db:"convertation_id"`
 
 	Balance_name_fin string `db:"balance_name_fin"`
-
-	Key_record string `db:"key_record"`
 
 	Balance_currency_str string `db:"balance_currency"`
 	Balance_currency     currency.Currency
@@ -80,7 +82,7 @@ func GetBalance(op Operation, balance_currency string) (*Balance, bool) {
 	ma_id := op.GetInt("Merchant_account_id")
 	provider_id := op.GetInt("Provider_id")
 	balance_type := op.GetString("Balance_type")
-	date := op.GetTime("Operation_created_at")
+	date := op.GetTime("Transaction_completed_at")
 
 	val, ok := data_maid[ma_id]
 	if ok {

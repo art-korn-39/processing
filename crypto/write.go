@@ -74,7 +74,7 @@ func insert_into_db(db *sqlx.DB) {
 	var i int
 	batch := make([]Operation, 0, batch_len)
 	for _, v := range Registry {
-		batch = append(batch, v)
+		batch = append(batch, *v)
 		if (i+1)%batch_len == 0 {
 			chan_operations <- batch
 			batch = make([]Operation, 0, batch_len)

@@ -13,6 +13,7 @@ const RANGE_MAX = float64(1000000000000)
 
 type Operation interface {
 	Get_Channel_currency() currency.Currency
+	Get_Provider_currency() currency.Currency
 	GetBool(string) bool
 	GetTime(string) time.Time
 	GetInt(string) int
@@ -78,6 +79,7 @@ type Tariff struct {
 	Range      string
 
 	IsTest bool
+	IsFile bool
 }
 
 func (t *Tariff) StartingFill() {

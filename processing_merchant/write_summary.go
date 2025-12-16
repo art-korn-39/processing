@@ -4,6 +4,7 @@ import (
 	"app/config"
 	"app/logs"
 	"app/querrys"
+	"app/util"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -17,13 +18,13 @@ import (
 
 func Write_Summary(s []SummaryRowMerchant) {
 
+	PSQL_Insert_SummaryMerchant(s)
+
 	if !config.Get().Summary.Usage {
 		return
 	}
 
-	if config.Get().Summary.Storage == config.PSQL {
-		PSQL_Insert_SummaryMerchant(s)
-	} else {
+	if config.Get().Summary.Storage == config.File {
 		Write_CSV_SummaryMerchant(s)
 	}
 
@@ -87,7 +88,7 @@ func Write_CSV_SummaryMerchant(s []SummaryRowMerchant) {
 		writer.Write(row)
 	}
 
-	logs.Add(logs.INFO, fmt.Sprintf("Сохранение итоговых данных в файл: %v", time.Since(start_time)))
+	logs.Add(logs.INFO, fmt.Sprintf("Сохранение итоговых данных в файл: %v", util.FormatDuration(time.Since(start_time))))
 
 }
 
@@ -171,6 +172,6 @@ func PSQL_Insert_SummaryMerchant(s []SummaryRowMerchant) {
 
 	wg.Wait()
 
-	logs.Add(logs.INFO, fmt.Sprintf("Загрузка итоговых данных в Postgres: %v", time.Since(start_time)))
+	logs.Add(logs.INFO, fmt.Sprintf("Загрузка итоговых данных в Postgres: %v", util.FormatDuration(time.Since(start_time))))
 
 }

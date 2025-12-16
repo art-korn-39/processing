@@ -73,7 +73,7 @@ func Read_XLSX_files(folder string) {
 
 	wg.Wait()
 
-	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера: %v [%s строк]", time.Since(start_time), util.FormatInt(len(rates))))
+	logs.Add(logs.INFO, fmt.Sprintf("Чтение реестра провайдера из файлов: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(rates))))
 
 }
 

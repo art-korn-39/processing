@@ -1,7 +1,6 @@
 package tariff_compensation
 
 import (
-	"app/querrys"
 	"sort"
 	"time"
 
@@ -10,9 +9,9 @@ import (
 
 var data []*Tariff
 
-func Read_Sources(db *sqlx.DB, registry_done chan querrys.Args) {
+func Read_Sources(db *sqlx.DB, processing_merchant bool) {
 
-	Read_PSQL_Tariffs(db, registry_done)
+	Read_PSQL_Tariffs(db, processing_merchant)
 
 }
 
@@ -25,10 +24,12 @@ func SortTariffs() {
 	)
 }
 
-func FindTariffForOperation(op Operation, is_referal bool) *Tariff {
+// в импорте мерчанта отбор по merchant_id, provider_id (используются оба варианта is_referal)
+// в импорте провайдера отбор по provider_id (используется только is_referal = false)
+func FindTariffForOperation(op Operation, processing_merchant, is_referal bool) *Tariff {
 
 	var operation_date time.Time
-	if op.GetBool("IsPerevodix") {
+	if processing_merchant && op.GetBool("IsPerevodix") {
 		operation_date = op.GetTime("Operation_created_at")
 	} else {
 		operation_date = op.GetTime("Transaction_completed_at")
@@ -39,11 +40,11 @@ func FindTariffForOperation(op Operation, is_referal bool) *Tariff {
 		return nil
 	}
 
-	opeation_group := op.GetString("Operation_group")
-
-	// is referal = true
-	// op group
-	// comis type = turnover
+	merchant_id := op.GetInt("Merchant_id")
+	provider_id := op.GetInt("Provider_id")
+	channel_amount := op.GetFloat("Channel_amount")
+	operation_group := op.GetString("Operation_group")
+	balance_currency := op.GetString("Balance_currency")
 
 	for _, t := range data {
 
@@ -51,20 +52,19 @@ func FindTariffForOperation(op Operation, is_referal bool) *Tariff {
 			continue
 		}
 
-		if t.ComissionType != "turnover" {
-			return nil
-		}
-
 		if t.Is_referal == is_referal &&
-			provider_balance_guid == t.Provider_balance_guid &&
-			t.Opeation_group == opeation_group &&
-			(t.DateFinish.After(operation_date) || t.DateFinish.IsZero()) {
+			(!processing_merchant || t.Merchant_id == merchant_id) &&
+			t.DateStart.Before(operation_date) && // добавил 04.12.25
+			(t.DateFinish.After(operation_date) || t.DateFinish.IsZero()) &&
+			(provider_balance_guid == t.Provider_balance_guid || t.Provider_balance_guid == "") &&
+			(provider_id == t.Provider_id || t.Provider_id == 0) &&
+			(balance_currency == t.Currency.Name || t.Currency.Name == "") &&
+			t.Operation_group == operation_group {
 
 			// проверяем наличие диапазона
 			if t.RangeMIN != 0 || t.RangeMAX != 0 {
 
 				// определелям попадание в диапазон тарифа если он заполнен
-				channel_amount := op.GetFloat("Channel_amount")
 				if channel_amount > t.RangeMIN &&
 					channel_amount <= t.RangeMAX {
 					return t

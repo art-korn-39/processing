@@ -5,6 +5,7 @@ import (
 	"app/file"
 	"app/logs"
 	"app/querrys"
+	"app/util"
 	"fmt"
 	"sync"
 	"time"
@@ -89,5 +90,5 @@ func InsertIntoDB(db *sqlx.DB, decline_operations map[int]*Operation, files []*f
 		f.InsertIntoDB(db, 0)
 	}
 
-	logs.Add(logs.MAIN, fmt.Sprintf("Загрузка decline в Postgres: %v (%d строк)", time.Since(start_time), len(decline_operations)))
+	logs.Add(logs.MAIN, fmt.Sprintf("Загрузка decline в Postgres: %v (%d строк)", util.FormatDuration(time.Since(start_time)), len(decline_operations)))
 }
