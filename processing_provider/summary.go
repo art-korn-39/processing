@@ -140,6 +140,9 @@ func GroupRegistryToSummaryProvider() (data []SummaryRowProvider) {
 
 	group_data := map[SummaryRowProvider]SummaryRowProvider{}
 	for _, operation := range storage.Registry {
+		if operation.IsTestId > 0 {
+			continue
+		}
 		key := NewKey(operation) // получили структуру с полями группировки
 		row := group_data[key]   // получили текущие агрегатные данные по ним
 		row.AddValues(operation) // увеличили агрегатные данные на значения тек. операции

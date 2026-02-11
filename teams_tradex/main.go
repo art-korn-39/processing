@@ -1,6 +1,7 @@
 package teams_tradex
 
 import (
+	"app/currency"
 	"app/logs"
 	"app/querrys"
 	"app/util"
@@ -40,6 +41,8 @@ func Read(db *sqlx.DB) {
 	}
 
 	for _, team := range slice_teams {
+
+		team.Channel_currency = currency.New(team.Channel_currency_str)
 
 		map_team_names[team.Name] = &team
 		map_team_ids[strings.ToLower(team.Id)] = &team

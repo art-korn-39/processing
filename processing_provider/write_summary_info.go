@@ -5,6 +5,7 @@ import (
 	"app/logs"
 	"app/util"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/tealeg/xlsx"
@@ -37,8 +38,10 @@ func Write_XLSX_SummaryInfo(M map[KeyFields_SummaryInfo]SumFileds) {
 	f := xlsx.NewFile()
 
 	add_page_turnover(f, M)
+	add_page_turnover_tradex(f, M)
 	add_page_detail(f, M)
 	add_page_turnover_dragonpay(f, M)
+	add_page_fails_tradex(f)
 
 	err := f.Save(config.Get().SummaryInfo.Filename)
 	if err != nil {
@@ -59,7 +62,7 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		"Валюта баланса", "Кол-во транз", "Сумма в валюте баланса", "BR в валюте баланса",
 		"Surcharge amount", "Доп. BR в валюте баланса", "Сумма в валюте канала", "Валюта канала",
 		"Мерч 1С", "Подразделение", "Поставщик", "Вид дохода", "Дата 1С", "Комментарий",
-		"BR в валюте баланса (возмещение)", "Сумма возмещения BR", "Сумма RR", "Дата снятия RR",
+		"BR в валюте баланса (возмещение)", "Сумма возмещения", "Сумма RR", "Дата снятия RR",
 	}
 
 	style := xlsx.NewStyle()
@@ -143,9 +146,9 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 		row.AddCell().SetString("")
 
+		util.AddCellWithFloat(row, v.BR_compensation, 2)
 		util.AddCellWithFloat(row, v.BR_balance_currency-v.BR_compensation, 2)
 
-		util.AddCellWithFloat(row, v.BR_compensation, 2)
 		util.AddCellWithFloat(row, v.RR_amount, 2)
 
 		if k.RR_date.IsZero() { //16
@@ -154,6 +157,120 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 			row.AddCell().SetDate(k.RR_date)
 		}
 
+	}
+}
+
+func add_page_turnover_tradex(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
+
+	sheet, _ := f.AddSheet("Обороты tradex")
+
+	headers := []string{"Баланс провайдера", "Ключ", "Наименование баланса ПС", "ЮЛ", "Дата учета",
+		"provider_name", "merchant_account", "operation_type", "region", "payment_type", "merchant_name",
+		"Валюта баланса", "Кол-во транз", "Сумма в валюте баланса", "BR в валюте баланса",
+		"Surcharge amount", "Доп. BR в валюте баланса", "Сумма в валюте канала", "Валюта канала",
+		"Мерч 1С", "Подразделение", "Поставщик", "Вид дохода", "Дата 1С", "Комментарий",
+		"BR в валюте баланса (возмещение)", "Сумма возмещения", "Сумма RR", "Дата снятия RR",
+		"team", "project id",
+	}
+
+	style := xlsx.NewStyle()
+	style.Fill.FgColor = "5B9BD5"
+	style.Fill.PatternType = "solid"
+	style.ApplyFill = true
+	style.Alignment.WrapText = true
+	style.Alignment.Horizontal = "center"
+	style.Alignment.Vertical = "center"
+	style.ApplyAlignment = true
+	style.Font.Bold = true
+	style.Font.Color = "FFFFFF"
+
+	row := sheet.AddRow()
+
+	for _, v := range headers {
+		cell := row.AddCell()
+		cell.SetString(v)
+		cell.SetStyle(style)
+	}
+
+	sheet.SetColWidth(0, 1, 30)   // баланс
+	sheet.SetColWidth(2, 2, 12)   // дата
+	sheet.SetColWidth(3, 3, 12)   // provider
+	sheet.SetColWidth(4, 4, 24)   // организация
+	sheet.SetColWidth(5, 5, 24)   // provider_name
+	sheet.SetColWidth(6, 6, 12)   // operation_type, country
+	sheet.SetColWidth(8, 8, 18)   // payment_method_type
+	sheet.SetColWidth(9, 9, 30)   // MA
+	sheet.SetColWidth(10, 16, 15) // merchant_name, Валюта канала...
+
+	for k, v := range M {
+
+		if !k.isTradex {
+			continue
+		}
+
+		row := sheet.AddRow()
+		row.AddCell().SetString(k.balance)
+		row.AddCell().SetString(k.id_revise)
+		row.AddCell().SetString(k.contractor_provider)
+		row.AddCell().SetString(k.organization)
+		row.AddCell().SetDate(k.document_date)
+		row.AddCell().SetString(k.provider_name)
+		row.AddCell().SetString(k.merchant_account_name)
+		row.AddCell().SetString(k.operation_type)
+		row.AddCell().SetString(k.region)
+		row.AddCell().SetString(k.payment_type)
+		row.AddCell().SetString(k.merchant_name)
+		row.AddCell().SetString(k.balance_currency.Name)
+		row.AddCell().SetInt(v.count_operations)
+
+		util.AddCellWithFloat(row, v.balance_amount, k.balance_currency.GetAccuracy(3))
+		util.AddCellWithFloat(row, v.BR_balance_currency, k.balance_currency.GetAccuracy(4))
+		util.AddCellWithFloat(row, v.surcharge_amount, 2)
+		util.AddCellWithFloat(row, v.Extra_BR_balance_currency, k.balance_currency.GetAccuracy(4))
+		util.AddCellWithFloat(row, v.channel_amount, 2)
+
+		row.AddCell().SetString(k.channel_currency.Name)
+
+		if k.isTestId == 2 {
+			row.AddCell().SetString("Тест")
+		} else {
+			row.AddCell().SetString(k.contractor_merchant)
+		}
+
+		row.AddCell().SetString(k.subdivision_name)
+		row.AddCell().SetString(k.provider1c)
+
+		if k.operation_group == "IN" {
+			row.AddCell().SetString("Комиссия АП (прием)")
+		} else if k.operation_type == "payout" {
+			row.AddCell().SetString("Комиссия АП (выплата)")
+		} else if k.operation_type == "refund" {
+			row.AddCell().SetString("Комиссия рефанд")
+		} else {
+			row.AddCell().SetString("")
+		}
+
+		if k.document_date.IsZero() {
+			row.AddCell().SetString("")
+		} else {
+			row.AddCell().SetDate(util.LastDayOfMonth(k.document_date))
+		}
+
+		row.AddCell().SetString("")
+
+		util.AddCellWithFloat(row, v.BR_compensation, 2)
+		util.AddCellWithFloat(row, v.BR_balance_currency-v.BR_compensation, 2)
+
+		util.AddCellWithFloat(row, v.RR_amount, 2)
+
+		if k.RR_date.IsZero() { //16
+			row.AddCell().SetString("")
+		} else {
+			row.AddCell().SetDate(k.RR_date)
+		}
+
+		row.AddCell().SetString(k.team_tradex)
+		row.AddCell().SetInt(k.project_id_tradex)
 	}
 }
 
@@ -311,5 +428,107 @@ func add_page_turnover_dragonpay(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFi
 		row.AddCell().SetString("DragonPay")
 		row.AddCell().SetString(k.provider1c)
 
+	}
+}
+
+func add_page_fails_tradex(f *xlsx.File) {
+
+	sheet, _ := f.AddSheet("Ошибки tradex")
+
+	headers := []string{"id / operation_id", "Проверка", "Проверка tradex", "Дата учета",
+		"br amount tradex", "provider amount tradex", "operation status", "team",
+		"provider_name", "merchant_account", "operation_type", "region", "payment_type", "merchant_name",
+		"Валюта баланса", "Сумма в валюте баланса", "BR в валюте баланса",
+		"Surcharge amount", "Доп. BR в валюте баланса", "Сумма в валюте канала", "Валюта канала",
+		"Поставщик", "project id",
+	}
+
+	style := xlsx.NewStyle()
+	style.Fill.FgColor = "5B9BD5"
+	style.Fill.PatternType = "solid"
+	style.ApplyFill = true
+	style.Alignment.WrapText = true
+	style.Alignment.Horizontal = "center"
+	style.Alignment.Vertical = "center"
+	style.ApplyAlignment = true
+	style.Font.Bold = true
+	style.Font.Color = "FFFFFF"
+
+	row := sheet.AddRow()
+
+	for _, v := range headers {
+		cell := row.AddCell()
+		cell.SetString(v)
+		cell.SetStyle(style)
+	}
+
+	sheet.SetColWidth(0, 1, 30)   // баланс
+	sheet.SetColWidth(2, 2, 12)   // дата
+	sheet.SetColWidth(3, 3, 12)   // provider
+	sheet.SetColWidth(4, 4, 24)   // организация
+	sheet.SetColWidth(5, 5, 24)   // provider_name
+	sheet.SetColWidth(6, 6, 12)   // operation_type, country
+	sheet.SetColWidth(8, 8, 18)   // payment_method_type
+	sheet.SetColWidth(9, 9, 30)   // MA
+	sheet.SetColWidth(10, 16, 15) // merchant_name, Валюта канала...
+
+	var cell *xlsx.Cell
+
+	for _, op := range storage.Registry {
+
+		if !op.IsTradex {
+			continue
+		}
+
+		if op.ProviderOperation == nil {
+			continue
+		}
+
+		if op.VerificationTradex == VRF_OK {
+			continue
+		}
+
+		// provOp := op.ProviderOperation
+		// if util.Equals(provOp.BR_amount, op.BR_balance_currency) &&
+		// 	(util.Equals(provOp.Provider_amount_tradex, op.Channel_amount) || util.Equals(provOp.Provider_amount_tradex, 0)) &&
+		// 	(provOp.Operation_status == "success" || provOp.Operation_status == "") {
+		// 	continue
+		// }
+
+		row := sheet.AddRow()
+
+		cell = row.AddCell() //0
+		cell.SetString(strconv.Itoa(op.Operation_id))
+		cell.SetFormat("0")
+
+		row.AddCell().SetString(op.Verification)
+		row.AddCell().SetString(op.VerificationTradex)
+
+		row.AddCell().SetDate(op.Document_date)
+
+		util.AddCellWithFloat(row, op.ProviderOperation.BR_amount, 4)
+		util.AddCellWithFloat(row, op.ProviderOperation.Provider_amount_tradex, 4)
+		row.AddCell().SetString(op.ProviderOperation.Operation_status)
+		row.AddCell().SetString(op.ProviderOperation.Team)
+
+		row.AddCell().SetString(op.Provider_name)
+		row.AddCell().SetString(op.Merchant_account_name)
+		row.AddCell().SetString(op.Operation_type)
+		row.AddCell().SetString(op.Region)
+		row.AddCell().SetString(op.Payment_type)
+		row.AddCell().SetString(op.Merchant_name)
+		row.AddCell().SetString(op.Balance_currency.Name)
+
+		util.AddCellWithFloat(row, op.Balance_amount, op.Balance_currency.GetAccuracy(3))
+		util.AddCellWithFloat(row, op.BR_balance_currency, op.Balance_currency.GetAccuracy(4))
+		util.AddCellWithFloat(row, op.Surcharge_amount, 2)
+		util.AddCellWithFloat(row, op.Extra_BR_balance_currency, op.Balance_currency.GetAccuracy(4))
+		util.AddCellWithFloat(row, op.Channel_amount, 2)
+
+		row.AddCell().SetString(op.Channel_currency.Name)
+
+		row.AddCell().SetString(op.Provider1c)
+
+		row.AddCell().SetInt(op.Project_id)
 	}
 }

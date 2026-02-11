@@ -50,9 +50,10 @@ type KeyFields_SummaryInfo struct {
 	organization string
 	id_revise    string
 
-	document_date         time.Time
-	provider_name         string
-	verification          string
+	document_date time.Time
+	provider_name string
+	verification  string
+	//verification_tradex   string
 	operation_type        string
 	operation_group       string
 	payment_type          string
@@ -66,10 +67,12 @@ type KeyFields_SummaryInfo struct {
 	contractor_merchant   string
 	project_name          string
 	project_id            int
+	project_id_tradex     int
 	provider1c            string
 	subdivision_name      string
 	RR_date               time.Time
 	isDragonpay           bool
+	isTradex              bool
 	isTestId              int
 	team_tradex           string
 }
@@ -90,6 +93,9 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		RR_date:               o.RR_date,
 		isDragonpay:           o.IsDragonPay,
 		isTestId:              o.IsTestId,
+		isTradex:              o.IsTradex,
+		project_id_tradex:     o.Project_id,
+		//verification_tradex:   o.VerificationTradex,
 	}
 
 	if o.Tariff != nil {

@@ -12,7 +12,6 @@ import (
 	"app/rr_provider"
 	"app/tariff_compensation"
 	"app/tariff_provider"
-	"app/teams_tradex"
 	"app/util"
 	"strconv"
 	"strings"
@@ -54,6 +53,7 @@ type Operation struct {
 	RRN                   string
 	Payment_id            string
 	Balance_type          string
+	Real_provider         string
 
 	Project_name      string `db:"project_name"`
 	Project_id        int    `db:"project_id"`
@@ -90,12 +90,14 @@ type Operation struct {
 	Extra_BR_balance_currency float64
 	Operation_actual_amount   float64
 	BR_Compensation           float64
+	Rate                      float64
 
-	Verification string
-	IsDragonPay  bool
-	IsKessPay    bool
-	IsPerevodix  bool
-	IsTradex     bool
+	Verification       string
+	VerificationTradex string
+	IsDragonPay        bool
+	IsKessPay          bool
+	IsPerevodix        bool
+	IsTradex           bool
 
 	RR_amount float64
 	RR_date   time.Time
@@ -181,6 +183,33 @@ func (o *Operation) StartingFill() {
 
 }
 
+func (o *Operation) SetBalanceID() {
+
+	if o.Balance_id != 0 {
+		return
+	}
+
+	ch_operation, ok := bof_clickhouse_data[o.Operation_id]
+	if ok {
+		o.Balance_id = ch_operation.Balance_id
+	} else {
+		for _, v := range storage.Registry {
+			if v.Merchant_account_id == o.Merchant_account_id &&
+				v.Operation_type == o.Operation_type &&
+				v.Payment_type == o.Payment_type &&
+				v.Provider_id == o.Provider_id &&
+				v.Merchant_id == o.Merchant_id &&
+				v.Channel_currency_str == o.Channel_currency_str &&
+				v != o && v.Balance_id > 0 {
+
+				o.Balance_id = v.Balance_id
+				return
+			}
+		}
+	}
+
+}
+
 func (o *Operation) SetCountry() {
 	o.Country = countries.GetCountry(o.Country_code2, o.Channel_currency.Name)
 }
@@ -207,6 +236,7 @@ const (
 	CNV_CALLBACK   int = 3
 )
 
+// unused
 func (o *Operation) SetBalance() {
 
 	// для операции с конвертом = "реестр" должна быть операция в "Provider_registry"
@@ -297,6 +327,22 @@ func (o *Operation) SetBalanceAmount() {
 
 }
 
+func (o *Operation) SetRate() {
+
+	o.Rate = 1
+
+	if o.ProviderBalance != nil && o.ProviderBalance.Convertation_id == CNV_CALLBACK && o.Provider_amount != 0 {
+
+		o.Rate = o.Channel_amount / o.Provider_amount
+
+	} else if o.ProviderOperation != nil && o.ProviderOperation.Rate != 0 {
+
+		o.Rate = o.ProviderOperation.Rate
+
+	}
+
+}
+
 func (o *Operation) SetBRAmount() {
 
 	if o.IsPerevodix {
@@ -314,7 +360,16 @@ func (o *Operation) SetBRAmount() {
 	}
 
 	// BR
-	commission := o.Balance_amount*t.Percent + t.Fix
+	useRate := o.Balance_currency != t.TariffCurrency && t.TariffCurrency != currency.Currency{}
+
+	var amount float64
+	if useRate {
+		amount = o.Channel_amount
+	} else {
+		amount = o.Balance_amount
+	}
+
+	commission := amount*t.Percent + t.Fix
 
 	if t.Min != 0 && commission < t.Min {
 		commission = t.Min
@@ -322,18 +377,15 @@ func (o *Operation) SetBRAmount() {
 		commission = t.Max
 	}
 
-	// ОКРУГЛЕНИЕ
-	// if o.Balance_currency.Crypto {
-	// 	o.BR_balance_currency = util.Round(commission, 8)
-	// } else if o.Balance_currency.Exponent {
-	// 	o.BR_balance_currency = util.Round(commission, 0)
-	// } else {
-	// 	o.BR_balance_currency = util.Round(commission, 4)
-	// }
+	if useRate && o.Rate != 0 {
+		commission = commission / o.Rate
+	}
 
-	//#1204
+	// ОКРУГЛЕНИЕ
 	if o.Balance_currency.Exponent {
 		o.BR_balance_currency = util.Round(commission, 0)
+	} else if o.IsTradex {
+		o.BR_balance_currency = util.Round(commission, 2)
 	} else {
 		o.BR_balance_currency = util.Round(commission, 8)
 	}
@@ -348,7 +400,6 @@ func (o *Operation) SetExtraBRAmount() {
 		return
 	}
 
-	// BR
 	commission := o.Balance_amount*t.Percent + t.Fix
 	if o.IsKessPay {
 		commission = (o.Balance_amount-o.BR_balance_currency)*t.Percent + t.Fix
@@ -360,9 +411,10 @@ func (o *Operation) SetExtraBRAmount() {
 		commission = t.Max
 	}
 
-	//#1204
 	if o.Balance_currency.Exponent {
 		o.Extra_BR_balance_currency = util.Round(commission, 0)
+	} else if o.IsTradex {
+		o.Extra_BR_balance_currency = util.Round(commission, 2)
 	} else {
 		o.Extra_BR_balance_currency = util.Round(commission, 8)
 	}
@@ -413,7 +465,7 @@ func (o *Operation) SetBRCompensation() {
 
 	t := o.Tariff_compensation
 
-	amount := o.Balance_amount*t.Percent/100 + t.Fix
+	amount := o.Balance_amount*t.Percent + t.Fix
 
 	if t.Min != 0 && amount < t.Min {
 		amount = t.Min
@@ -427,7 +479,15 @@ func (o *Operation) SetBRCompensation() {
 
 func (o *Operation) SetVerification() {
 
-	if o.ProviderBalance == nil {
+	if o.IsTradex && o.ProviderOperation == nil {
+		if provider_registry.OperationByDateExists(o.Operation_id, o.Document_date) {
+			o.Verification = VRF_BAD_CHANNEL_AMOUNT
+		} else if provider_registry.OperationByAmountExists(o.Operation_id, o.Channel_amount) {
+			o.Verification = VRF_BAD_DATE
+		} else {
+			o.Verification = VRF_NO_IN_REG
+		}
+	} else if o.ProviderBalance == nil {
 		o.Verification = VRF_NO_BALANCE
 	} else if o.ProviderBalance.Convertation_id == CNV_REESTR && o.ProviderOperation == nil {
 		o.Verification = VRF_NO_IN_REG
@@ -439,11 +499,41 @@ func (o *Operation) SetVerification() {
 
 }
 
+func (o *Operation) SetVerificationTradex() {
+
+	if !o.IsTradex {
+		return
+	}
+
+	if o.Verification != VRF_OK {
+		return
+	}
+
+	if !(o.ProviderOperation.Operation_status == "success" || o.ProviderOperation.Operation_status == "") {
+		o.VerificationTradex = VRF_TRADEX_STATUS
+	} else if !util.Equals(o.BR_balance_currency, o.ProviderOperation.BR_amount) {
+		o.VerificationTradex = VRF_TRADEX_CHECK_BR
+	} else if !util.Equals(o.Channel_amount, o.ProviderOperation.Provider_amount_tradex) &&
+		o.ProviderOperation.Provider_amount_tradex != 0 {
+
+		o.VerificationTradex = VRF_TRADEX_CHECK_AMOUNT
+	} else {
+		o.VerificationTradex = VRF_OK
+	}
+
+}
+
 const (
-	VRF_OK         = "ОК"
-	VRF_NO_BALANCE = "Не найден баланс, проверь конвертацию"
-	VRF_NO_TARIFF  = "Не найден тариф"
-	VRF_NO_IN_REG  = "Нет в реестре"
+	VRF_OK                 = "ОК"
+	VRF_NO_BALANCE         = "Не найден баланс, проверь конвертацию"
+	VRF_BAD_CHANNEL_AMOUNT = "Не совпадают суммы операции"
+	VRF_BAD_DATE           = "Не совпадают даты операции"
+	VRF_NO_TARIFF          = "Не найден тариф"
+	VRF_NO_IN_REG          = "Нет в реестре"
+
+	VRF_TRADEX_STATUS       = "Проверь статус ПС"
+	VRF_TRADEX_CHECK_BR     = "Проверь BR"
+	VRF_TRADEX_CHECK_AMOUNT = "Проверь amount"
 )
 
 func (op *Operation) Get_Channel_currency() currency.Currency {
@@ -459,6 +549,8 @@ func (op *Operation) GetBool(name string) bool {
 	switch name {
 	case "IsDragonPay":
 		result = op.IsDragonPay
+	case "IsTradex":
+		result = op.IsTradex
 	default:
 		logs.Add(logs.FATAL, "неизвестное поле bool: ", name)
 	}
@@ -510,18 +602,26 @@ func (op *Operation) GetString(name string) string {
 	var result string
 	switch name {
 	case "Provider_balance_guid":
-		if op.IsTradex {
-			if op.ProviderOperation != nil {
-				team := op.ProviderOperation.Team
-				team_ref, ok := teams_tradex.GetTeamByName(team)
-				if ok {
-					return team_ref.Balance_guid
-				}
-			}
-			return ""
-		} else if op.ProviderBalance != nil {
+		// 01.02.2026 +++
+		// У tradex уже подобран баланс по этому же алгоритму, поэтому можно брать из операции
+		// Было:
+		// if op.IsTradex {
+		// 	if op.ProviderOperation != nil {
+		// 		team := op.ProviderOperation.Team
+		// 		team_ref, ok := teams_tradex.GetTeamByName(team)
+		// 		if ok {
+		// 			return team_ref.Balance_guid
+		// 		}
+		// 	}
+		// 	return ""
+		// } else if op.ProviderBalance != nil {
+		// 	result = op.ProviderBalance.GUID
+		// }
+		// Стало:
+		if op.ProviderBalance != nil {
 			result = op.ProviderBalance.GUID
 		}
+		// 01.02.2026 ---
 	case "Extra_balance_guid":
 		if op.ProviderBalance != nil {
 			result = op.ProviderBalance.Extra_balance_guid

@@ -9,6 +9,7 @@ type Args struct {
 	DateTo           time.Time
 	Created_DateFrom time.Time
 	Created_DateTo   time.Time
+	ID               []int
 }
 
 func Stat_Select_reports() string {
@@ -101,7 +102,8 @@ func Stat_Select_provider_registry_by_merchant_id() string {
 	return `SELECT 
 			operation_id, transaction_completed_at, operation_type, country, payment_method_type, 
 			merchant_name, rate, amount, channel_amount, channel_currency, provider_currency, br_amount, 
-			balance, provider1c, team, project_url, project_id, br_fix
+			balance, provider1c, team, project_url, project_id, br_fix, user_tradex, team_id, 
+			comission_tradex, bonuses_tradex, provider_amount_tradex, operation_status
 		FROM provider_registry 
 		WHERE (merchant_id = ANY($1) OR merchant_id = 0)
 		AND transaction_completed_at BETWEEN $2 AND $3`
@@ -111,7 +113,8 @@ func Stat_Select_provider_registry_by_provider_id() string {
 	return `SELECT 
 			operation_id, transaction_completed_at, operation_type, country, payment_method_type, 
 			merchant_name, rate, amount, channel_amount, channel_currency, provider_currency, br_amount, 
-			balance, provider1c, team, project_url, project_id, br_fix
+			balance, provider1c, team, project_url, project_id, br_fix, user_tradex, team_id, 
+			comission_tradex, bonuses_tradex, provider_amount_tradex, operation_status
 		FROM provider_registry 
 		WHERE (provider_id = ANY($1) OR provider_id = 0)
 		AND transaction_completed_at BETWEEN $2 AND $3`
@@ -120,8 +123,9 @@ func Stat_Select_provider_registry_by_provider_id() string {
 func Stat_Select_provider_registry_period_only() string {
 	return `SELECT 
 			operation_id, transaction_completed_at, operation_type, country, payment_method_type, 
-			merchant_name, rate, amount, channel_amount, channel_currency, provider_currency, 
-			br_amount, balance, provider1c, team, project_url, project_id, br_fix
+			merchant_name, rate, amount, channel_amount, channel_currency, provider_currency, br_amount, 
+			balance, provider1c, team, project_url, project_id, br_fix, user_tradex, team_id, 
+			comission_tradex, bonuses_tradex, provider_amount_tradex, operation_status
 		FROM provider_registry 
 		WHERE transaction_completed_at BETWEEN $1 AND $2`
 }
@@ -146,7 +150,7 @@ func Stat_Select_tariffs_provider() string {
 				payment_method,payment_method_type,region,channel_currency,project_name,
 				business_type,operation_group,traffic_type,account_bank_name, use_transaction_created_at,
 				tariff_range_turnouver_min,tariff_range_turnouver_max,tariff_range_amount_min,
-				tariff_range_amount_max,percent,fix,min,max,search_string_ma,endpoint_id,team
+				tariff_range_amount_max,percent,fix,min,max,search_string_ma,endpoint_id,team,tariff_currency
 			FROM tariffs_provider`
 }
 
@@ -163,15 +167,18 @@ func Stat_Select_tariffs_compensations() string {
 }
 
 func Stat_Select_provider_balances() string {
-	return `SELECT 
-				guid,provider_balance,contractor,provider_name,provider_id,balance_code,
-				legal_entity,merchant_account,merchant_account_id,date_start,nickname,
-				date_finish,convertation,convertation_id,balance_currency,type,
-				extra_balance_guid,contractor_guid,balance_name_fin,subdivision_name,
-				subdivision_guid
-			FROM provider_balances
-			WHERE provider_id > 0 AND merchant_account_id > 0`
-	//provider_id = ANY($1)
+	return `SELECT distinct
+				pb.guid,pb.provider_balance,pb.contractor,pb.provider_name,pb.provider_id,pb.balance_code,
+				pb.legal_entity,pb.merchant_account,pb.merchant_account_id,pb.date_start,pb.nickname,
+				pb.date_finish,pb.convertation,pb.convertation_id,pb.balance_currency,pb.type,
+				pb.extra_balance_guid,pb.contractor_guid,pb.balance_name_fin,pb.subdivision_name,
+				subdivision_guid,
+				coalesce(p.is_tradex, false) as is_tradex
+			FROM provider_balances as pb
+			LEFT JOIN providers as p
+			ON pb.contractor_guid = p.contractor_guid
+			WHERE pb.provider_id > 0 AND pb.merchant_account_id > 0`
+
 }
 
 func Stat_Select_crypto() string {
@@ -315,7 +322,8 @@ func Stat_Select_bof_origamix() string {
 
 func Stat_Select_teams_tradex() string {
 	return `SELECT 
-				guid,name,id,provider_balance_guid,provider_balance_name,provider_balance_nickname
+				guid,name,id,provider_balance_guid,channel_currency,
+				provider_balance_name,provider_balance_nickname
 			FROM teams_tradex
 			`
 }

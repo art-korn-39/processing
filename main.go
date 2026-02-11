@@ -36,7 +36,7 @@ func main() {
 	// conversion 			| decline 			  | crypto  			| dragonpay 		  | aws | origamix
 	// crm_chargeback 		| crm_dictionary 	  | crm_provider_losses | crm_merchant_losses |
 
-	flag.StringVar(&app, "app", "processing_merchant", "")
+	flag.StringVar(&app, "app", "processing_provider", "")
 	flag.StringVar(&file_config, "file_config", "", "")
 	flag.Parse()
 

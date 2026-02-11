@@ -63,13 +63,14 @@ func Read(db *sqlx.DB) {
 
 }
 
-func Skip(date time.Time, ma_id int, operation_type string) bool {
+func Skip(date time.Time, ma_id, merchant_id int, operation_type string) bool {
 
 	s, ok := data[ma_id]
 	if ok {
 		for _, v := range *s {
 
 			if v.Date_start.Before(date) && v.Date_finish.After(date) &&
+				merchant_id == v.Merchant_id &&
 				(v.Operation_type == "" || v.Operation_type == operation_type) {
 
 				return true

@@ -100,8 +100,9 @@ func readTradexComission(filename string) {
 }
 
 type Tradex_operation struct {
-	id     string
-	amount float64
+	id        string
+	amount    float64
+	comission float64
 }
 
 func (o *Tradex_operation) StartingFill() {
@@ -112,8 +113,9 @@ func ConvertRecordToTradexOperation(record []string, map_fileds map[string]int) 
 
 	op = &Tradex_operation{
 
-		id:     record[map_fileds["originoperationid"]-1],
-		amount: util.FR(strconv.ParseFloat(record[map_fileds["amount"]-1], 64)).(float64) / 100,
+		id:        record[map_fileds["originoperationid"]-1],
+		amount:    util.FR(strconv.ParseFloat(record[map_fileds["amount"]-1], 64)).(float64) / 100,
+		comission: util.FR(strconv.ParseFloat(record[map_fileds["commission"]-1], 64)).(float64) / 100,
 	}
 
 	return

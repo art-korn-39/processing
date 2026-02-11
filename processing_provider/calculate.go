@@ -29,12 +29,14 @@ func CalculateCommission() {
 				operation.mu.Lock()
 
 				operation.SetBalanceAmount()
+				operation.SetRate()
 				operation.SetBRAmount()
 				operation.SetExtraBRAmount()
 				operation.SetRR()
 				operation.SetBRCompensation()
 
 				operation.SetVerification()
+				operation.SetVerificationTradex()
 
 				operation.mu.Unlock()
 

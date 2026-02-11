@@ -7,6 +7,7 @@ import (
 	"app/merchants"
 	"app/provider_balances"
 	"app/provider_registry"
+	"app/providers"
 	"app/providers_1c"
 	"app/querrys"
 	"app/rr_provider"
@@ -78,9 +79,9 @@ func ReadSources() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(13)
+	wg.Add(15)
 
-	channel_readers := 3
+	channel_readers := 4
 	registry_done := make(chan querrys.Args, channel_readers)
 
 	go func() {
@@ -101,6 +102,11 @@ func ReadSources() {
 	go func() {
 		defer wg.Done()
 		tariff_provider.Read_Sources(storage.Postgres)
+	}()
+
+	go func() {
+		defer wg.Done()
+		GetDataFromClickhouse(storage.Clickhouse, registry_done)
 	}()
 
 	go func() {
@@ -148,6 +154,11 @@ func ReadSources() {
 		rr_provider.Read(storage.Postgres)
 	}()
 
+	go func() {
+		defer wg.Done()
+		providers.Read(storage.Postgres)
+	}()
+
 	wg.Wait()
 }
 
@@ -155,7 +166,7 @@ func SaveResult() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(2)
+	wg.Add(3)
 
 	// Итоговые данные
 	// Делаем сначала, т.к. они id документа проставляют
@@ -166,6 +177,12 @@ func SaveResult() {
 	go func() {
 		defer wg.Done()
 		Write_Detailed()
+	}()
+
+	// Детализированные записи tradex
+	go func() {
+		defer wg.Done()
+		Write_Detailed_tradex()
 	}()
 
 	// Выгрузка в эксель

@@ -45,7 +45,7 @@ func PSQL_read_registry_by_merchant(db *sqlx.DB, registry_done <-chan querrys.Ar
 	for i := range rates {
 		operation := &rates[i]
 
-		operation.StartingFill(false)
+		operation.StartingFill(1)
 
 		registry.Set(*operation)
 	}
@@ -112,7 +112,7 @@ func PSQL_read_registry_by_merchant_async(db *sqlx.DB, registry_done <-chan quer
 	for i := range rates {
 		operation := &rates[i]
 
-		operation.StartingFill(false)
+		operation.StartingFill(1)
 
 		registry.Set(*operation)
 	}
@@ -184,7 +184,7 @@ func PSQL_read_registry_by_provider_async(db *sqlx.DB, registry_done <-chan quer
 	for i := range rates {
 		operation := &rates[i]
 
-		operation.StartingFill(false)
+		operation.StartingFill(1)
 
 		registry.Set(*operation)
 	}

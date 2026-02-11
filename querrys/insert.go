@@ -6,13 +6,15 @@ func Stat_Insert_provider_registry() string {
 		operation_id, transaction_completed_at, provider_name, merchant_name, merchant_account_name,
 		project_url, payment_method_type, country, rate, operation_type, amount, transaction_created_at,
 		provider_payment_id, operation_status, account_number, channel_currency, provider_currency, br_amount,
-		transaction_completed_at_day, channel_amount, balance, provider1c, project_id, team, br_fix
+		transaction_completed_at_day, channel_amount, balance, provider1c, project_id, team, br_fix,
+		user_tradex, team_id, comission_tradex, bonuses_tradex, provider_amount_tradex
 	)
 	VALUES (
 		:operation_id, :transaction_completed_at, :provider_name, :merchant_name, :merchant_account_name,
 		:project_url, :payment_method_type, :country, :rate, :operation_type, :amount, :transaction_created_at,
 		:provider_payment_id, :operation_status, :account_number, :channel_currency, :provider_currency, :br_amount,
-		:transaction_completed_at_day, :channel_amount, :balance, :provider1c, :project_id, :team, :br_fix
+		:transaction_completed_at_day, :channel_amount, :balance, :provider1c, :project_id, :team, :br_fix,
+		:user_tradex, :team_id, :comission_tradex, :bonuses_tradex, :provider_amount_tradex
 	)
 	
 	ON CONFLICT ON CONSTRAINT pk_id DO UPDATE
@@ -23,40 +25,9 @@ func Stat_Insert_provider_registry() string {
 		transaction_completed_at_day = EXCLUDED.transaction_completed_at_day, 
 		operation_status = EXCLUDED.operation_status, balance = EXCLUDED.balance,
 		project_id = EXCLUDED.project_id, team = EXCLUDED.team, br_fix = EXCLUDED.br_fix,
-		transaction_created_at = EXCLUDED.transaction_created_at, provider1c = EXCLUDED.provider1c;`
-}
-
-func Stat_Insert_provider_registry_test() string {
-	return `
-	INSERT INTO provider_registry_test (
-		operation_id, transaction_completed_at, provider_name, merchant_name, merchant_account_name,
-		payment_method_type, country, rate, operation_type, amount,
-		provider_payment_id, account_number, channel_currency, provider_currency, br_amount,
-		transaction_completed_at_day, channel_amount, balance, provider1c, transaction_created_at, 
-		project_id, team
-	)
-	VALUES (
-		:operation_id, :transaction_completed_at, :provider_name, :merchant_name, :merchant_account_name,
-		:payment_method_type, :country, :rate, :operation_type, :amount,
-		:provider_payment_id, :account_number, :channel_currency, :provider_currency, :br_amount,
-		:transaction_completed_at_day, :channel_amount, :balance, :provider1c, :transaction_created_at, 
-		:project_id, :team
-	)
-	
-	ON CONFLICT ON CONSTRAINT pk_provider_registry_test_id DO UPDATE
-
-	SET rate = EXCLUDED.rate, amount = EXCLUDED.amount, br_amount = EXCLUDED.br_amount,
-		channel_amount = EXCLUDED.channel_amount, provider_currency = EXCLUDED.provider_currency,
-		transaction_completed_at = EXCLUDED.transaction_completed_at, 
-		transaction_completed_at_day = EXCLUDED.transaction_completed_at_day, 
-		balance = EXCLUDED.balance, 
-		provider1c = EXCLUDED.provider1c, provider_name = EXCLUDED.provider_name, 
-		merchant_name = EXCLUDED.merchant_name, merchant_account_name = EXCLUDED.merchant_account_name,
-		payment_method_type = EXCLUDED.payment_method_type, team = EXCLUDED.team,
-		country = EXCLUDED.country, operation_type = EXCLUDED.operation_type, 
-		provider_payment_id = EXCLUDED.provider_payment_id, account_number = EXCLUDED.account_number,
-		transaction_created_at = EXCLUDED.transaction_created_at, project_id = EXCLUDED.project_id,
-		channel_currency = EXCLUDED.channel_currency;`
+		transaction_created_at = EXCLUDED.transaction_created_at, provider1c = EXCLUDED.provider1c,
+		user_tradex = EXCLUDED.user_tradex, team_id = EXCLUDED.team_id, comission_tradex = EXCLUDED.comission_tradex,
+		bonuses_tradex = EXCLUDED.bonuses_tradex, provider_amount_tradex = EXCLUDED.provider_amount_tradex;`
 }
 
 func Stat_Insert_detailed() string {

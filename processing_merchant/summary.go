@@ -177,7 +177,10 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 
 	group_data := map[SummaryRowMerchant]SummaryRowMerchant{}
 	for _, operation := range storage.Registry {
-		if operation.IsTestId > 1 {
+		if operation.IsTestId > 0 {
+			continue
+		}
+		if operation.Tariff != nil && operation.Tariff.IsTest {
 			continue
 		}
 		key := NewKey(operation) // получили структуру с полями группировки

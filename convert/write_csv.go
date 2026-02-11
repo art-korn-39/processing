@@ -100,7 +100,8 @@ func SetHeaders_detailed(writer *csv.Writer) {
 		"merchant_name", "project_id", "operation_type",
 		"account_number", "channel_amount", "channel_currency", "issuer_country",
 		"payment_method_type", "transaction_completed_at", "transaction_created_at", "provider_currency",
-		"курс", "provider_amount", "BR", "balance", "provider1c", "team", "operation_status", "Проверка",
+		"курс", "provider_amount", "BR", "balance", "provider1c", "team_id", "team_name", "operation_status",
+		"user_tradex", "provider_amount_tradex", "bonuses_tradex", "comission_tradex", "Проверка",
 	}
 
 	writer.Write(headers)
@@ -120,6 +121,18 @@ func makeDetailedRow(op *pr.Operation) []string {
 	// 	verification = "ОК"
 	// } else {
 	// 	verification = "Не найдено"
+	// }
+
+	// var team_id, team_name string
+	// if is_kgx_tradex {
+	// 	team_id = op.Team
+	// 	team, ok := teams_tradex.GetTeamByTeamID(op.Team)
+	// 	if ok {
+	// 		team_name = team.Name
+	// 	}
+	// } else {
+	// 	team_name = op.Team
+	// 	team_id = ""
 	// }
 
 	result := []string{
@@ -143,8 +156,13 @@ func makeDetailedRow(op *pr.Operation) []string {
 		strings.ReplaceAll(fmt.Sprintf("%.2f", op.BR_amount), ".", ","),
 		op.Balance,
 		op.Provider1c,
+		op.Team_id,
 		op.Team,
 		op.Operation_status,
+		op.User_tradex,
+		strings.ReplaceAll(fmt.Sprintf("%.2f", op.Provider_amount_tradex), ".", ","),
+		op.Bonuses_tradex,
+		strings.ReplaceAll(fmt.Sprintf("%.2f", op.Comission_tradex), ".", ","),
 		op.Verification,
 	}
 
@@ -184,8 +202,13 @@ func makeDetailedRowBof(op *Bof_operation) []string {
 		"", //strings.ReplaceAll(fmt.Sprintf("%.2f", op.BR_amount), ".", ","),
 		"", //op.Balance,
 		"", //op.Provider1c,
-		"", //op.Team,
+		"", //op.Team id,
+		"", //op.Team name,
 		"", //op.Operation_status,
+		"", //op.user_tradex
+		"", //op.Provider_amount_tradex
+		"", //op.Bonuses_tradex
+		"", //op.Comission_tradex
 		util.TR(opExist, "Есть данные по конвертации", "Не найдено").(string),
 	}
 

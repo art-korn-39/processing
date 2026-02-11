@@ -7,9 +7,12 @@ import (
 	"app/merchants"
 	"app/provider_balances"
 	"app/provider_registry"
+	"app/providers"
 	"app/rr_provider"
 	"app/tariff_compensation"
 	"app/tariff_provider"
+	"app/teams_tradex"
+	"app/test_merchant_accounts"
 	"app/util"
 	"fmt"
 	"sync"
@@ -38,19 +41,40 @@ func FillRefFieldsInRegistry() {
 
 				op.mu.Lock()
 
+				// тестовый трафик
+				if test_merchant_accounts.Skip(op.Document_date, op.Merchant_account_id, op.Merchant_id, op.Operation_type) {
+					op.IsTestId = 1
+					op.IsTestType = "live test"
+				}
+
+				// заполнение balance_id из clickhouse
+				if op.IsTestId == 0 {
+					op.SetBalanceID()
+				}
+
 				// страна
 				op.SetCountry()
 
-				// операция провайдера
-				op.ProviderOperation, _ = provider_registry.GetOperation(op.Operation_id, op.Document_date, op.Channel_amount)
-				if op.ProviderOperation != nil {
-					if op.ProviderOperation.Team != "" {
-						op.IsTradex = true
-					}
+				// это tradex
+				op.IsTradex = providers.Is_tradex(op.Provider_id)
+
+				if op.Provider_id == 35802 && op.Real_provider != "ps-tradex" {
+					op.IsTradex = false
 				}
 
+				// операция провайдера
+				op.ProviderOperation, _ = provider_registry.GetOperation(op.Operation_id, op.Document_date, op.Channel_amount)
+
 				// баланс провайдера
-				op.SetBalance()
+				if op.IsTradex && op.ProviderOperation != nil {
+					team_name := op.ProviderOperation.Team
+					team_ref, ok := teams_tradex.GetTeamByName(team_name)
+					if ok {
+						op.ProviderBalance, _ = provider_balances.GetBalanceByGUID(team_ref.Balance_guid)
+					}
+				} else {
+					op.ProviderBalance, _ = provider_balances.GetBalance(op, "")
+				}
 
 				// валюта баланса
 				op.SetBalanceCurrency()
@@ -222,7 +246,7 @@ func SetBalanceCurrencies() {
 
 }
 
-func SelectTariffs() {
+func SelectTariffs_() {
 
 	start_time := time.Now()
 

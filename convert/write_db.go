@@ -71,7 +71,7 @@ func writeIntoDB(db *sqlx.DB) {
 	var i int
 	batch := make([]provider_registry.Operation, 0, batch_len)
 	for _, v := range final_registry {
-		if v.Verification != "ОК" {
+		if !v.Save {
 			continue
 		}
 		batch = append(batch, *v)

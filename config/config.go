@@ -31,7 +31,6 @@ var (
 )
 
 type Storage string
-type Application string
 
 const (
 	PSQL       Storage = "PSQL"
@@ -43,7 +42,7 @@ const (
 
 type (
 	Config struct {
-		Application Application
+		Application string
 		File_config string
 
 		File_logs   string `json:"file_logs"`
@@ -75,17 +74,19 @@ type (
 
 		// исходящие данные
 		Detailed    ExportData `json:"detailed"`
+		Detailed_2  ExportData `json:"detailed_2"`
 		SummaryInfo ExportData `json:"summary_info"`
 		Summary     ExportData `json:"summary"`
 	}
 
 	Settings struct {
-		Guid             []string `json:"guid"`
-		Handbook         string   `json:"handbook"`
-		Tradex_comission string   `json:"tradex_comission"`
-		Sheet            string   `json:"sheet"`
-		KGX_Tradex       bool     `json:"kgx"`
-		Daily_rates      bool     `json:"daily_rates"`
+		Guid             []string  `json:"guid"`
+		Handbook         string    `json:"handbook"`
+		Tradex_comission string    `json:"tradex_comission"`
+		Sheet            string    `json:"sheet"`
+		Tradex           bool      `json:"tradex"`
+		Daily_rates      bool      `json:"daily_rates"`
+		Closing_date     time.Time `json:"closing_date"`
 	}
 
 	DatabaseConnection struct {
@@ -146,7 +147,7 @@ func init() {
 
 func New(app, file_config string) {
 	cfg = Config{
-		Application: Application(app),
+		Application: app,
 		File_config: file_config,
 	}
 }
@@ -250,7 +251,9 @@ func (c *Config) SetDBUsage() {
 	// по умолчанию всегда подключаемся к postgres, т.к. случаи, когда он не используется крайне редкие
 	c.PSQL.Usage = true
 
-	c.Clickhouse.Usage = c.Registry.Storage == Clickhouse
+	c.Clickhouse.Usage = c.Registry.Storage == Clickhouse ||
+		c.Application == "processing_merchant" ||
+		c.Application == "processing_provider"
 
 	c.AWS.Usage = c.Registry.Storage == AWS
 	if c.AWS.Usage {
@@ -262,4 +265,17 @@ func (c *Config) SetDBUsage() {
 		c.Clickhouse.Usage = false
 	}
 
+}
+
+func SkipDate(date time.Time) bool {
+
+	if cfg.Settings.Closing_date.IsZero() {
+		return false
+	}
+
+	if cfg.Settings.Closing_date.After(date) {
+		return true
+	}
+
+	return false
 }

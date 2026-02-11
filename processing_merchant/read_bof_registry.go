@@ -75,6 +75,10 @@ func NewQuerryArgs(from_cfg bool) (args querrys.Args) {
 		for _, row := range storage.Registry {
 			args.Merchant_id = append(args.Merchant_id, row.Merchant_id)
 			args.Provider_id = append(args.Provider_id, row.Provider_id)
+
+			if row.Balance_id == 0 {
+				args.ID = append(args.ID, row.Operation_id)
+			}
 		}
 
 		args.Merchant_id = util.Compact(args.Merchant_id)
@@ -233,6 +237,11 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 	idx = map_fileds["tariff_currency"]
 	if idx > 0 {
 		op.Tariff_currency = currency.New(record[idx-1])
+	}
+
+	idx = map_fileds["real_provider"]
+	if idx > 0 {
+		op.Real_provider = record[idx-1]
 	}
 
 	return

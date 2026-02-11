@@ -55,3 +55,45 @@ func GetOperation(id int, d time.Time, amount float64) (*Operation, bool) {
 	return nil, false
 
 }
+
+func OperationByDateExists(id int, d time.Time) bool {
+
+	val, ok := registry[id]
+	if ok {
+		for {
+			op := val.Operation
+			if op.Transaction_completed_at_day.Equal(d) {
+				return true
+			}
+
+			if val.Next == nil {
+				break
+			}
+			val = val.Next
+		}
+	}
+
+	return false
+
+}
+
+func OperationByAmountExists(id int, amount float64) bool {
+
+	val, ok := registry[id]
+	if ok {
+		for {
+			op := val.Operation
+			if util.Equals(op.Channel_amount, amount) {
+				return true
+			}
+
+			if val.Next == nil {
+				break
+			}
+			val = val.Next
+		}
+	}
+
+	return false
+
+}

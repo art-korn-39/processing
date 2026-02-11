@@ -49,15 +49,3 @@ func Read(db *sqlx.DB) {
 	logs.Add(logs.INFO, fmt.Sprintf("Чтение балансов провайдеров: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(slice_balances))))
 
 }
-
-// func GetBalance(provider_id, ma_id int, balance_currency, balance_type string) (*Balance, bool) {
-// 	hash := fmt.Sprint(provider_id, ma_id, balance_currency, balance_type)
-// 	b, ok := data_maid[hash]
-// 	return b, ok
-// }
-
-// func GetByProvierAndMA(provider_id, ma_id int) (*Balance, bool) {
-// 	hash := fmt.Sprint(provider_id, ma_id)
-// 	b, ok := data_maid[hash]
-// 	return b, ok
-// }

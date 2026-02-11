@@ -50,6 +50,7 @@ type Operation struct {
 	Business_type         string `db:"business_type"`
 	Country_code2         string `db:"country"`
 	Region                string `db:"region"`
+	Real_provider         string
 
 	Project_name      string `db:"project_name"`
 	Project_id        int    `db:"project_id"`
@@ -135,10 +136,12 @@ type Operation struct {
 	Tariff_compensation  *tariff_compensation.Tariff
 	RR_merchant          *rr_merchant.Tariff
 
-	Tariff_rate_fix     float64 `db:"billing__tariff_rate_fix"`
-	Tariff_rate_percent float64 `db:"billing__tariff_rate_percent"`
-	Tariff_rate_min     float64 `db:"billing__tariff_rate_min"`
-	Tariff_rate_max     float64 `db:"billing__tariff_rate_max"`
+	Tariff_rate_fix               float64 `db:"billing__tariff_rate_fix"`
+	Tariff_rate_percent           float64 `db:"billing__tariff_rate_percent"`
+	Tariff_rate_min               float64 `db:"billing__tariff_rate_min"`
+	Tariff_rate_max               float64 `db:"billing__tariff_rate_max"`
+	Tariff_currency_rate          float64
+	Tariff_currency_rate_exponent float64
 
 	Tariff_currency currency.Currency
 
@@ -221,13 +224,32 @@ func (o *Operation) StartingFill() {
 
 }
 
-// func (o *Operation) SetCountry() {
-// 	o.Country = countries.GetCountry(o.Country_code2, o.Channel_currency.Name)
-// }
+func (o *Operation) SetBalanceID() {
 
-// func (o *Operation) SetDetailed_provider() {
-// 	o.Detailed_provider = data_detailed_provider[o.Operation_id]
-// }
+	if o.Balance_id != 0 {
+		return
+	}
+
+	ch_operation, ok := bof_clickhouse_data[o.Operation_id]
+	if ok {
+		o.Balance_id = ch_operation.Balance_id
+	} else {
+		for _, v := range storage.Registry {
+			if v.Merchant_account_id == o.Merchant_account_id &&
+				v.Operation_type == o.Operation_type &&
+				v.Payment_type == o.Payment_type &&
+				v.Provider_id == o.Provider_id &&
+				v.Merchant_id == o.Merchant_id &&
+				v.Channel_currency_str == o.Channel_currency_str &&
+				v != o && v.Balance_id > 0 {
+
+				o.Balance_id = v.Balance_id
+				return
+			}
+		}
+	}
+
+}
 
 func (o *Operation) SetBalanceCurrency() {
 
@@ -402,11 +424,6 @@ func (o *Operation) SetSRAmount() {
 
 }
 
-// func (o *Operation) SetProviderBalance() {
-
-// 	o.ProviderBalance, _ = provider_balances.GetBalance(o, "")
-// }
-
 func (o *Operation) SetProvider1c() {
 
 	if o.TakeProvider1cFromTariff && o.Tariff != nil && o.Tariff.Provider1C != "" {
@@ -527,8 +544,8 @@ func (o *Operation) SetVerification() {
 		o.Verification = VRF_OK
 	} else if o.CheckRates != 0 {
 		o.Verification = VRF_CHECK_TARIFF
-	} else if o.Tariff_currency != o.Balance_currency && o.Tariff_currency.Name != "" {
-		o.Verification = VRF_TARIFF_CURRENCY
+		// } else if o.Tariff_currency != o.Balance_currency && o.Tariff_currency.Name != "" {
+		// 	o.Verification = VRF_TARIFF_CURRENCY
 	} else if o.Channel_currency != Balance_currency && Converation != "Колбек" {
 		o.Verification = VRF_CHECK_CURRENCY
 	} else if Converation == "Частичные выплаты" && o.Channel_amount != o.Actual_amount {

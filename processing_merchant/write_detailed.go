@@ -188,7 +188,6 @@ func PSQL_Insert_Detailed() {
 	const batch_len = 1000
 
 	var wg sync.WaitGroup
-	//var once sync.Once
 
 	stat := querrys.Stat_Insert_detailed()
 	_, err := storage.Postgres.PrepareNamed(stat)
@@ -208,40 +207,20 @@ func PSQL_Insert_Detailed() {
 					logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД (detailed): ", err))
 				}
 
-				// tx, _ := storage.Postgres.Beginx()
-
-				// sliceID := make([]int, 0, len(v))
-				// for _, row := range v {
-				// 	sliceID = append(sliceID, row.Operation_id)
-				// }
-
-				// _, err = tx.Exec("delete from detailed where operation_id = ANY($1);", pq.Array(sliceID))
-				// if err != nil {
-				// 	once.Do(func() { logs.Add(logs.INFO, err) })
-				// 	tx.Rollback()
-				// 	return
-				// }
-
-				// _, err := tx.NamedExec(stat, v)
-				// if err != nil {
-				// 	once.Do(func() { logs.Add(logs.INFO, err) })
-				// 	tx.Rollback()
-				// 	return
-				// } else if logs.Testing {
-				// 	tx.Rollback()
-				// } else {
-				// 	tx.Commit()
-				// }
-
 			}
 		}()
 	}
 
 	batch := make([]Detailed_row, 0, batch_len)
-	for i, v := range storage.Registry {
+	for _, v := range storage.Registry {
+
+		if config.SkipDate(v.Document_date) {
+			continue
+		}
+
 		d := NewDetailedRow(v)
 		batch = append(batch, d)
-		if (i+1)%batch_len == 0 {
+		if len(batch) >= batch_len {
 			channel <- batch
 			batch = make([]Detailed_row, 0, batch_len)
 		}

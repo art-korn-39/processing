@@ -261,7 +261,7 @@ func Read_convert_sheet(sheet *xlsx.Sheet, filename string) (ops []Operation, er
 			operation.BR_fix = util.TR(math.IsNaN(operation.BR_fix), float64(0), operation.BR_fix).(float64)
 		}
 
-		operation.StartingFill(true)
+		operation.StartingFill(0)
 
 		ops = append(ops, operation)
 

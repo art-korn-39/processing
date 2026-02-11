@@ -4,7 +4,6 @@ import (
 	"app/config"
 	"app/logs"
 	"app/tariff_merchant"
-	"app/test_merchant_accounts"
 	"app/util"
 	"fmt"
 	"slices"
@@ -119,9 +118,9 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		// 	continue
 		// }
 
-		if test_merchant_accounts.Skip(k.document_date, k.merchant_account_id, k.operation_type) {
-			continue
-		}
+		// if test_merchant_accounts.Skip(k.document_date, k.merchant_account_id, k.operation_type) {
+		// 	continue
+		// }
 
 		row := sheet.AddRow()
 
@@ -313,9 +312,9 @@ func add_page_detailed_nu(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 			continue
 		}
 
-		if test_merchant_accounts.Skip(k.document_date, k.merchant_account_id, k.operation_type) {
-			continue
-		}
+		// if test_merchant_accounts.Skip(k.document_date, k.merchant_account_id, k.operation_type) {
+		// 	continue
+		// }
 
 		row := sheet.AddRow()
 		row.AddCell().SetString(k.balance_name_prov) //k.tariff.Balance_name)   //0
@@ -489,9 +488,9 @@ func add_page_detailed_project(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFile
 		// 	continue
 		// }
 
-		if test_merchant_accounts.Skip(k.document_date, k.merchant_account_id, k.operation_type) {
-			continue
-		}
+		// if test_merchant_accounts.Skip(k.document_date, k.merchant_account_id, k.operation_type) {
+		// 	continue
+		// }
 
 		row := sheet.AddRow()
 
@@ -639,9 +638,9 @@ func add_page_svodno(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 			continue
 		}
 
-		if test_merchant_accounts.Skip(k.document_date, k.merchant_account_id, k.operation_type) {
-			continue
-		}
+		// if test_merchant_accounts.Skip(k.document_date, k.merchant_account_id, k.operation_type) {
+		// 	continue
+		// }
 
 		row := sheet.AddRow()
 		row.AddCell().SetString(k.balance_name_prov) //k.tariff.Balance_name)   //0

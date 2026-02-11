@@ -223,9 +223,11 @@ func FindTariffForOperation(op Operation) *Tariff {
 				continue
 			}
 
+			// DateStartMA - в файлах пустая, только из pg заполняется
+
 			if t.DateStartMA.Before(operation_date) &&
 				(t.DateFinishMA.After(operation_date) || t.DateFinishMA.IsZero()) &&
-				t.DateStart.Before(operation_date) &&
+				(t.IsFile == false || t.DateStart.Before(operation_date)) && // если из файла, то отбираем ещё по дате старта
 				t.Operation_type == operation_type {
 
 				// тип сети будет колонка в тарифе и проверять на неё

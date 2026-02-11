@@ -156,9 +156,16 @@ func PSQL_Insert_SummaryMerchant(s []SummaryRowMerchant) {
 
 	batch := make([]SummaryRowMerchant, 0, batch_len)
 	for _, v := range s {
+
+		if config.SkipDate(v.Document_date) {
+			continue
+		}
+
 		if current_date != v.Document_date {
-			channel <- batch
-			batch = make([]SummaryRowMerchant, 0, batch_len)
+			if len(batch) > 0 {
+				channel <- batch
+				batch = make([]SummaryRowMerchant, 0, batch_len)
+			}
 			current_date = v.Document_date
 		}
 		batch = append(batch, v)

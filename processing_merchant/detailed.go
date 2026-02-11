@@ -153,7 +153,7 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	if o.Tariff != nil {
 		t := o.Tariff
 		d.Convertation = t.Convertation
-		d.Provider1C = t.Provider1C
+		//d.Provider1C = t.Provider1C // 06.02 убрал, т.к. поставщик уже в операции ранее определили
 		d.Tariff_date_start = t.DateStart
 		d.Act_percent = t.Percent
 		d.Act_fix = t.Fix
@@ -163,11 +163,13 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 		d.Range_max = t.RangeMAX
 	}
 
-	if o.Tariff_dragonpay_mid != nil {
-		d.Tariff_condition_id = o.Tariff_dragonpay_mid.Id
-	} else if o.Tariff != nil {
-		d.Tariff_condition_id = o.Tariff.Id
-	}
+	d.Tariff_condition_id = o.Tariff_condition_id
+
+	// if o.Tariff_dragonpay_mid != nil {
+	// 	d.Tariff_condition_id = o.Tariff_dragonpay_mid.Id
+	// } else if o.Tariff != nil {
+	// 	d.Tariff_condition_id = o.Tariff.Id
+	// }
 
 	if o.Tariff_bof != nil {
 		t := o.Tariff_bof

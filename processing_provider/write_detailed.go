@@ -136,14 +136,9 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		d.Endpoint_id,
 		util.IsString1251(d.Account_bank_name),
 		d.Operation_created_at.Format(time.DateTime),
-		//#1204
-		//util.FloatToString(d.Balance_amount, d.Balance_currency.GetAccuracy(2)),
-		//util.FloatToString(d.BR_balance_currency, d.Balance_currency.GetAccuracy(4)),
-		//util.FloatToString(d.Extra_BR_balance_currency, d.Balance_currency.GetAccuracy(4)),
 		util.FloatToString(d.Balance_amount, 8),
 		util.FloatToString(d.BR_balance_currency, 8),
 		util.FloatToString(d.Extra_BR_balance_currency, 8),
-		//
 		d.Balance_currency_str,
 		util.FloatToString(d.Rate, d.Balance_currency.GetAccuracy(2)),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.CompensationBR), ".", ","),
@@ -205,10 +200,15 @@ func PSQL_Insert_Detailed() {
 	}
 
 	batch := make([]Detailed_row, 0, batch_len)
-	for i, v := range storage.Registry {
+	for _, v := range storage.Registry {
+
+		if config.SkipDate(v.Document_date) {
+			continue
+		}
+
 		d := NewDetailedRow(v)
 		batch = append(batch, d)
-		if (i+1)%batch_len == 0 {
+		if len(batch) >= batch_len {
 			channel <- batch
 			batch = make([]Detailed_row, 0, batch_len)
 		}

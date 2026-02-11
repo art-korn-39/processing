@@ -40,6 +40,39 @@ type Bof_operation struct {
 	Channel_currency     currency.Currency
 }
 
+func (bof_op *Bof_operation) GetKey(key_column string) string {
+	var key string
+	switch key_column {
+	case OPID:
+		key = bof_op.Operation_id
+	case PAYID:
+		key = bof_op.Provider_payment_id
+	}
+	return key
+}
+
+func (bof_op *Bof_operation) GetSecondKey(key_column string) string {
+	var key string
+	switch key_column {
+	case OPID:
+		key = bof_op.Provider_payment_id
+	case PAYID:
+		key = bof_op.Operation_id
+	}
+	return key
+}
+
+func (op *Bof_operation) GetBool(name string) bool {
+	var result bool
+	switch name {
+	// case "":
+	// 	result =
+	default:
+		logs.Add(logs.FATAL, "неизвестное поле bool: ", name)
+	}
+	return result
+}
+
 func (op *Bof_operation) GetTime(name string) time.Time {
 	var result time.Time
 	switch name {
@@ -152,12 +185,8 @@ func readBofFile(filename string, key_column string) error {
 				op := ConvertRecordToOperation(record, map_fileds)
 				op.fill()
 				mu.Lock()
-				switch key_column {
-				case OPID:
-					bof_registry[op.Operation_id] = op
-				case PAYID:
-					bof_registry[op.Provider_payment_id] = op
-				}
+				bof_registry[op.GetKey(key_column)] = op
+				bof_registry_second_key[op.GetSecondKey(key_column)] = op
 				mu.Unlock()
 			}
 		}()
@@ -226,15 +255,11 @@ func readBofCH(db *sqlx.DB, key_column string) error {
 					logs.Add(logs.ERROR, err)
 					continue
 				}
-				for _, v := range result {
-					v.fill()
+				for _, bof_op := range result {
+					bof_op.fill()
 					mu.Lock()
-					switch key_column {
-					case OPID:
-						bof_registry[v.Operation_id] = &v
-					case PAYID:
-						bof_registry[v.Provider_payment_id] = &v
-					}
+					bof_registry[bof_op.GetKey(key_column)] = &bof_op
+					bof_registry_second_key[bof_op.GetSecondKey(key_column)] = &bof_op
 					mu.Unlock()
 				}
 			}

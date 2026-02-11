@@ -122,7 +122,7 @@ import (
 
 func getTeamByTeamID(record []string, map_fields map[string]int) string {
 
-	idx := map_fields["partnerid"]
+	idx := map_fields["partnerid"] // тут team_id
 	if idx > 0 {
 		partner_id := strings.ToLower(record[idx-1])
 		team, ok := teams_tradex.GetTeamByTeamID(partner_id)

@@ -82,9 +82,9 @@ func ReadSources() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(14)
+	wg.Add(15)
 
-	channel_readers := 5
+	channel_readers := 6
 	registry_done := make(chan querrys.Args, channel_readers)
 
 	go func() {
@@ -120,6 +120,11 @@ func ReadSources() {
 	go func() {
 		defer wg.Done()
 		dragonpay.Read_Registry(storage.Postgres, false, registry_done)
+	}()
+
+	go func() {
+		defer wg.Done()
+		GetDataFromClickhouse(storage.Clickhouse, registry_done)
 	}()
 
 	go func() {

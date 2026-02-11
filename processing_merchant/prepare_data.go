@@ -83,9 +83,14 @@ func FillRefFieldsInRegistry() {
 				op.mu.Lock()
 
 				// тестовый трафик
-				if test_merchant_accounts.Skip(op.Document_date, op.Merchant_account_id, op.Operation_type) {
+				if test_merchant_accounts.Skip(op.Document_date, op.Merchant_account_id, op.Merchant_id, op.Operation_type) {
 					op.IsTestId = 1
 					op.IsTestType = "live test"
+				}
+
+				// заполнение balance_id из clickhouse
+				if op.IsTestId == 0 {
+					op.SetBalanceID()
 				}
 
 				// dragonpay: payment_type, provider1c
@@ -115,6 +120,10 @@ func FillRefFieldsInRegistry() {
 
 				// это tradex
 				op.IsTradex = providers.Is_tradex(op.Provider_id)
+
+				if op.Provider_id == 35802 && op.Real_provider != "ps-tradex" {
+					op.IsTradex = false
+				}
 
 				// баланс провайдера
 				if op.IsTradex && op.ProviderOperation != nil {

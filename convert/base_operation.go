@@ -6,6 +6,7 @@ import (
 	"app/logs"
 	"app/provider_balances"
 	pg "app/provider_registry"
+	"app/teams_tradex"
 	"app/util"
 	"fmt"
 	"slices"
@@ -48,72 +49,126 @@ func createBaseOperation(record []string, map_fields map[string]int, setting *Se
 
 }
 
-func (ext_op *Base_operation) createProviderOperation() (op *pg.Operation, err error) {
+func (base_op *Base_operation) GetKey() string {
+	var key string
+	switch base_op.Setting.Key_column {
+	case OPID:
+		key = base_op.operation_id
+	case PAYID:
+		key = base_op.payment_id
+	}
+	return key
+}
+
+func (base_op *Base_operation) GetSecondKey() string {
+	var key string
+	switch base_op.Setting.Key_column {
+	case OPID:
+		key = base_op.payment_id
+	case PAYID:
+		key = base_op.operation_id
+	}
+	return key
+}
+
+func (base_op *Base_operation) GetSecondKeyColumn() string {
+	var key string
+	switch base_op.Setting.Key_column {
+	case OPID:
+		key = PAYID
+	case PAYID:
+		key = OPID
+	}
+	return key
+}
+
+func (base_op *Base_operation) createProviderOperation() (op *pg.Operation, err error) {
 
 	op = &pg.Operation{}
-	ext_op.Provider_operation = op
+	base_op.Provider_operation = op
 
-	if ext_op.operation_id != "" && ext_op.operation_id != "0" {
-		op.Id, err = strconv.Atoi(ext_op.operation_id)
+	if base_op.operation_id != "" && base_op.operation_id != "0" {
+		op.Id, err = strconv.Atoi(base_op.operation_id)
 	} else {
-		op.Id, err = strconv.Atoi(ext_op.getValue("operation_id"))
+		op.Id, err = strconv.Atoi(base_op.getValue("operation_id"))
 	}
 	if err != nil {
 		return nil, fmt.Errorf("field: operation_id - %v", err)
 	}
 
-	if ext_op.payment_id != "" {
-		op.Provider_payment_id = ext_op.payment_id
+	if base_op.payment_id != "" {
+		op.Provider_payment_id = base_op.payment_id
 	} else {
-		op.Provider_payment_id = ext_op.getValue("provider_payment_id")
+		op.Provider_payment_id = base_op.getValue("provider_payment_id")
 	}
 
-	op.Transaction_completed_at, err = time.Parse(time.DateTime, ext_op.getValue("transaction_completed_at"))
+	op.Transaction_completed_at, err = time.Parse(time.DateTime, base_op.getValue("transaction_completed_at"))
 	if err != nil {
 		return nil, err
 	}
 
-	op.Transaction_created_at, err = time.Parse(time.DateTime, ext_op.getValue("transaction_created_at"))
+	op.Transaction_created_at, err = time.Parse(time.DateTime, base_op.getValue("transaction_created_at"))
 	if err != nil {
 		return nil, err
 	}
 
-	op.Channel_amount, err = util.ParseFloat(ext_op.getValue("channel_amount"))
+	op.Channel_amount, err = util.ParseFloat(base_op.getValue("channel_amount"))
 	if err != nil {
 		return nil, err
 	}
 
-	op.Rate, err = util.ParseFloat(ext_op.getValue("rate"))
+	op.Rate, err = util.ParseFloat(base_op.getValue("rate"))
 	if err != nil {
 		return nil, err
 	}
 
-	op.Amount, err = util.ParseFloat(ext_op.getValue("amount"))
+	op.Amount, err = util.ParseFloat(base_op.getValue("amount"))
 	if err != nil {
 		return nil, err
 	}
 
-	op.BR_amount, err = util.ParseFloat(ext_op.getValue("br_amount"))
+	op.BR_amount, err = util.ParseFloat(base_op.getValue("br_amount"))
 	if err != nil {
 		return nil, err
 	}
 
-	op.Provider_name = ext_op.getValue("provider_name")
-	op.Merchant_name = ext_op.getValue("merchant_name")
-	op.Merchant_account_name = ext_op.getValue("merchant_account_name")
-	op.Operation_type = ext_op.getValue("operation_type")
-	op.Payment_type = ext_op.getValue("payment_method_type")
-	op.Country = ext_op.getValue("country")
-	op.Account_number = ext_op.getValue("account_number")
-	op.Channel_currency_str = ext_op.getValue("channel_currency")
-	op.Provider_currency_str = ext_op.getValue("provider_currency")
-	op.Balance = ext_op.getValue("balance")
-	op.Provider1c = ext_op.getValue("provider1c")
-	op.Project_id, _ = strconv.Atoi(ext_op.getValue("project_id"))
-	op.Team = ext_op.getValue("team (kgx/tradex)")
-	op.Operation_status = ext_op.getValue("operation_status")
+	op.Provider_name = base_op.getValue("provider_name")
+	op.Merchant_name = base_op.getValue("merchant_name")
+	op.Merchant_account_name = base_op.getValue("merchant_account_name")
+	op.Operation_type = base_op.getValue("operation_type")
+	op.Payment_type = base_op.getValue("payment_method_type")
+	op.Country = base_op.getValue("country")
+	op.Account_number = base_op.getValue("account_number")
+	op.Channel_currency_str = base_op.getValue("channel_currency")
+	op.Provider_currency_str = base_op.getValue("provider_currency")
+	op.Balance = base_op.getValue("balance")
+	op.Provider1c = base_op.getValue("provider1c")
+	op.Project_id, _ = strconv.Atoi(base_op.getValue("project_id"))
 
-	op.StartingFill(false)
+	// у tradex в реестре будет team_id
+	// у остальных team_name из внешнего источника
+	if is_tradex {
+		op.Team_id = base_op.getValue("team (kgx/tradex)")
+		team_ref, ok := teams_tradex.GetTeamByTeamID(op.Team_id)
+		if ok {
+			op.Team = team_ref.Name
+		} else {
+			op.Team = fmt.Sprintf("%s%s", "Нет команды_", op.Channel_currency_str)
+		}
+	} else {
+		op.Team = base_op.getValue("team (kgx/tradex)")
+		//op.Team_id =
+	}
+
+	op.Operation_status = base_op.getValue("operation_status")
+	op.User_tradex = base_op.getValue("user_tradex")
+	op.Bonuses_tradex = base_op.getValue("bonuses_tradex")
+	op.Comission_tradex, err = util.ParseFloat(base_op.getValue("comission_tradex"))
+	if err != nil {
+		return nil, err
+	}
+
+	op.StartingFill(2)
 
 	return op, nil
 
@@ -127,12 +182,17 @@ func (base_op *Base_operation) getValue(reg_name string) (result string) {
 		return
 	}
 
-	float_names := []string{"amount", "channel_amount", "br_amount", "rate"}
+	float_names := []string{"amount", "channel_amount", "br_amount", "rate", "comission_tradex"}
 
 	bof_op := Bof_operation{Operation_id: "0"}
 	if base_op.Bof_operation != nil {
 		bof_op = *base_op.Bof_operation
 	}
+
+	// if reg_name == "channel_amount" {
+	// 	result = strconv.FormatFloat(bof_op.Channel_amount, 'f', -1, 64)
+	// 	return result
+	// }
 
 	if mapping.Skip {
 		if slices.Contains(float_names, reg_name) {
@@ -205,7 +265,7 @@ func (base_op *Base_operation) getValue(reg_name string) (result string) {
 			if slices.Contains(float_names, reg_name) && reg_name != "rate" {
 				str := base_op.record[idx]
 				number, _ := util.ParseFloat(str)
-				if is_kgx_tradex {
+				if is_tradex {
 					number = number / 100
 				}
 				result = strconv.FormatFloat(number, 'f', -1, 64)
@@ -220,7 +280,7 @@ func (base_op *Base_operation) getValue(reg_name string) (result string) {
 }
 
 func getBalance(record []string, map_fields map[string]int, bof_op Bof_operation) (balance_name string) {
-	if is_kgx_tradex {
+	if is_tradex {
 		balance_name = getBalanceByTeamID(record, map_fields)
 	} else {
 		balance, ok := provider_balances.GetBalanceByProviderAndMA(bof_op.Merchant_account_id, bof_op.Provider_id)
@@ -235,7 +295,7 @@ func getProvider1c(bof_op Bof_operation, provider_currency string) (provider1c s
 
 	balance := balances[bof_op]
 
-	if is_kgx_tradex {
+	if is_tradex {
 
 		return balances_tradex.GetProvider1c(balance, provider_currency, bof_op.Country_code2, bof_op.Payment_type)
 

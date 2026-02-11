@@ -11,6 +11,7 @@ import (
 	"app/querrys"
 	"app/storage"
 	"app/teams_tradex"
+	"app/util"
 	"fmt"
 	"os"
 	"strconv"
@@ -30,10 +31,13 @@ var (
 	// прочитанные BOF операции (из файла или CH)
 	bof_registry map[string]*Bof_operation //ключ - operation_id / provider_payment_id (string)
 
+	// прочитанные BOF операции (из файла или CH) где ключ не основной
+	bof_registry_second_key map[string]*Bof_operation //ключ - operation_id / provider_payment_id (string)
+
 	// операции из файла(ов) tradex
 	tradex_registry map[string]*Tradex_operation
 
-	is_kgx_tradex   bool
+	is_tradex       bool
 	use_daily_rates bool
 	main_setting    *Setting
 	all_settings    map[string]*Setting
@@ -45,6 +49,7 @@ func init() {
 	final_registry = map[int]*pr.Operation{}
 	ext_registry = make([]*Base_operation, 0, 100000)
 	bof_registry = map[string]*Bof_operation{}
+	bof_registry_second_key = map[string]*Bof_operation{}
 	tradex_registry = map[string]*Tradex_operation{}
 
 	all_settings = map[string]*Setting{}
@@ -87,7 +92,7 @@ func ReadAndConvert(cfg *config.Config, storage *storage.Storage) []*Base_operat
 		logs.Add(logs.FATAL, "По указанному провайдеру не найдены настройки конвертации.")
 	}
 
-	is_kgx_tradex = cfg.Settings.KGX_Tradex
+	is_tradex = cfg.Settings.Tradex
 	use_daily_rates = cfg.Settings.Daily_rates
 	tradex_comission_file := cfg.Settings.Tradex_comission
 	filename := cfg.Provider_registry.Filename
@@ -127,7 +132,7 @@ func ReadAndConvert(cfg *config.Config, storage *storage.Storage) []*Base_operat
 
 	// чтение дополнительного маппинга
 	if external_usage {
-		if is_kgx_tradex {
+		if is_tradex {
 			// err = readHandbook(cfg.Settings.Handbook)
 			// if err != nil {
 			// 	logs.Add(logs.FATAL, err)
@@ -174,13 +179,18 @@ func handleRecords() error {
 	} else {
 		for _, base_operation := range ext_registry {
 			var ok bool
-			switch base_operation.Setting.Key_column {
-			case OPID:
-				base_operation.Bof_operation, ok = bof_registry[base_operation.operation_id]
-			case PAYID:
-				base_operation.Bof_operation, ok = bof_registry[base_operation.payment_id]
-			}
-			if !ok {
+			base_operation.Bof_operation, ok = bof_registry[base_operation.GetKey()] // поиск по основному ключу
+			if !ok && is_tradex {
+				base_operation.Bof_operation, ok = bof_registry_second_key[base_operation.GetSecondKey()] // поиск по второму ключу
+				if !ok {
+					base_operation.Bof_operation, ok = bof_registry_second_key[base_operation.GetKey()] // доп. поиск
+					if !ok {
+						cntWithoutBof++
+					}
+				} else {
+					cntWithoutBof++
+				}
+			} else {
 				cntWithoutBof++
 			}
 		}
@@ -194,10 +204,11 @@ func handleRecords() error {
 			continue
 		}
 
-		if is_kgx_tradex {
+		if is_tradex {
 			tradex_operation, ok := tradex_registry[base_operation.payment_id]
 			if ok {
 				provider_operation.BR_amount = tradex_operation.amount
+				provider_operation.Comission_tradex = tradex_operation.comission
 			}
 		}
 
@@ -205,7 +216,7 @@ func handleRecords() error {
 
 		setCalculatedFields(provider_operation, sliceCalculatedFields)
 
-		setVerification(provider_operation)
+		setVerification(provider_operation, base_operation)
 
 		if base_operation.Bof_operation != nil {
 			final_registry[provider_operation.Id] = provider_operation
@@ -247,7 +258,19 @@ func setCalculatedFields(op *pr.Operation, calculatedFields []string) {
 
 }
 
-func setVerification(op *pr.Operation) {
+func setVerification(op *pr.Operation, base_op *Base_operation) {
+
+	op.Save = true
+
+	if use_daily_rates {
+		if op.Rate != 0 {
+			op.Verification = "ОК"
+		} else {
+			op.Verification = "Не найдено"
+			op.Save = false
+		}
+		return
+	}
 
 	operation_id := strconv.Itoa(op.Id)
 	payment_id := op.Provider_payment_id
@@ -255,6 +278,31 @@ func setVerification(op *pr.Operation) {
 	_, ok1 := bof_registry[operation_id]
 	_, ok2 := bof_registry[payment_id]
 
-	op.SetVerification(ok1 || ok2, use_daily_rates)
+	_, ok3 := bof_registry_second_key[operation_id]
+	_, ok4 := bof_registry_second_key[payment_id]
+
+	bof_usage := ok1 || ok2
+	bof2_usage := ok3 || ok4
+
+	if base_op.Bof_operation != nil && !util.Equals(base_op.Bof_operation.Channel_amount, op.Channel_amount) {
+		op.Channel_amount = base_op.Bof_operation.Channel_amount // убрать
+		if op.Channel_currency == op.Provider_currency {
+			op.Amount = op.Channel_amount
+		}
+		op.Verification = "ОК, проверь channel amount"
+	} else if bof_usage {
+		if op.Channel_currency == op.Provider_currency && op.Amount != op.Provider_amount_tradex && is_tradex {
+			op.Verification = "ОК, проверь amount"
+		} else {
+			op.Verification = "ОК"
+		}
+	} else if bof2_usage && is_tradex { // нашли по второму ключу
+		op.Verification = "ОК, найдено по operation_id" // т.к только для tradex, то второй ключ это всегда operation_id
+	} else {
+		op.Verification = "Не_найдено"
+		op.Save = false
+	}
+
+	//op.SetVerification(ok1 || ok2, ok3 || ok4, use_daily_rates)
 
 }

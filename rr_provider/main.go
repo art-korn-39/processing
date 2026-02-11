@@ -18,7 +18,7 @@ func FindRRForOperation(op Operation) *Tariff {
 			continue
 		}
 
-		if rr.Merchant_account_id == merchant_account_id &&
+		if (rr.Merchant_account_id == merchant_account_id || rr.Merchant_account_id == 0) &&
 			rr.DateStart.Before(operation_date) &&
 			(rr.DateFinish.After(operation_date) || rr.DateFinish.IsZero()) &&
 			rr.Provider_id == provider_id &&

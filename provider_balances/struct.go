@@ -35,6 +35,8 @@ type Balance struct {
 
 	Balance_currency_str string `db:"balance_currency"`
 	Balance_currency     currency.Currency
+
+	Is_tradex bool `db:"is_tradex"`
 }
 
 var (
@@ -52,6 +54,7 @@ type Operation interface {
 	GetTime(string) time.Time
 	GetInt(string) int
 	GetString(string) string
+	GetBool(string) bool
 }
 
 func (r data) Set(b Balance) {
@@ -83,12 +86,14 @@ func GetBalance(op Operation, balance_currency string) (*Balance, bool) {
 	provider_id := op.GetInt("Provider_id")
 	balance_type := op.GetString("Balance_type")
 	date := op.GetTime("Transaction_completed_at")
+	is_tradex := op.GetBool("IsTradex")
 
 	val, ok := data_maid[ma_id]
 	if ok {
 		for {
 			b := val.Balance
 			if b.Provider_id == provider_id &&
+				b.Is_tradex == is_tradex &&
 				(b.Balance_currency.Name == balance_currency || balance_currency == "") &&
 				(b.Type == balance_type || b.Type == "IN-OUT" || balance_type == "NULL") {
 

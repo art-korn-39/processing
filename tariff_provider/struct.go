@@ -39,6 +39,8 @@ type Tariff struct {
 	Region                     string    `db:"region"`
 	ChannelCurrency            currency.Currency
 	ChannelCurrency_str        string `db:"channel_currency"`
+	TariffCurrency             currency.Currency
+	TariffCurrency_str         string `db:"tariff_currency"`
 	Project                    string `db:"project_name"`
 	Business_type              string `db:"business_type"`
 	Operation_group            string `db:"operation_group"`
@@ -70,6 +72,8 @@ func (t *Tariff) StartingFill() {
 	}
 
 	t.ChannelCurrency = currency.New(t.ChannelCurrency_str)
+
+	t.TariffCurrency = currency.New(t.TariffCurrency_str)
 
 	t.Percent = t.Percent / 100
 
