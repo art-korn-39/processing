@@ -70,7 +70,7 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		"real_amount / channel_amount", "real_amount, fee", "Сумма в валюте баланса",
 		"SR Balance Currency", "ChecFee", "Кол-во операций", "СуммаХолдаМ",
 		"К возврату на баланс, оборот", "К возврату на баланс, комиссия", "Surcharge amount", "BOF fee_amount",
-		"issuer country", "referal_name", "SR_referal", "RR_amount", "RR_date_unhold"}
+		"issuer country", "referal_name", "SR_referal", "RR_amount", "RR_date_unhold", "BR amount"}
 
 	style := xlsx.NewStyle()
 	style.Fill.FgColor = "5B9BD5"
@@ -246,6 +246,8 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		} else {
 			row.AddCell().SetDate(k.RR_date)
 		}
+
+		util.AddCellWithFloat(row, v.BR_amount, 2)
 	}
 
 }
@@ -440,7 +442,7 @@ func add_page_detailed_project(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFile
 		"real_amount / channel_amount", "real_amount, fee", "Сумма в валюте баланса",
 		"SR Balance Currency", "ChecFee", "Кол-во операций", "Сумма холда", "СуммаХолдаМ",
 		"К возврату на баланс, оборот", "К возврату на баланс, комиссия", "Surcharge amount", "BOF fee_amount",
-		"issuer country"}
+		"issuer country", "BR amount"}
 
 	style := xlsx.NewStyle()
 	style.Fill.FgColor = "5B9BD5"
@@ -560,6 +562,8 @@ func add_page_detailed_project(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFile
 		util.AddCellWithFloat(row, v.fee_amount, 2)
 
 		row.AddCell().SetString(k.country)
+
+		util.AddCellWithFloat(row, v.BR_amount, 2)
 	}
 
 }
@@ -1072,7 +1076,7 @@ func add_page_all_fails(f *xlsx.File) {
 			continue
 		}
 
-		if op.IsTestId > 0 {
+		if op.IsTestId > IST_LIVE {
 			continue
 		}
 

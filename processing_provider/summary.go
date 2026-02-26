@@ -37,6 +37,8 @@ type SummaryRowProvider struct {
 	Channel_currency_str string `db:"channel_currency"`
 	Balance_currency_str string `db:"balance_currency"`
 
+	Provider_balance_GUID string `db:"provider_balance_guid"`
+
 	Count_operations    int     `db:"count_operations"`
 	Channel_amount      float64 `db:"channel_amount"`
 	BR_channel_currency float64 `db:"br_channel_currency"`
@@ -50,6 +52,8 @@ type SummaryRowProvider struct {
 
 	RR_amount float64   `db:"rr_amount"`
 	RR_date   time.Time `db:"rr_date"`
+
+	Is_test_id int `db:"is_test_id"`
 }
 
 func (row *SummaryRowProvider) AddValues(o *Operation) {
@@ -120,6 +124,7 @@ func GroupRegistryToSummaryProvider() (data []SummaryRowProvider) {
 		k.Balance_currency_str = o.Balance_currency.Name
 		k.Provider_1c = o.Provider1c
 		k.RR_date = o.RR_date
+		k.Is_test_id = o.IsTestId
 
 		if o.Tariff != nil {
 			k.Tariff_date_start = o.Tariff.DateStart
@@ -130,6 +135,7 @@ func GroupRegistryToSummaryProvider() (data []SummaryRowProvider) {
 		if o.ProviderBalance != nil {
 			k.Convertation = o.ProviderBalance.Convertation
 			k.Convertation_id = o.ProviderBalance.Convertation_id
+			k.Provider_balance_GUID = o.ProviderBalance.GUID
 		}
 
 		k.SetID()
@@ -140,9 +146,9 @@ func GroupRegistryToSummaryProvider() (data []SummaryRowProvider) {
 
 	group_data := map[SummaryRowProvider]SummaryRowProvider{}
 	for _, operation := range storage.Registry {
-		if operation.IsTestId > 0 {
-			continue
-		}
+		// if operation.IsTestId > 0 {
+		// 	continue
+		// }
 		key := NewKey(operation) // получили структуру с полями группировки
 		row := group_data[key]   // получили текущие агрегатные данные по ним
 		row.AddValues(operation) // увеличили агрегатные данные на значения тек. операции

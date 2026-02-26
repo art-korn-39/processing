@@ -29,7 +29,7 @@ func CalculateCommission() {
 
 				operation := storage.Registry[index]
 
-				if operation.IsTestId > 0 {
+				if operation.IsTestId > IST_LIVE {
 					continue
 				}
 

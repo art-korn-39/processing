@@ -33,6 +33,7 @@ func CalculateCommission() {
 				operation.SetBRAmount()
 				operation.SetExtraBRAmount()
 				operation.SetRR()
+				operation.SetUNA()
 				operation.SetBRCompensation()
 
 				operation.SetVerification()

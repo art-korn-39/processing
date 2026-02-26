@@ -13,6 +13,7 @@ import (
 	"app/tariff_provider"
 	"app/teams_tradex"
 	"app/test_merchant_accounts"
+	"app/una_provider"
 	"app/util"
 	"fmt"
 	"sync"
@@ -43,12 +44,11 @@ func FillRefFieldsInRegistry() {
 
 				// тестовый трафик
 				if test_merchant_accounts.Skip(op.Document_date, op.Merchant_account_id, op.Merchant_id, op.Operation_type) {
-					op.IsTestId = 1
-					op.IsTestType = "live test"
+					op.SetIsTestID(IST_LIVE_TEST)
 				}
 
 				// заполнение balance_id из clickhouse
-				if op.IsTestId == 0 {
+				if op.IsTestId == IST_LIVE {
 					op.SetBalanceID()
 				}
 
@@ -105,8 +105,19 @@ func FillRefFieldsInRegistry() {
 
 				}
 
+				// связанная операция из таблицы detailed_merchant
+				op.Detailed_merchant = data_detailed_merchant[op.Operation_id]
+				if op.Detailed_merchant != nil {
+					op.SetIsTestID(op.Detailed_merchant.IsTestId)
+				}
+
 				// мерчант
 				op.Merchant, _ = merchants.GetByProjectID(op.Project_id)
+
+				// тестовый трафик
+				if op.Merchant == nil {
+					op.SetIsTestID(IST_LIVE_TEST)
+				}
 
 				// поставщик 1С
 				op.SetProvider1c()
@@ -114,8 +125,14 @@ func FillRefFieldsInRegistry() {
 				// РР провайдера
 				op.RR_provider = rr_provider.FindRRForOperation(op)
 
+				// UNA провайдера
+				op.UNA_provider = una_provider.FindRRForOperation(op)
+
 				// подбор тарифа компенсации
 				op.Tariff_compensation = tariff_compensation.FindTariffForOperation(op, false, false)
+
+				// псевдоним тестового id
+				op.SetIsTestType()
 
 				op.mu.Unlock()
 

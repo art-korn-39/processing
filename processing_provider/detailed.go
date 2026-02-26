@@ -62,6 +62,8 @@ type Detailed_row struct {
 	RR_date                   time.Time `db:"rr_date"`
 	Is_perevodix              bool      `db:"is_perevodix"`
 	BR_Compensation           float64   `db:"br_compensation"`
+	UNA_amount                float64   `db:"una_amount"`
+	UNA_date                  time.Time `db:"una_date"`
 
 	Balance_currency currency.Currency
 	Provider_BR      float64
@@ -126,6 +128,8 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.Region = o.Country.Region
 	d.Provider_1c = o.Provider1c
 	d.Is_perevodix = o.IsPerevodix
+	d.UNA_amount = o.UNA_amount
+	d.UNA_date = o.UNA_date
 
 	if o.DragonpayOperation != nil {
 		d.Provider_dragonpay = o.DragonpayOperation.Provider1c
@@ -151,8 +155,6 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	if o.ProviderOperation != nil {
 		d.Provider_BR = o.ProviderOperation.BR_amount
 	}
-
-	//
 
 	return d
 }

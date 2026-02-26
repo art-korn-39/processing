@@ -27,6 +27,7 @@ type SumFileds struct {
 	BalanceRefund_fee      float64
 	Surcharge_amount       float64
 	SR_referal             float64
+	BR_amount              float64
 }
 
 func (sf *SumFileds) AddValues(o *Operation) {
@@ -45,6 +46,10 @@ func (sf *SumFileds) AddValues(o *Operation) {
 	sf.BalanceRefund_turnover = sf.BalanceRefund_turnover + o.Channel_amount - o.Actual_amount
 	sf.Surcharge_amount = sf.Surcharge_amount + o.Surcharge_amount
 	sf.SR_referal = sf.SR_referal + o.SR_referal
+
+	if o.Detailed_provider != nil {
+		sf.BR_amount = sf.BR_amount + o.Detailed_provider.BR_amount
+	}
 }
 
 func (sf *SumFileds) AddValuesFromSF(sf2 SumFileds) {
@@ -63,6 +68,7 @@ func (sf *SumFileds) AddValuesFromSF(sf2 SumFileds) {
 	sf.BalanceRefund_turnover = sf.BalanceRefund_turnover + sf2.BalanceRefund_turnover
 	sf.Surcharge_amount = sf.Surcharge_amount + sf2.Surcharge_amount
 	sf.SR_referal = sf.SR_referal + sf2.SR_referal
+	sf.BR_amount = sf.BR_amount + sf2.BR_amount
 }
 
 func (sf *SumFileds) SetBalanceRefund(convertation string, percent float64) {
@@ -193,7 +199,7 @@ func GroupRegistryToSummaryInfo() (group_data map[KeyFields_SummaryInfo]SumFiled
 
 	group_data = map[KeyFields_SummaryInfo]SumFileds{}
 	for _, operation := range storage.Registry {
-		if operation.IsTestId > 0 {
+		if operation.IsTestId > IST_LIVE {
 			continue
 		}
 		kf := NewKeyFields_SummaryInfo(operation) // получили структуру с полями группировки

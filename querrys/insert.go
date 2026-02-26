@@ -107,7 +107,7 @@ func Stat_Insert_detailed_provider() string {
 		balance_currency, rate, compensation_br, verification,tariff_date_start, act_percent, 
 		act_fix, act_min, act_max, range_min, range_max, region, provider_dragonpay, balance_id,
 		rr_amount, rr_date, is_test_id, is_test_type, provider_1c, is_perevodix, br_compensation,
-		merchant_account_id
+		merchant_account_id, una_amount, una_date
 	)
 	VALUES (
 		:document_id, :operation_id,  :provider_payment_id, :transaction_id, :rrn, :payment_id, :provider_id,
@@ -118,7 +118,7 @@ func Stat_Insert_detailed_provider() string {
 		:balance_currency, :rate, :compensation_br, :verification, :tariff_date_start, :act_percent, 
 		:act_fix, :act_min, :act_max, :range_min, :range_max, :region, :provider_dragonpay, :balance_id,
 		:rr_amount, :rr_date, :is_test_id, :is_test_type, :provider_1c, :is_perevodix, :br_compensation,
-		:merchant_account_id
+		:merchant_account_id, :una_amount, :una_date
 		)
 	ON CONFLICT ON CONSTRAINT pk_detailed_provider_id DO UPDATE SET
 		document_id = EXCLUDED.document_id, provider_payment_id = EXCLUDED.provider_payment_id,
@@ -141,7 +141,7 @@ func Stat_Insert_detailed_provider() string {
 		balance_id = EXCLUDED.balance_id,rr_amount = EXCLUDED.rr_amount,rr_date = EXCLUDED.rr_date,
 		is_test_id = EXCLUDED.is_test_id,is_test_type = EXCLUDED.is_test_type,provider_1c = EXCLUDED.provider_1c,
 		is_perevodix = EXCLUDED.is_perevodix,br_compensation = EXCLUDED.br_compensation,
-		merchant_account_id = EXCLUDED.merchant_account_id		
+		merchant_account_id = EXCLUDED.merchant_account_id,una_amount = EXCLUDED.una_amount,una_date = EXCLUDED.una_date		
 	`
 }
 
@@ -257,7 +257,8 @@ func Stat_Insert_chargeback() string {
 
 	ON CONFLICT ON CONSTRAINT pk_chargebacks_id DO UPDATE
 
-	SET total_amount = EXCLUDED.total_amount, status = EXCLUDED.status`
+	SET total_amount = EXCLUDED.total_amount, status = EXCLUDED.status, 
+		merchant_id = EXCLUDED.merchant_id, provider_id = EXCLUDED.provider_id`
 }
 
 func Stat_Insert_chargeback_operations() string {
@@ -287,7 +288,8 @@ func Stat_Insert_chargeback_operations() string {
 		channel_currency = EXCLUDED.channel_currency, transaction_status = EXCLUDED.transaction_status, 
 		chargeback_id = EXCLUDED.chargeback_id, state = EXCLUDED.state, state_change_date = EXCLUDED.state_change_date,
 		chargeback_case_id = EXCLUDED.chargeback_case_id, chargeback_status = EXCLUDED.chargeback_status,
-		chargeback_deadline = EXCLUDED.chargeback_deadline, chargeback_code_reason = EXCLUDED.chargeback_code_reason`
+		chargeback_deadline = EXCLUDED.chargeback_deadline, chargeback_code_reason = EXCLUDED.chargeback_code_reason,
+		merchant_id = EXCLUDED.merchant_id, provider_id = EXCLUDED.provider_id`
 }
 
 func Stat_Insert_crm_payment_method() string {
@@ -477,7 +479,7 @@ func Stat_Insert_summary_merchant() string {
 		balance_currency, convertation, tariff_date_start, tariff_id, formula, channel_amount, balance_amount, 
 		sr_channel_currency, sr_balance_currency, count_operations, rate, referal_guid,
 		payment_type_id, payment_method_id, rated_account, provider_1c, subdivision_1c, business_type, project_id,
-		rr_amount, rr_date, schema, convertation_id, provider_balance_guid, sr_referal
+		rr_amount, rr_date, schema, convertation_id, provider_balance_guid, sr_referal, is_test_id
 	)
 	VALUES (
 		:document_id, :document_date, :operation_type, :operation_group, :merchant_id, :merchant_account_id, 
@@ -485,7 +487,7 @@ func Stat_Insert_summary_merchant() string {
 		:convertation, :tariff_date_start, :tariff_id, :formula, :channel_amount, :balance_amount, 
 		:sr_channel_currency, :sr_balance_currency, :count_operations, :rate, :referal_guid,
 		:payment_type_id, :payment_method_id, :rated_account, :provider_1c, :subdivision_1c, :business_type, :project_id,
-		:rr_amount, :rr_date, :schema, :convertation_id, :provider_balance_guid, :sr_referal
+		:rr_amount, :rr_date, :schema, :convertation_id, :provider_balance_guid, :sr_referal, :is_test_id
 		)`
 }
 
@@ -497,7 +499,7 @@ func Stat_Insert_summary_provider() string {
 		balance_currency, convertation, tariff_date_start, tariff_guid, formula, channel_amount, balance_amount, 
 		br_channel_currency, br_balance_currency, count_operations, rate, provider_1c,
 		payment_type_id,  project_id, rr_amount, rr_date, convertation_id, extra_br_balance_currency,
-		br_compensation, balance_id
+		br_compensation, balance_id, provider_balance_guid, is_test_id
 	)
 	VALUES (
 		:document_id, :document_date, :operation_type, :operation_group, :merchant_id, :merchant_account_id, 
@@ -505,7 +507,7 @@ func Stat_Insert_summary_provider() string {
 		:convertation, :tariff_date_start, :tariff_guid, :formula, :channel_amount, :balance_amount, 
 		:br_channel_currency, :br_balance_currency, :count_operations, :rate, :provider_1c,
 		:payment_type_id,  :project_id, :rr_amount, :rr_date, :convertation_id, :extra_br_balance_currency,
-		:br_compensation, :balance_id
+		:br_compensation, :balance_id, :provider_balance_guid, :is_test_id
 		)`
 }
 

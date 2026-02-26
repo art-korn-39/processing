@@ -35,8 +35,9 @@ type Bof_operation struct {
 	Payment_type             string `db:"payment_type"`
 	Country_code2            string `db:"country"`
 
-	Channel_amount       float64 `db:"channel_amount"`
-	Channel_currency_str string  `db:"channel_currency"`
+	Channel_amount float64 `db:"channel_amount"`
+	//Channel_amount_init  float64 // оригинальная, без экспоненты
+	Channel_currency_str string `db:"channel_currency"`
 	Channel_currency     currency.Currency
 }
 
@@ -65,8 +66,8 @@ func (bof_op *Bof_operation) GetSecondKey(key_column string) string {
 func (op *Bof_operation) GetBool(name string) bool {
 	var result bool
 	switch name {
-	// case "":
-	// 	result =
+	case "IsTradex":
+		result = is_tradex
 	default:
 		logs.Add(logs.FATAL, "неизвестное поле bool: ", name)
 	}
@@ -114,6 +115,7 @@ func (op *Bof_operation) GetString(name string) string {
 func (op *Bof_operation) fill() {
 
 	op.Channel_currency = currency.New(op.Channel_currency_str)
+	//op.Channel_amount_init = op.Channel_amount
 	op.Channel_amount = util.TR(op.Channel_currency.Exponent, op.Channel_amount, op.Channel_amount/100).(float64)
 
 	if op.Operation_type_id == 3 {

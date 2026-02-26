@@ -28,7 +28,7 @@ func loadOperations(cfg config.Config, token string) error {
 
 	slice_periods := []util.Period{
 		{
-			StartDay: time.Now().AddDate(0, -1, 0),
+			StartDay: time.Now().AddDate(0, 0, -5),
 			EndDay:   time.Now(),
 		},
 	}
@@ -70,7 +70,7 @@ func getOperationsForPeriod(cfg config.Config, token string, date_start, date_en
 	}
 	s0 = append(s0, strings.Join(s1, ","))
 
-	s0 = append(s0, "$filter=CreatedOn+ge+@date1+and+CreatedOn+le+@date2")
+	s0 = append(s0, "$filter=ModifiedOn+ge+@date1+and+ModifiedOn+le+@date2")
 	s0 = append(s0, "@date1="+date_start.Format(time_layout))
 	s0 = append(s0, "@date2="+date_end.Format(time_layout))
 

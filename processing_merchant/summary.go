@@ -55,6 +55,7 @@ type SummaryRowMerchant struct {
 	RR_date   time.Time `db:"rr_date"`
 
 	Provider_balance_GUID string `db:"provider_balance_guid"`
+	Is_test_id            int    `db:"is_test_id"`
 
 	HasProviderOperation bool
 }
@@ -142,6 +143,7 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 		k.RR_date = o.RR_date
 		k.Provider_1c = o.Provider1c
 		k.Country = o.Country.Code2
+		k.Is_test_id = o.IsTestId
 
 		if o.Tariff != nil {
 			k.Convertation = o.Tariff.Convertation
@@ -177,12 +179,12 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 
 	group_data := map[SummaryRowMerchant]SummaryRowMerchant{}
 	for _, operation := range storage.Registry {
-		if operation.IsTestId > 0 {
-			continue
-		}
-		if operation.Tariff != nil && operation.Tariff.IsTest {
-			continue
-		}
+		// if operation.IsTestId > 0 {
+		// 	continue
+		// }
+		// if operation.Tariff != nil && operation.Tariff.IsTest {
+		// 	continue
+		// }
 		key := NewKey(operation) // получили структуру с полями группировки
 		row := group_data[key]   // получили текущие агрегатные данные по ним
 		row.AddValues(operation) // увеличили агрегатные данные на значения тек. операции

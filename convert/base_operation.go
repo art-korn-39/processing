@@ -157,7 +157,6 @@ func (base_op *Base_operation) createProviderOperation() (op *pg.Operation, err 
 		}
 	} else {
 		op.Team = base_op.getValue("team (kgx/tradex)")
-		//op.Team_id =
 	}
 
 	op.Operation_status = base_op.getValue("operation_status")
@@ -188,11 +187,6 @@ func (base_op *Base_operation) getValue(reg_name string) (result string) {
 	if base_op.Bof_operation != nil {
 		bof_op = *base_op.Bof_operation
 	}
-
-	// if reg_name == "channel_amount" {
-	// 	result = strconv.FormatFloat(bof_op.Channel_amount, 'f', -1, 64)
-	// 	return result
-	// }
 
 	if mapping.Skip {
 		if slices.Contains(float_names, reg_name) {

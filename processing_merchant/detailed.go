@@ -84,6 +84,7 @@ type Detailed_row struct {
 	IsTestId   int    `db:"is_test_id"`
 	IsTestType string `db:"is_test_type"`
 
+	BR_amount        float64
 	Balance_currency currency.Currency
 }
 
@@ -185,6 +186,10 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 
 	if o.ProviderOperation != nil {
 		d.Provider_registry_amount = o.ProviderOperation.Amount
+	}
+
+	if o.Detailed_provider != nil {
+		d.BR_amount = o.Detailed_provider.BR_amount
 	}
 
 	return d

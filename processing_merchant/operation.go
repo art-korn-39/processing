@@ -10,7 +10,7 @@ import (
 	"app/provider_balances"
 	"app/provider_registry"
 	"app/providers_1c"
-	"app/rr_merchant"
+	"app/rr_provider"
 	"app/tariff_compensation"
 	"app/tariff_merchant"
 	"app/util"
@@ -134,7 +134,8 @@ type Operation struct {
 	ProviderBalance      *provider_balances.Balance
 	Tariff_referal       *tariff_compensation.Tariff
 	Tariff_compensation  *tariff_compensation.Tariff
-	RR_merchant          *rr_merchant.Tariff
+	//RR_merchant          *rr_merchant.Tariff //не используем
+	RR_provider *rr_provider.Tariff
 
 	Tariff_rate_fix               float64 `db:"billing__tariff_rate_fix"`
 	Tariff_rate_percent           float64 `db:"billing__tariff_rate_percent"`
@@ -146,7 +147,7 @@ type Operation struct {
 	Tariff_currency currency.Currency
 
 	Skip       bool
-	IsTestId   int // 0 = live | 1 = live test | 2 = tech test
+	IsTestId   int
 	IsTestType string
 }
 
@@ -218,9 +219,9 @@ func (o *Operation) StartingFill() {
 
 	o.Skip = o.Provider_name == "Capitaller transfers"
 
-	if o.IsTestId == 0 {
-		o.IsTestType = "live"
-	}
+	// if o.IsTestId == 0 {
+	// 	o.IsTestType = "live"
+	// }
 
 }
 
@@ -448,6 +449,25 @@ func (o *Operation) SetTariffReferal() {
 
 }
 
+func (o *Operation) SetIsTestID(id int) {
+
+	new_id := max(o.IsTestId, id)
+	o.IsTestId = new_id
+
+}
+
+func (o *Operation) SetIsTestType() {
+
+	if o.IsTestId == IST_LIVE {
+		o.IsTestType = "live"
+	} else if o.IsTestId == IST_LIVE_TEST {
+		o.IsTestType = "live test"
+	} else if o.IsTestId == IST_TECH_TEST {
+		o.IsTestType = "tech test"
+	}
+
+}
+
 func (o *Operation) SetSRReferal() {
 
 	t := o.Tariff_referal
@@ -489,14 +509,6 @@ func (o *Operation) SetSRReferal() {
 }
 
 func (o *Operation) SetCheckFee() {
-
-	// if o.Fee_currency == o.Balance_currency {
-	// 	o.CheckFee = util.BaseRound(o.Fee_amount - o.SR_balance_currency)
-	// } else {
-	// 	o.CheckFee = util.BaseRound(o.Fee_amount - o.SR_channel_currency)
-	// }
-
-	// # 1204 убрал округление
 
 	if o.Fee_currency == o.Balance_currency {
 		o.CheckFee = o.Fee_amount - o.SR_balance_currency
@@ -540,6 +552,9 @@ func (o *Operation) SetVerification() {
 		} else {
 			o.Verification = VRF_VALID_REG // всё ок
 		}
+	} else if o.IsSirp && o.ProviderOperation == nil {
+		o.Verification = VRF_NO_IN_REG
+
 	} else if o.CheckFee == 0 {
 		o.Verification = VRF_OK
 	} else if o.CheckRates != 0 {
@@ -593,9 +608,16 @@ const (
 	VRF_CHECK_DATE_START      = "Проверь дату старта тарифа"
 )
 
+// 0 = live | 1 = live test (из МА/мерчанта/тарифа) | 2 = tech test (из БОФ)
+const (
+	IST_LIVE      = 0 // live
+	IST_LIVE_TEST = 1 // live test
+	IST_TECH_TEST = 2 // tech test
+)
+
 func (o *Operation) SetRR() {
 
-	if o.RR_merchant == nil {
+	if o.RR_provider == nil {
 		return
 	}
 
@@ -603,13 +625,8 @@ func (o *Operation) SetRR() {
 		return
 	}
 
-	// o.RR_date = o.Document_date.AddDate(0, 0, o.Tariff.RR_days)
-	// o.RR_amount = o.Balance_amount * o.Tariff.RR_percent / 100
-
-	//if o.RR_merchant != nil {
-	o.RR_date = o.Document_date.AddDate(0, 0, o.RR_merchant.Amount_days)
-	o.RR_amount = o.Balance_amount * o.RR_merchant.Percent / 100
-	//}
+	o.RR_date = o.Document_date.AddDate(0, 0, o.RR_provider.Amount_days)
+	o.RR_amount = o.Balance_amount * o.RR_provider.Percent / 100
 
 }
 

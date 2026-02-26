@@ -224,8 +224,8 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 	if idx > 0 {
 		num, _ := strconv.Atoi(record[idx-1])
 		if num == 1 && (op.Balance_id == 0 || strings.Contains(op.Provider_name, "[MOCK]")) {
-			op.IsTestId = 2
-			op.IsTestType = "tech test"
+			op.IsTestId = IST_TECH_TEST
+			//op.IsTestType = "tech test"
 		}
 	}
 

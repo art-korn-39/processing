@@ -59,7 +59,7 @@ func Write_CSV_Detailed() {
 			defer wg.Done()
 			for i := range channel_indexes {
 				o := storage.Registry[i]
-				if o.IsTestId > 0 {
+				if o.IsTestId > IST_LIVE {
 					continue
 				}
 				detailed_row := NewDetailedRow(o)
@@ -106,7 +106,7 @@ func SetHeaders_detailed(writer *csv.Writer) {
 		"Crypto_network", "balance_id", "tariff_condition_id", "contract_id",
 		"Старт Тарифа", "Конвертация", "Акт. тариф", "Акт. фикс", "Акт. Мин", "Акт. Макс", "Range min", "Range max",
 		"tariff_rate_percent", "tariff_rate_fix", "tariff_rate_min", "tariff_rate_max", "project id", "project name",
-		"referal_name", "SR_referal", "RR_amount", "RR_date_unhold",
+		"referal_name", "SR_referal", "RR_amount", "RR_date_unhold", "BR amount",
 	}
 	writer.Write(headers)
 }
@@ -170,6 +170,7 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		strings.ReplaceAll(fmt.Sprintf("%.8f", d.SR_referal), ".", ","),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.RR_amount), ".", ","),
 		d.RR_date.Format(time.DateTime),
+		strings.ReplaceAll(fmt.Sprintf("%.4f", d.BR_amount), ".", ","),
 	}
 
 	return

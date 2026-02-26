@@ -230,6 +230,15 @@ func Stat_Select_rr_provider() string {
 			ORDER BY date_start DESC, date_finish ASC`
 }
 
+func Stat_Select_una_provider() string {
+	return `SELECT 
+				contract_name, contract_guid, contractor_name, contractor_guid,  
+				provider_id, date_start, date_finish, bof_id,
+				balance_name, balance_guid, amount_days
+			FROM una_provider
+			ORDER BY date_start DESC, date_finish ASC`
+}
+
 func Stat_Select_test_merchant_accounts() string {
 	return `SELECT 
 				date_start,date_finish,

@@ -2,6 +2,7 @@ package convert
 
 import (
 	"app/config"
+	"app/currency"
 	"app/logs"
 	"app/util"
 	"app/validation"
@@ -100,22 +101,29 @@ func readTradexComission(filename string) {
 }
 
 type Tradex_operation struct {
-	id        string
-	amount    float64
-	comission float64
+	id           string
+	amount       float64
+	comission    float64
+	currency     currency.Currency
+	currency_str string
 }
 
 func (o *Tradex_operation) StartingFill() {
+
+	o.currency = currency.New(o.currency_str)
+
+	o.amount = util.TR(o.currency.Exponent, o.amount, o.amount/100).(float64)
+	o.comission = util.TR(o.currency.Exponent, o.comission, o.comission/100).(float64)
 
 }
 
 func ConvertRecordToTradexOperation(record []string, map_fileds map[string]int) (op *Tradex_operation) {
 
 	op = &Tradex_operation{
-
-		id:        record[map_fileds["originoperationid"]-1],
-		amount:    util.FR(strconv.ParseFloat(record[map_fileds["amount"]-1], 64)).(float64) / 100,
-		comission: util.FR(strconv.ParseFloat(record[map_fileds["commission"]-1], 64)).(float64) / 100,
+		id:           record[map_fileds["originoperationid"]-1],
+		amount:       util.FR(strconv.ParseFloat(record[map_fileds["amount"]-1], 64)).(float64),
+		comission:    util.FR(strconv.ParseFloat(record[map_fileds["commission"]-1], 64)).(float64),
+		currency_str: record[map_fileds["currency"]-1],
 	}
 
 	return

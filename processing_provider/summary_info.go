@@ -22,6 +22,7 @@ type SumFileds struct {
 	channel_amount            float64
 	surcharge_amount          float64
 	RR_amount                 float64
+	UNA_amount                float64
 }
 
 func (sf *SumFileds) AddValues(o *Operation) {
@@ -33,6 +34,7 @@ func (sf *SumFileds) AddValues(o *Operation) {
 	sf.channel_amount = sf.channel_amount + o.Channel_amount
 	sf.surcharge_amount = sf.surcharge_amount + o.Surcharge_amount
 	sf.RR_amount = sf.RR_amount + o.RR_amount
+	sf.UNA_amount = sf.UNA_amount + o.UNA_amount
 }
 
 func (sf *SumFileds) RoundValues(balance_currency currency.Currency) {
@@ -43,6 +45,7 @@ func (sf *SumFileds) RoundValues(balance_currency currency.Currency) {
 	sf.channel_amount = util.Round(sf.channel_amount, 2)
 	sf.surcharge_amount = util.Round(sf.surcharge_amount, 2)
 	sf.RR_amount = util.Round(sf.RR_amount, 2)
+	sf.UNA_amount = util.Round(sf.UNA_amount, 2)
 }
 
 type KeyFields_SummaryInfo struct {
@@ -50,10 +53,9 @@ type KeyFields_SummaryInfo struct {
 	organization string
 	id_revise    string
 
-	document_date time.Time
-	provider_name string
-	verification  string
-	//verification_tradex   string
+	document_date         time.Time
+	provider_name         string
+	verification          string
 	operation_type        string
 	operation_group       string
 	payment_type          string
@@ -70,11 +72,12 @@ type KeyFields_SummaryInfo struct {
 	project_id_tradex     int
 	provider1c            string
 	subdivision_name      string
-	RR_date               time.Time
+	rr_date               time.Time
 	isDragonpay           bool
 	isTradex              bool
 	isTestId              int
 	team_tradex           string
+	una_date              time.Time
 }
 
 func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
@@ -90,12 +93,12 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		region:                o.Country.Region,
 		channel_currency:      o.Channel_currency,
 		balance_currency:      o.Balance_currency,
-		RR_date:               o.RR_date,
+		rr_date:               o.RR_date,
 		isDragonpay:           o.IsDragonPay,
 		isTestId:              o.IsTestId,
 		isTradex:              o.IsTradex,
 		project_id_tradex:     o.Project_id,
-		//verification_tradex:   o.VerificationTradex,
+		una_date:              o.UNA_date,
 	}
 
 	if o.Tariff != nil {

@@ -68,9 +68,9 @@ type Operation struct {
 func (op *Operation) fill() {
 	op.ID, _ = strconv.Atoi(op.ID_str)
 	op.Provider_payment_id, _ = strconv.Atoi(op.Provider_payment_id_str)
-	op.Merchant_id, _ = strconv.Atoi(op.Merchant["PspMechantProcessingId"])
+	op.Merchant_id = getID(op.Merchant["PspMechantProcessingId"])
 	op.Merchant_name = op.Merchant["Name"]
-	op.Provider_id, _ = strconv.Atoi(op.Provider["PspProviderId"])
+	op.Provider_id = getID(op.Provider["PspProviderId"])
 	op.Provider_name = op.Provider["UsrName"]
 	op.Merchant_account_id, _ = strconv.Atoi(op.Merchant_account["Number"])
 	op.Merchant_account_name = op.Merchant_account["Name"]

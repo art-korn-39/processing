@@ -22,9 +22,9 @@ const (
 )
 
 var (
-	inception_date = time.Date(2022, 12, 1, 0, 0, 0, 0, time.UTC)
-	_1feb23        = time.Date(2023, 2, 1, 0, 0, 0, 0, time.UTC)
-	_3feb23        = time.Date(2023, 2, 3, 0, 0, 0, 0, time.UTC)
+	_1dec22 = time.Date(2022, 12, 1, 0, 0, 0, 0, time.UTC)
+	_1feb23 = time.Date(2023, 2, 1, 0, 0, 0, 0, time.UTC)
+	_3feb23 = time.Date(2023, 2, 3, 0, 0, 0, 0, time.UTC)
 )
 
 func loadChargebacks(cfg config.Config, token string) error {
@@ -104,7 +104,7 @@ func loadOperations(cfg config.Config, token string) error {
 
 	if cfg.Full_loading {
 		slice_periods = []util.Period{}
-		slice_periods = append(slice_periods, util.GetSliceOfDuration(inception_date, _1feb23, time.Hour*24*31)...)
+		slice_periods = append(slice_periods, util.GetSliceOfDuration(_1dec22, _1feb23, time.Hour*24*31)...)
 		slice_periods = append(slice_periods, util.GetSliceOfDuration(_1feb23, _3feb23, time.Hour*24)...)
 		slice_periods = append(slice_periods, util.GetSliceOfDuration(_3feb23, time.Now(), time.Hour*24*30)...)
 	}

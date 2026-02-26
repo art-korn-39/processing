@@ -10,7 +10,7 @@ import (
 	"app/providers"
 	"app/providers_1c"
 	"app/querrys"
-	"app/rr_merchant"
+	"app/rr_provider"
 	"app/tariff_compensation"
 	"app/tariff_merchant"
 	"app/teams_tradex"
@@ -157,9 +157,14 @@ func ReadSources() {
 		teams_tradex.Read(storage.Postgres)
 	}()
 
+	// go func() {
+	// 	defer wg.Done()
+	// 	rr_merchant.Read(storage.Postgres)
+	// }()
+
 	go func() {
 		defer wg.Done()
-		rr_merchant.Read(storage.Postgres)
+		rr_provider.Read(storage.Postgres)
 	}()
 
 	wg.Wait()

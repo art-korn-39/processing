@@ -1,7 +1,9 @@
 package crm_chargeback
 
 import (
+	"app/util"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -33,11 +35,43 @@ type Chargeback struct {
 }
 
 func (c *Chargeback) fill() {
-	c.Merchant_id, _ = strconv.Atoi(c.Merchant["PspMechantProcessingId"])
+
+	c.Merchant_id = getID(c.Merchant["PspMechantProcessingId"])
 	c.Merchant_name = c.Merchant["Name"]
-	c.Provider_id, _ = strconv.Atoi(c.Provider["PspProviderId"])
+	c.Provider_id = getID(c.Provider["PspProviderId"])
 	c.Provider_name = c.Provider["UsrName"]
 	c.Status = c.Status_map["Name"]
 	c.Code_reason = c.Code_reason_map["Name"]
 	c.Brand = c.Brand_map["Name"]
+}
+
+func getID(is_str string) int {
+
+	MAX_INTEGER := 2147483647
+
+	ids_str := strings.Trim(is_str, " ")
+	if ids_str == "" {
+		return 0
+	}
+
+	s := strings.Split(ids_str, ",")
+	if len(s) == 0 {
+		return 0
+	}
+
+	s = util.Compact(s)
+
+	for _, v := range s {
+		num, err := strconv.Atoi(strings.Trim(v, " "))
+		if err != nil {
+			return 0
+		} else {
+			if num <= MAX_INTEGER {
+				return num
+			}
+		}
+	}
+
+	return 0
+
 }

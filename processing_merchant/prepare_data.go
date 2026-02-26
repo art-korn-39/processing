@@ -10,7 +10,7 @@ import (
 	"app/provider_balances"
 	"app/provider_registry"
 	"app/providers"
-	"app/rr_merchant"
+	"app/rr_provider"
 	"app/tariff_compensation"
 	"app/tariff_merchant"
 	"app/teams_tradex"
@@ -84,12 +84,11 @@ func FillRefFieldsInRegistry() {
 
 				// тестовый трафик
 				if test_merchant_accounts.Skip(op.Document_date, op.Merchant_account_id, op.Merchant_id, op.Operation_type) {
-					op.IsTestId = 1
-					op.IsTestType = "live test"
+					op.SetIsTestID(IST_LIVE_TEST)
 				}
 
 				// заполнение balance_id из clickhouse
-				if op.IsTestId == 0 {
+				if op.IsTestId == IST_LIVE {
 					op.SetBalanceID()
 				}
 
@@ -143,18 +142,17 @@ func FillRefFieldsInRegistry() {
 				op.Detailed_provider = data_detailed_provider[op.Operation_id]
 
 				// подбор тарифов
-				if op.IsTestId == 0 {
+				op.Tariff = tariff_merchant.FindTariffForOperation(op)
+				if op.Tariff == nil {
+					atomic.AddInt64(&countWithoutTariff, 1)
+				} else if op.Tariff.IsTest {
+					op.SetIsTestID(IST_LIVE_TEST)
+				}
 
-					op.Tariff = tariff_merchant.FindTariffForOperation(op)
-					if op.Tariff == nil {
-						atomic.AddInt64(&countWithoutTariff, 1)
-					}
-
-					if op.IsDragonPay {
-						op.ClassicTariffDragonPay = true
-						op.Tariff_dragonpay_mid = tariff_merchant.FindTariffForOperation(op)
-					}
-
+				// подбор тарифа dragonpay
+				if op.IsDragonPay {
+					op.ClassicTariffDragonPay = true
+					op.Tariff_dragonpay_mid = tariff_merchant.FindTariffForOperation(op)
 				}
 
 				// валюта баланса
@@ -170,7 +168,10 @@ func FillRefFieldsInRegistry() {
 				op.Hold, _ = holds.FindHoldForOperation(op.Balance_currency, op.Transaction_completed_at)
 
 				// РР мерчанта
-				op.RR_merchant = rr_merchant.FindRRForOperation(op)
+				op.RR_provider = rr_provider.FindRRForOperation(op)
+
+				// псевдоним тестового id
+				op.SetIsTestType()
 
 				op.mu.Unlock()
 

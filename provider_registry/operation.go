@@ -48,7 +48,7 @@ type Operation struct {
 	Provider_currency currency.Currency
 }
 
-// 0: conversion (file reading), 1: convert (file parsing), 2: psql (loading from psql)
+// 0: conversion (file reading), 1: processing (loading from psql), 2: convert (file parsing)
 func (o *Operation) StartingFill(option int) {
 
 	// чтение файлов через РЗ
@@ -61,16 +61,27 @@ func (o *Operation) StartingFill(option int) {
 		o.Channel_currency_str = o.Channel_currency.Name
 		o.Provider_currency_str = o.Provider_currency.Name
 
-	} else { // при конвертации + загрузка из psql
+	} else if option == 1 { // загрузка из psql
+
+		o.Channel_currency = currency.New(o.Channel_currency_str)
+		o.Provider_currency = currency.New(o.Provider_currency_str)
+		o.BR_amount = util.Round(o.BR_amount, 4)
+		o.BR_fix = util.Round(o.BR_fix, 4)
+
+	} else if option == 2 { // при конвертации + загрузка из psql
+
 		o.Channel_currency = currency.New(o.Channel_currency_str)
 		o.Provider_currency = currency.New(o.Provider_currency_str)
 		o.BR_amount = util.Round(o.BR_amount, 4)
 		o.BR_fix = util.Round(o.BR_fix, 4)
 
 		if option == 2 {
+
 			if o.Channel_currency == o.Provider_currency {
 				o.Provider_amount_tradex = o.Amount
 				o.Amount = o.Channel_amount
+			} else {
+				o.Provider_amount_tradex = o.Channel_amount
 			}
 		}
 	}

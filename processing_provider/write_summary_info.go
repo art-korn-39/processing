@@ -62,7 +62,7 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		"Валюта баланса", "Кол-во транз", "Сумма в валюте баланса", "BR в валюте баланса",
 		"Surcharge amount", "Доп. BR в валюте баланса", "Сумма в валюте канала", "Валюта канала",
 		"Мерч 1С", "Подразделение", "Поставщик", "Вид дохода", "Дата 1С", "Комментарий",
-		"BR в валюте баланса (возмещение)", "Сумма возмещения", "Сумма RR", "Дата снятия RR",
+		"BR в валюте баланса (возмещение)", "Сумма возмещения", "Сумма RR", "Дата снятия RR", "UNA", "Дата снятия UNA",
 	}
 
 	style := xlsx.NewStyle()
@@ -119,7 +119,7 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 		row.AddCell().SetString(k.channel_currency.Name)
 
-		if k.isTestId == 2 {
+		if k.isTestId >= IST_LIVE_TEST {
 			row.AddCell().SetString("Тест")
 		} else {
 			row.AddCell().SetString(k.contractor_merchant)
@@ -151,10 +151,18 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 		util.AddCellWithFloat(row, v.RR_amount, 2)
 
-		if k.RR_date.IsZero() { //16
+		if k.rr_date.IsZero() { //16
 			row.AddCell().SetString("")
 		} else {
-			row.AddCell().SetDate(k.RR_date)
+			row.AddCell().SetDate(k.rr_date)
+		}
+
+		util.AddCellWithFloat(row, v.UNA_amount, 2)
+
+		if k.una_date.IsZero() { //16
+			row.AddCell().SetString("")
+		} else {
+			row.AddCell().SetDate(k.una_date)
 		}
 
 	}
@@ -169,7 +177,7 @@ func add_page_turnover_tradex(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFiled
 		"Валюта баланса", "Кол-во транз", "Сумма в валюте баланса", "BR в валюте баланса",
 		"Surcharge amount", "Доп. BR в валюте баланса", "Сумма в валюте канала", "Валюта канала",
 		"Мерч 1С", "Подразделение", "Поставщик", "Вид дохода", "Дата 1С", "Комментарий",
-		"BR в валюте баланса (возмещение)", "Сумма возмещения", "Сумма RR", "Дата снятия RR",
+		"BR в валюте баланса (возмещение)", "Сумма возмещения", "Сумма RR", "Дата снятия RR", "UNA", "Дата снятия UNA",
 		"team", "project id",
 	}
 
@@ -231,7 +239,7 @@ func add_page_turnover_tradex(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFiled
 
 		row.AddCell().SetString(k.channel_currency.Name)
 
-		if k.isTestId == 2 {
+		if k.isTestId >= IST_LIVE_TEST {
 			row.AddCell().SetString("Тест")
 		} else {
 			row.AddCell().SetString(k.contractor_merchant)
@@ -263,10 +271,18 @@ func add_page_turnover_tradex(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFiled
 
 		util.AddCellWithFloat(row, v.RR_amount, 2)
 
-		if k.RR_date.IsZero() { //16
+		if k.rr_date.IsZero() { //16
 			row.AddCell().SetString("")
 		} else {
-			row.AddCell().SetDate(k.RR_date)
+			row.AddCell().SetDate(k.rr_date)
+		}
+
+		util.AddCellWithFloat(row, v.UNA_amount, 2)
+
+		if k.una_date.IsZero() { //16
+			row.AddCell().SetString("")
+		} else {
+			row.AddCell().SetDate(k.una_date)
 		}
 
 		row.AddCell().SetString(k.team_tradex)
@@ -487,13 +503,6 @@ func add_page_fails_tradex(f *xlsx.File) {
 		if op.VerificationTradex == VRF_OK {
 			continue
 		}
-
-		// provOp := op.ProviderOperation
-		// if util.Equals(provOp.BR_amount, op.BR_balance_currency) &&
-		// 	(util.Equals(provOp.Provider_amount_tradex, op.Channel_amount) || util.Equals(provOp.Provider_amount_tradex, 0)) &&
-		// 	(provOp.Operation_status == "success" || provOp.Operation_status == "") {
-		// 	continue
-		// }
 
 		row := sheet.AddRow()
 

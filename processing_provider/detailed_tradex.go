@@ -142,7 +142,7 @@ func NewDetailedRowTradex(o *Operation) (d Detailed_row_tradex) {
 		d.BR_provider_registry = prov_op.BR_amount
 		d.Commission_tradex = prov_op.Comission_tradex
 		d.Delta_BR_provider_registry = d.BR_balance_currency - d.BR_provider_registry
-		d.Delta_amount = d.Balance_amount - d.Provider_amount_tradex
+		d.Delta_amount = d.Channel_amount - d.Provider_amount_tradex
 		d.Team_provider_registry = prov_op.Team
 		d.Balance_provider_registry = prov_op.Balance
 		d.Status_provider_registry = prov_op.Operation_status

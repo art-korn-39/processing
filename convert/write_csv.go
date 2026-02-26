@@ -159,7 +159,7 @@ func makeDetailedRow(op *pr.Operation) []string {
 		op.Team_id,
 		op.Team,
 		op.Operation_status,
-		op.User_tradex,
+		util.IsString1251(op.User_tradex),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", op.Provider_amount_tradex), ".", ","),
 		op.Bonuses_tradex,
 		strings.ReplaceAll(fmt.Sprintf("%.2f", op.Comission_tradex), ".", ","),

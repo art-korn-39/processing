@@ -104,6 +104,7 @@ func SetHeaders_detailed(writer *csv.Writer) {
 		"Акт. тариф", "Акт. фикс", "Акт. Мин", "Акт. Макс",
 		"Range min", "Range max", "region", "Поставщик Dragonpay", "Provider BR",
 		"Тип трафика", "provider 1C", "RR_amount", "RR_date_unhold", "BR compensation",
+		"UNA", "Дата снятия UNA",
 	}
 	writer.Write(headers)
 }
@@ -158,6 +159,8 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.RR_amount), ".", ","),
 		d.RR_date.Format(time.DateTime),
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.BR_Compensation), ".", ","),
+		strings.ReplaceAll(fmt.Sprintf("%.2f", d.UNA_amount), ".", ","),
+		d.UNA_date.Format(time.DateTime),
 	}
 
 	return

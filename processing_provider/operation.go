@@ -12,6 +12,7 @@ import (
 	"app/rr_provider"
 	"app/tariff_compensation"
 	"app/tariff_provider"
+	"app/una_provider"
 	"app/util"
 	"strconv"
 	"strings"
@@ -102,6 +103,9 @@ type Operation struct {
 	RR_amount float64
 	RR_date   time.Time
 
+	UNA_amount float64
+	UNA_date   time.Time
+
 	Provider1c string
 
 	ProviderOperation   *provider_registry.Operation
@@ -113,6 +117,8 @@ type Operation struct {
 	ProviderBalance     *provider_balances.Balance
 	Merchant            *merchants.Merchant
 	RR_provider         *rr_provider.Tariff
+	UNA_provider        *una_provider.Tariff
+	Detailed_merchant   *detailed_merchant
 
 	Legal_entity_id int `db:"legal_entity_id"`
 
@@ -177,9 +183,9 @@ func (o *Operation) StartingFill() {
 		o.Balance_type = "IN"
 	}
 
-	if o.IsTestId == 0 {
-		o.IsTestType = "live"
-	}
+	// if o.IsTestId == 0 {
+	// 	o.IsTestType = "live"
+	// }
 
 }
 
@@ -230,12 +236,6 @@ func (o *Operation) SetPaymentType() {
 
 // }
 
-const (
-	CNV_NO_CONVERT int = 1
-	CNV_REESTR     int = 2
-	CNV_CALLBACK   int = 3
-)
-
 // unused
 func (o *Operation) SetBalance() {
 
@@ -280,15 +280,19 @@ func (o *Operation) SetBalance() {
 
 func (o *Operation) SetBalanceCurrency() {
 
-	if o.ProviderOperation != nil {
+	// могут быть колбэки, поэтому проверка валюты провайдера
+	if o.ProviderOperation != nil && o.ProviderOperation.Provider_currency.Name != "" {
+
 		o.Balance_currency = o.ProviderOperation.Provider_currency
 
+		// валюта из баланса для реестра/колбэка если нет операции провайдера
 	} else if o.ProviderBalance != nil &&
 		(o.ProviderBalance.Convertation_id == CNV_CALLBACK ||
 			o.ProviderBalance.Convertation_id == CNV_REESTR) {
 
 		o.Balance_currency = o.ProviderBalance.Balance_currency
 
+		// берем USDT из баланса
 	} else if o.ProviderBalance != nil &&
 		o.ProviderBalance.Convertation_id == CNV_NO_CONVERT &&
 		o.Channel_currency.Name == "USD" {
@@ -296,7 +300,28 @@ func (o *Operation) SetBalanceCurrency() {
 		o.Balance_currency = o.ProviderBalance.Balance_currency
 
 	} else {
+
 		o.Balance_currency = o.Channel_currency
+
+	}
+
+}
+
+func (o *Operation) SetIsTestID(id int) {
+
+	new_id := max(o.IsTestId, id)
+	o.IsTestId = new_id
+
+}
+
+func (o *Operation) SetIsTestType() {
+
+	if o.IsTestId == IST_LIVE {
+		o.IsTestType = "live"
+	} else if o.IsTestId == IST_LIVE_TEST {
+		o.IsTestType = "live test"
+	} else if o.IsTestId == IST_TECH_TEST {
+		o.IsTestType = "tech test"
 	}
 
 }
@@ -411,6 +436,10 @@ func (o *Operation) SetExtraBRAmount() {
 		commission = t.Max
 	}
 
+	if o.IsTradex && o.Rate != 0 { // в валюте баланса
+		commission = commission / o.Rate
+	}
+
 	if o.Balance_currency.Exponent {
 		o.Extra_BR_balance_currency = util.Round(commission, 0)
 	} else if o.IsTradex {
@@ -447,13 +476,23 @@ func (o *Operation) SetRR() {
 		return
 	}
 
-	// o.RR_date = o.Document_date.AddDate(0, 0, o.Tariff.RR_days)
-	// o.RR_amount = o.Balance_amount * o.Tariff.RR_percent / 100
-
-	//if o.RR_merchant != nil {
 	o.RR_date = o.Document_date.AddDate(0, 0, o.RR_provider.Amount_days)
 	o.RR_amount = o.Balance_amount * o.RR_provider.Percent / 100
-	//}
+
+}
+
+func (o *Operation) SetUNA() {
+
+	if o.UNA_provider == nil {
+		return
+	}
+
+	if o.Operation_group != "IN" {
+		return
+	}
+
+	o.UNA_date = o.Document_date.AddDate(0, 0, o.UNA_provider.Amount_days)
+	o.UNA_amount = o.Balance_amount - o.BR_balance_currency - o.RR_amount
 
 }
 
@@ -534,6 +573,18 @@ const (
 	VRF_TRADEX_STATUS       = "Проверь статус ПС"
 	VRF_TRADEX_CHECK_BR     = "Проверь BR"
 	VRF_TRADEX_CHECK_AMOUNT = "Проверь amount"
+)
+
+const (
+	IST_LIVE      = 0 // live
+	IST_LIVE_TEST = 1 // live test
+	IST_TECH_TEST = 2 // tech test
+)
+
+const (
+	CNV_NO_CONVERT int = 1
+	CNV_REESTR     int = 2
+	CNV_CALLBACK   int = 3
 )
 
 func (op *Operation) Get_Channel_currency() currency.Currency {

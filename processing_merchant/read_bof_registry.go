@@ -203,8 +203,7 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 
 	num, _ := strconv.Atoi(record[map_fileds["is_test"]-1])
 	if num == 1 && (op.Balance_id == 0 || strings.Contains(op.Provider_name, "[MOCK]")) {
-		op.IsTestId = 2
-		op.IsTestType = "tech test"
+		op.IsTestId = IST_TECH_TEST
 	}
 
 	idx := map_fileds["created_at / operation_created_at"]
