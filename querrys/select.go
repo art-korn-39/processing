@@ -279,6 +279,13 @@ func Stat_Select_dragonpay() string {
 			WHERE create_date BETWEEN $1 AND $2`
 }
 
+func Stat_Select_chargebacks() string {
+	return `SELECT 
+				id,name,case_id,created_on,total_amount,account_number,deadline,receipt_date,
+				status,brand,code_reason,merchant_id,merchant_name,provider_id,provider_name
+			FROM chargebacks`
+}
+
 func Stat_Select_dragonpay_operation() string {
 	return `SELECT 
 				operation_id,provider,create_date,settle_date,refno,

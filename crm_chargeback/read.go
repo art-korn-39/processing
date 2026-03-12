@@ -2,6 +2,7 @@ package crm_chargeback
 
 import (
 	"app/logs"
+	"app/querrys"
 	"app/util"
 	"fmt"
 	"time"
@@ -17,7 +18,7 @@ func readChargebacks(db *sqlx.DB) {
 
 	start_time := time.Now()
 
-	stat := `SELECT * FROM chargebacks`
+	stat := querrys.Stat_Select_chargebacks()
 
 	slice_chargebacks := []Chargeback{}
 

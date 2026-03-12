@@ -13,6 +13,7 @@ import (
 	"app/rr_provider"
 	"app/tariff_compensation"
 	"app/tariff_merchant"
+	"app/una_provider"
 	"app/util"
 	"slices"
 	"strings"
@@ -116,6 +117,9 @@ type Operation struct {
 	RR_amount float64
 	RR_date   time.Time
 
+	UNA_amount float64
+	UNA_date   time.Time
+
 	CompensationRC float64
 	CompensationBC float64
 
@@ -135,7 +139,8 @@ type Operation struct {
 	Tariff_referal       *tariff_compensation.Tariff
 	Tariff_compensation  *tariff_compensation.Tariff
 	//RR_merchant          *rr_merchant.Tariff //не используем
-	RR_provider *rr_provider.Tariff
+	RR_provider  *rr_provider.Tariff
+	UNA_provider *una_provider.Tariff
 
 	Tariff_rate_fix               float64 `db:"billing__tariff_rate_fix"`
 	Tariff_rate_percent           float64 `db:"billing__tariff_rate_percent"`
@@ -254,16 +259,45 @@ func (o *Operation) SetBalanceID() {
 
 func (o *Operation) SetBalanceCurrency() {
 
-	if o.Tariff == nil {
-		return
-	}
+	// if o.Tariff == nil {
+	// 	return
+	// }
 
-	t := o.Tariff
+	// t := o.Tariff
 
-	o.Balance_currency = t.Balance_currency
+	// o.Balance_currency = t.Balance_currency
 
-	if t.Convertation == "KGX" && o.ProviderOperation != nil {
+	// if t.Convertation == "KGX" && o.ProviderOperation != nil {
+	// 	o.Balance_currency = o.ProviderOperation.Provider_currency
+	// }
+
+	// могут быть колбэки, поэтому проверка валюты провайдера
+	if o.ProviderOperation != nil && o.ProviderOperation.Provider_currency.Name != "" {
+
 		o.Balance_currency = o.ProviderOperation.Provider_currency
+
+		// валюта из баланса для реестра/колбэка если нет операции провайдера
+	} else if o.ProviderBalance != nil &&
+		(o.ProviderBalance.Convertation_id == CNV_CALLBACK ||
+			o.ProviderBalance.Convertation_id == CNV_REESTR) {
+
+		o.Balance_currency = o.ProviderBalance.Balance_currency
+
+		// берем USDT из баланса
+	} else if o.ProviderBalance != nil &&
+		o.ProviderBalance.Convertation_id == CNV_NO_CONVERT &&
+		o.Channel_currency.Name == "USD" {
+
+		o.Balance_currency = o.ProviderBalance.Balance_currency
+
+	} else if o.Tariff != nil {
+
+		o.Balance_currency = o.Tariff.Balance_currency
+
+	} else {
+
+		o.Balance_currency = o.Channel_currency
+
 	}
 
 }
@@ -615,6 +649,12 @@ const (
 	IST_TECH_TEST = 2 // tech test
 )
 
+const (
+	CNV_NO_CONVERT int = 1
+	CNV_REESTR     int = 2
+	CNV_CALLBACK   int = 3
+)
+
 func (o *Operation) SetRR() {
 
 	if o.RR_provider == nil {
@@ -627,6 +667,21 @@ func (o *Operation) SetRR() {
 
 	o.RR_date = o.Document_date.AddDate(0, 0, o.RR_provider.Amount_days)
 	o.RR_amount = o.Balance_amount * o.RR_provider.Percent / 100
+
+}
+
+func (o *Operation) SetUNA() {
+
+	if o.UNA_provider == nil {
+		return
+	}
+
+	if o.Operation_group != "IN" {
+		return
+	}
+
+	o.UNA_date = o.Document_date.AddDate(0, 0, o.UNA_provider.Amount_days)
+	o.UNA_amount = o.Balance_amount - o.SR_balance_currency - o.RR_amount
 
 }
 

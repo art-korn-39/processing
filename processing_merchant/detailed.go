@@ -59,6 +59,9 @@ type Detailed_row struct {
 	RR_amount float64   `db:"rr_amount"`
 	RR_date   time.Time `db:"rr_date"`
 
+	UNA_amount float64   `db:"una_amount"`
+	UNA_date   time.Time `db:"una_date"`
+
 	Verification   string `db:"verification"`
 	Crypto_network string `db:"crypto_network"`
 	Convertation   string `db:"convertation"`
@@ -136,6 +139,9 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.SR_referal = o.SR_referal
 	d.RR_amount = o.RR_amount
 	d.RR_date = o.RR_date
+
+	d.UNA_amount = o.UNA_amount
+	d.UNA_date = o.UNA_date
 
 	d.CheckFee = o.CheckFee
 	d.Verification = o.Verification

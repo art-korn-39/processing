@@ -25,6 +25,16 @@ var (
 	_1dec22 = time.Date(2022, 12, 1, 0, 0, 0, 0, time.UTC)
 	_1feb23 = time.Date(2023, 2, 1, 0, 0, 0, 0, time.UTC)
 	_3feb23 = time.Date(2023, 2, 3, 0, 0, 0, 0, time.UTC)
+	_1dec23 = time.Date(2023, 12, 1, 0, 0, 0, 0, time.UTC)
+
+	_29dec23 = time.Date(2023, 12, 29, 0, 0, 0, 0, time.UTC)
+	_30dec23 = time.Date(2023, 12, 30, 0, 0, 0, 0, time.UTC)
+
+	_1jan24 = time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	_1feb25 = time.Date(2025, 2, 1, 0, 0, 0, 0, time.UTC)
+	_1mar25 = time.Date(2025, 3, 1, 0, 0, 0, 0, time.UTC)
+
+	_1feb26 = time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC)
 )
 
 func loadChargebacks(cfg config.Config, token string) error {
@@ -44,8 +54,11 @@ func loadChargebacks(cfg config.Config, token string) error {
 		"UsrChargebackProcessingBrand($select=name)",
 	}
 	s0 = append(s0, strings.Join(s1, ","))
-	if !cfg.Full_loading {
-		s0 = append(s0, "$filter=CreatedOn+gt+@date")
+	if cfg.Full_loading {
+		s0 = append(s0, "$filter=ModifiedOn+gt+@date")
+		s0 = append(s0, "@date="+time.Now().AddDate(0, -12, 0).Format(time_layout))
+	} else {
+		s0 = append(s0, "$filter=ModifiedOn+gt+@date")
 		s0 = append(s0, "@date="+time.Now().AddDate(0, -1, 0).Format(time_layout))
 	}
 	url_params := strings.Join(s0, "&")
@@ -104,9 +117,17 @@ func loadOperations(cfg config.Config, token string) error {
 
 	if cfg.Full_loading {
 		slice_periods = []util.Period{}
-		slice_periods = append(slice_periods, util.GetSliceOfDuration(_1dec22, _1feb23, time.Hour*24*31)...)
-		slice_periods = append(slice_periods, util.GetSliceOfDuration(_1feb23, _3feb23, time.Hour*24)...)
-		slice_periods = append(slice_periods, util.GetSliceOfDuration(_3feb23, time.Now(), time.Hour*24*30)...)
+		// slice_periods = append(slice_periods, util.GetSliceOfDuration(_1dec22, _1feb23, time.Hour*24*31)...)
+		// slice_periods = append(slice_periods, util.GetSliceOfDuration(_1feb23, _3feb23, time.Hour*24)...)
+		// slice_periods = append(slice_periods, util.GetSliceOfDuration(_3feb23, _29dec23, time.Hour*24*30)...)
+
+		// slice_periods = append(slice_periods, util.GetSliceOfDuration(_29dec23, _30dec23, time.Hour*1)...)
+
+		// slice_periods = append(slice_periods, util.GetSliceOfDuration(_30dec23, _1feb25, time.Hour*24*30)...)
+		// slice_periods = append(slice_periods, util.GetSliceOfDuration(_1feb25, _1mar25, time.Hour*24)...)
+		//slice_periods = append(slice_periods, util.GetSliceOfDuration(_30dec23, time.Now(), time.Hour*24*3)...)
+
+		slice_periods = append(slice_periods, util.GetSliceOfDuration(_1mar25, time.Now(), time.Hour*24*30)...)
 	}
 
 	operations = map[string]*Operation{}
@@ -124,6 +145,8 @@ func loadOperations(cfg config.Config, token string) error {
 	}
 
 	logs.Add(logs.MAIN, fmt.Sprintf("Получение операций: %v [%s строк]", time.Since(start_time), util.FormatInt(len(operations))))
+
+	logs.Add(logs.MAIN, fmt.Sprintf("Загрузка dispute: %v [%s строк]", time.Since(start_time), util.FormatInt(len(dispute_map))))
 
 	return nil
 }
@@ -151,7 +174,7 @@ func getOperationsForPeriod(cfg config.Config, token string, date_start, date_en
 	}
 	s0 = append(s0, strings.Join(s1, ","))
 
-	s0 = append(s0, "$filter=CreatedOn+ge+@date1+and+CreatedOn+le+@date2")
+	s0 = append(s0, "$filter=ModifiedOn+ge+@date1+and+ModifiedOn+le+@date2")
 	s0 = append(s0, "@date1="+date_start.Format(time_layout))
 	s0 = append(s0, "@date2="+date_end.Format(time_layout))
 
@@ -173,7 +196,7 @@ func getOperationsForPeriod(cfg config.Config, token string, date_start, date_en
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("wrong response status: %s, error: %s", resp.Status, getErrorFromBody(body))
+		return fmt.Errorf("[d1: %s | d2: %s] wrong response status: %s, error: %s", date_start.Format(time_layout), date_end.Format(time_layout), resp.Status, getErrorFromBody(body))
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -207,7 +230,7 @@ func getDisputeForPeriod(cfg config.Config, token string, date_start, date_end t
 	}
 
 	s0 := []string{
-		"$select=operationid,chargebackid,state,statechangedate",
+		"$select=operationid,chargebackid,state,statechangedate,createdon,modifiedon",
 	}
 
 	s0 = append(s0, "$expand=state($select=Name)")
@@ -233,7 +256,7 @@ func getDisputeForPeriod(cfg config.Config, token string, date_start, date_end t
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("wrong response status: %s, error: %s", resp.Status, getErrorFromBody(body))
+		return fmt.Errorf("[d1: %s | d2: %s] wrong response status: %s, error: %s", date_start.Format(time_layout), date_end.Format(time_layout), resp.Status, getErrorFromBody(body))
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -273,5 +296,6 @@ func getErrorFromBody(body []byte) string {
 	if res != "" {
 		return res
 	}
-	return ""
+
+	return str
 }

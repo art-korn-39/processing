@@ -1,28 +1,28 @@
 package una_provider
 
-func FindRRForOperation(op Operation) *Tariff {
+func FindUNAForOperation(op Operation) *Tariff {
 
 	operation_date := op.GetTime("Transaction_completed_at")
 	provider_id := op.GetInt("Provider_id")
-	operation_type := op.GetString("Operation_type")
+	operation_group := op.GetString("Operation_group")
 	balance_guid := op.GetString("Provider_balance_guid")
 
-	if operation_type != "sale" {
+	if operation_group != "IN" {
 		return nil
 	}
 
-	for _, rr := range data {
+	for _, una := range data {
 
-		if rr.DateStart.IsZero() {
+		if una.DateStart.IsZero() {
 			continue
 		}
 
-		if rr.DateStart.Before(operation_date) &&
-			(rr.DateFinish.After(operation_date) || rr.DateFinish.IsZero()) &&
-			rr.Provider_id == provider_id &&
-			rr.Balance_guid == balance_guid {
+		if una.DateStart.Before(operation_date) &&
+			(una.DateFinish.After(operation_date) || una.DateFinish.IsZero()) &&
+			una.Provider_id == provider_id &&
+			una.Balance_guid == balance_guid {
 
-			return rr
+			return una
 		}
 
 	}

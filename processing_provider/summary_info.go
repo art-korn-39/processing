@@ -23,6 +23,7 @@ type SumFileds struct {
 	surcharge_amount          float64
 	RR_amount                 float64
 	UNA_amount                float64
+	SR_balance_currency       float64
 }
 
 func (sf *SumFileds) AddValues(o *Operation) {
@@ -35,6 +36,10 @@ func (sf *SumFileds) AddValues(o *Operation) {
 	sf.surcharge_amount = sf.surcharge_amount + o.Surcharge_amount
 	sf.RR_amount = sf.RR_amount + o.RR_amount
 	sf.UNA_amount = sf.UNA_amount + o.UNA_amount
+
+	if o.Detailed_merchant != nil {
+		sf.SR_balance_currency = sf.SR_balance_currency + o.Detailed_merchant.SR_balance_currency
+	}
 }
 
 func (sf *SumFileds) RoundValues(balance_currency currency.Currency) {
@@ -46,6 +51,7 @@ func (sf *SumFileds) RoundValues(balance_currency currency.Currency) {
 	sf.surcharge_amount = util.Round(sf.surcharge_amount, 2)
 	sf.RR_amount = util.Round(sf.RR_amount, 2)
 	sf.UNA_amount = util.Round(sf.UNA_amount, 2)
+	sf.SR_balance_currency = util.Round(sf.SR_balance_currency, balance_currency.GetAccuracy(4)) //4
 }
 
 type KeyFields_SummaryInfo struct {
@@ -136,6 +142,7 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 	if o.Merchant != nil {
 		KF.contractor_merchant = o.Merchant.Contractor_name
 	} else { // если пустой мерчант 1С, то запишем данные по проекту, чтобы проще отследить было
+		KF.contractor_merchant = "Нет в 1С"
 		KF.project_name = o.Project_name
 		KF.project_id = o.Project_id
 	}

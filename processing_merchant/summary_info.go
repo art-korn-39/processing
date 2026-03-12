@@ -19,6 +19,7 @@ type SumFileds struct {
 	SR_balance_currency    float64
 	checkFee               float64
 	checkRates             float64
+	UNA_amount             float64
 	RR_amount              float64
 	hold_amount            float64
 	CompensationRC         float64
@@ -46,6 +47,7 @@ func (sf *SumFileds) AddValues(o *Operation) {
 	sf.BalanceRefund_turnover = sf.BalanceRefund_turnover + o.Channel_amount - o.Actual_amount
 	sf.Surcharge_amount = sf.Surcharge_amount + o.Surcharge_amount
 	sf.SR_referal = sf.SR_referal + o.SR_referal
+	sf.UNA_amount = sf.UNA_amount + o.UNA_amount
 
 	if o.Detailed_provider != nil {
 		sf.BR_amount = sf.BR_amount + o.Detailed_provider.BR_amount
@@ -68,6 +70,7 @@ func (sf *SumFileds) AddValuesFromSF(sf2 SumFileds) {
 	sf.BalanceRefund_turnover = sf.BalanceRefund_turnover + sf2.BalanceRefund_turnover
 	sf.Surcharge_amount = sf.Surcharge_amount + sf2.Surcharge_amount
 	sf.SR_referal = sf.SR_referal + sf2.SR_referal
+	sf.UNA_amount = sf.UNA_amount + sf2.UNA_amount
 	sf.BR_amount = sf.BR_amount + sf2.BR_amount
 }
 
@@ -114,6 +117,7 @@ type KeyFields_SummaryInfo struct {
 	hold_date      time.Time
 	crypto_network string
 	provider1c     string
+	una_date       time.Time
 
 	project_id int
 }
@@ -140,6 +144,7 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		RR_date:               o.RR_date,
 		hold_date:             o.hold_date,
 		provider1c:            o.Provider1c,
+		una_date:              o.UNA_date,
 	}
 
 	// Для KGX собираем balance_name из нескольких полей
@@ -199,7 +204,7 @@ func GroupRegistryToSummaryInfo() (group_data map[KeyFields_SummaryInfo]SumFiled
 
 	group_data = map[KeyFields_SummaryInfo]SumFileds{}
 	for _, operation := range storage.Registry {
-		if operation.IsTestId > IST_LIVE {
+		if operation.IsTestId > IST_LIVE_TEST {
 			continue
 		}
 		kf := NewKeyFields_SummaryInfo(operation) // получили структуру с полями группировки

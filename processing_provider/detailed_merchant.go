@@ -12,8 +12,9 @@ import (
 )
 
 type detailed_merchant struct {
-	Operation_id int `db:"operation_id"`
-	IsTestId     int `db:"is_test_id"`
+	Operation_id        int     `db:"operation_id"`
+	IsTestId            int     `db:"is_test_id"`
+	SR_balance_currency float64 `db:"sr_balance_currency"`
 }
 
 var (
@@ -36,7 +37,7 @@ func PSQL_read_detailed_merchant(db *sqlx.DB, registry_done chan querrys.Args) {
 
 	start_time := time.Now()
 
-	stat := `SELECT operation_id, is_test_id 
+	stat := `SELECT operation_id, is_test_id, sr_balance_currency
 			FROM detailed
 			WHERE (provider_id = ANY($1) OR provider_id = 0) 
 			AND transaction_completed_at BETWEEN $2 AND $3`

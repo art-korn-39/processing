@@ -425,10 +425,16 @@ func (o *Operation) SetExtraBRAmount() {
 		return
 	}
 
-	commission := o.Balance_amount*t.Percent + t.Fix
-	if o.IsKessPay {
-		commission = (o.Balance_amount-o.BR_balance_currency)*t.Percent + t.Fix
+	useRate := o.Balance_currency != t.TariffCurrency && t.TariffCurrency != currency.Currency{}
+
+	var amount float64
+	if useRate { //&& o.IsTradex {
+		amount = o.Channel_amount
+	} else {
+		amount = o.Balance_amount
 	}
+
+	commission := amount*t.Percent + t.Fix
 
 	if t.Min != 0 && commission < t.Min {
 		commission = t.Min
@@ -436,7 +442,7 @@ func (o *Operation) SetExtraBRAmount() {
 		commission = t.Max
 	}
 
-	if o.IsTradex && o.Rate != 0 { // в валюте баланса
+	if useRate && o.Rate != 0 && !o.IsTradex { // в валюте баланса (для tradex результат в вал. канала)
 		commission = commission / o.Rate
 	}
 

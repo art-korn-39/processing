@@ -62,7 +62,8 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		"Валюта баланса", "Кол-во транз", "Сумма в валюте баланса", "BR в валюте баланса",
 		"Surcharge amount", "Доп. BR в валюте баланса", "Сумма в валюте канала", "Валюта канала",
 		"Мерч 1С", "Подразделение", "Поставщик", "Вид дохода", "Дата 1С", "Комментарий",
-		"BR в валюте баланса (возмещение)", "Сумма возмещения", "Сумма RR", "Дата снятия RR", "UNA", "Дата снятия UNA",
+		"BR в валюте баланса (возмещение)", "Сумма возмещения", "Сумма RR", "Дата снятия RR", "UNA",
+		"Дата снятия UNA", "SR balance currency",
 	}
 
 	style := xlsx.NewStyle()
@@ -165,6 +166,8 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 			row.AddCell().SetDate(k.una_date)
 		}
 
+		util.AddCellWithFloat(row, v.SR_balance_currency, k.balance_currency.GetAccuracy(4))
+
 	}
 }
 
@@ -232,7 +235,7 @@ func add_page_turnover_tradex(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFiled
 		row.AddCell().SetInt(v.count_operations)
 
 		util.AddCellWithFloat(row, v.balance_amount, k.balance_currency.GetAccuracy(3))
-		util.AddCellWithFloat(row, v.BR_balance_currency, k.balance_currency.GetAccuracy(4))
+		util.AddCellWithFloat(row, v.BR_balance_currency+v.Extra_BR_balance_currency, k.balance_currency.GetAccuracy(4))
 		util.AddCellWithFloat(row, v.surcharge_amount, 2)
 		util.AddCellWithFloat(row, v.Extra_BR_balance_currency, k.balance_currency.GetAccuracy(4))
 		util.AddCellWithFloat(row, v.channel_amount, 2)

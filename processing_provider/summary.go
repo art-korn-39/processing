@@ -53,6 +53,9 @@ type SummaryRowProvider struct {
 	RR_amount float64   `db:"rr_amount"`
 	RR_date   time.Time `db:"rr_date"`
 
+	UNA_amount float64   `db:"una_amount"`
+	UNA_date   time.Time `db:"una_date"`
+
 	Is_test_id int `db:"is_test_id"`
 }
 
@@ -65,6 +68,7 @@ func (row *SummaryRowProvider) AddValues(o *Operation) {
 	row.Extra_BR_balance_currency = row.Extra_BR_balance_currency + o.Extra_BR_balance_currency
 	row.BR_compensation = row.BR_compensation + o.BR_Compensation
 	row.RR_amount = row.RR_amount + o.RR_amount
+	row.UNA_amount = row.UNA_amount + o.UNA_amount
 
 }
 
@@ -124,6 +128,7 @@ func GroupRegistryToSummaryProvider() (data []SummaryRowProvider) {
 		k.Balance_currency_str = o.Balance_currency.Name
 		k.Provider_1c = o.Provider1c
 		k.RR_date = o.RR_date
+		k.UNA_date = o.UNA_date
 		k.Is_test_id = o.IsTestId
 
 		if o.Tariff != nil {
@@ -166,6 +171,7 @@ func GroupRegistryToSummaryProvider() (data []SummaryRowProvider) {
 		k.BR_channel_currency = v.BR_channel_currency
 		k.BR_balance_currency = v.BR_balance_currency
 		k.RR_amount = v.RR_amount
+		k.UNA_amount = v.UNA_amount
 		k.Extra_BR_balance_currency = v.Extra_BR_balance_currency
 
 		k.SetRate()

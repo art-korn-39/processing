@@ -15,6 +15,7 @@ import (
 	"app/tariff_merchant"
 	"app/teams_tradex"
 	"app/test_merchant_accounts"
+	"app/una_provider"
 	"app/util"
 	"fmt"
 	"sync"
@@ -167,8 +168,11 @@ func FillRefFieldsInRegistry() {
 				// холд
 				op.Hold, _ = holds.FindHoldForOperation(op.Balance_currency, op.Transaction_completed_at)
 
-				// РР мерчанта
+				// RR
 				op.RR_provider = rr_provider.FindRRForOperation(op)
+
+				// UNA
+				op.UNA_provider = una_provider.FindUNAForOperation(op)
 
 				// псевдоним тестового id
 				op.SetIsTestType()

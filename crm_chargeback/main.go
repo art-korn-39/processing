@@ -66,6 +66,8 @@ func setChargebackInfoIntoOperations() {
 			op.Chargeback_id = dispute.Chargeback_id
 			op.State = dispute.State_name
 			op.StateChangeDate = dispute.StateChangeDate
+			op.Created_on = dispute.Created_on
+			op.Modified_on = dispute.Modified_on
 			chargeback, ok := chargebacks[dispute.Chargeback_id]
 			if ok {
 				op.Chargeback_case_id = chargeback.Case_ID

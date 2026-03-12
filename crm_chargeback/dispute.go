@@ -9,6 +9,9 @@ type Dispute struct {
 	Operation_guid  string    `json:"OperationId"`
 	Chargeback_id   string    `json:"ChargebackId"`
 
+	Created_on  time.Time `json:"createdon"`
+	Modified_on time.Time `json:"modifiedon"`
+
 	State_name string
 
 	State map[string]string `json:"state"`

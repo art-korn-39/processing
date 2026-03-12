@@ -54,6 +54,9 @@ type SummaryRowMerchant struct {
 	RR_amount float64   `db:"rr_amount"`
 	RR_date   time.Time `db:"rr_date"`
 
+	UNA_amount float64   `db:"una_amount"`
+	UNA_date   time.Time `db:"una_date"`
+
 	Provider_balance_GUID string `db:"provider_balance_guid"`
 	Is_test_id            int    `db:"is_test_id"`
 
@@ -69,6 +72,7 @@ func (row *SummaryRowMerchant) AddValues(o *Operation) {
 	row.SR_balance_currency = row.SR_balance_currency + o.SR_balance_currency
 	row.RR_amount = row.RR_amount + o.RR_amount
 	row.SR_referal = row.SR_referal + o.SR_referal
+	row.UNA_amount = row.UNA_amount + o.UNA_amount
 
 }
 
@@ -141,6 +145,7 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 		k.Channel_currency_str = o.Channel_currency.Name
 		k.Balance_currency_str = o.Balance_currency.Name
 		k.RR_date = o.RR_date
+		k.UNA_date = o.UNA_date
 		k.Provider_1c = o.Provider1c
 		k.Country = o.Country.Code2
 		k.Is_test_id = o.IsTestId
@@ -202,6 +207,7 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 		k.SR_channel_currency = v.SR_channel_currency
 		k.SR_balance_currency = v.SR_balance_currency
 		k.RR_amount = v.RR_amount
+		k.UNA_amount = v.UNA_amount
 		k.SR_referal = v.SR_referal
 
 		k.SetRate()

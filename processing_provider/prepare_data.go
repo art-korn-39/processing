@@ -122,11 +122,11 @@ func FillRefFieldsInRegistry() {
 				// поставщик 1С
 				op.SetProvider1c()
 
-				// РР провайдера
+				// RR провайдера
 				op.RR_provider = rr_provider.FindRRForOperation(op)
 
 				// UNA провайдера
-				op.UNA_provider = una_provider.FindRRForOperation(op)
+				op.UNA_provider = una_provider.FindUNAForOperation(op)
 
 				// подбор тарифа компенсации
 				op.Tariff_compensation = tariff_compensation.FindTariffForOperation(op, false, false)

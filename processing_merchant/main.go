@@ -15,6 +15,7 @@ import (
 	"app/tariff_merchant"
 	"app/teams_tradex"
 	"app/test_merchant_accounts"
+	"app/una_provider"
 	"fmt"
 	"strings"
 	"sync"
@@ -82,7 +83,7 @@ func ReadSources() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(15)
+	wg.Add(16)
 
 	channel_readers := 6
 	registry_done := make(chan querrys.Args, channel_readers)
@@ -165,6 +166,11 @@ func ReadSources() {
 	go func() {
 		defer wg.Done()
 		rr_provider.Read(storage.Postgres)
+	}()
+
+	go func() {
+		defer wg.Done()
+		una_provider.Read(storage.Postgres)
 	}()
 
 	wg.Wait()

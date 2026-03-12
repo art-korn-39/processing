@@ -70,7 +70,8 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		"real_amount / channel_amount", "real_amount, fee", "Сумма в валюте баланса",
 		"SR Balance Currency", "ChecFee", "Кол-во операций", "СуммаХолдаМ",
 		"К возврату на баланс, оборот", "К возврату на баланс, комиссия", "Surcharge amount", "BOF fee_amount",
-		"issuer country", "referal_name", "SR_referal", "RR_amount", "RR_date_unhold", "BR amount"}
+		"issuer country", "referal_name", "SR_referal", "RR_amount", "RR_date_unhold", "UNA", "Дата снятия UNA",
+		"BR amount"}
 
 	style := xlsx.NewStyle()
 	style.Fill.FgColor = "5B9BD5"
@@ -245,6 +246,14 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 			row.AddCell().SetString("")
 		} else {
 			row.AddCell().SetDate(k.RR_date)
+		}
+
+		util.AddCellWithFloat(row, v.UNA_amount, 2)
+
+		if k.una_date.IsZero() { //16
+			row.AddCell().SetString("")
+		} else {
+			row.AddCell().SetDate(k.una_date)
 		}
 
 		util.AddCellWithFloat(row, v.BR_amount, 2)
