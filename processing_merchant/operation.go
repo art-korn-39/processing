@@ -98,6 +98,7 @@ type Operation struct {
 	SR_channel_currency  float64
 	SR_balance_currency  float64
 	SR_referal           float64
+	SR_compensation      float64
 	CheckFee, CheckRates float64
 	Verification         string
 	Verification_Tariff  string
@@ -270,9 +271,10 @@ func (o *Operation) SetBalanceCurrency() {
 	// if t.Convertation == "KGX" && o.ProviderOperation != nil {
 	// 	o.Balance_currency = o.ProviderOperation.Provider_currency
 	// }
-
+	//
+	//
 	// могут быть колбэки, поэтому проверка валюты провайдера
-	if o.ProviderOperation != nil && o.ProviderOperation.Provider_currency.Name != "" {
+	if !o.IsPerevodix && o.ProviderOperation != nil && o.ProviderOperation.Provider_currency.Name != "" {
 
 		o.Balance_currency = o.ProviderOperation.Provider_currency
 
@@ -477,12 +479,6 @@ func (o *Operation) SetProvider1c() {
 
 }
 
-func (o *Operation) SetTariffReferal() {
-
-	o.Tariff_referal = tariff_compensation.FindTariffForOperation(o, true, true)
-
-}
-
 func (o *Operation) SetIsTestID(id int) {
 
 	new_id := max(o.IsTestId, id)
@@ -533,13 +529,31 @@ func (o *Operation) SetSRReferal() {
 
 	o.SR_referal = util.Round(commission, 8)
 
-	// if o.Balance_currency.Crypto {
-	// 	o.SR_referal = util.Round(commission, 8)
-	// } else if o.Channel_currency.Exponent {
-	// 	o.SR_referal = util.Round(commission, 0)
-	// } else {
-	// 	o.SR_referal = util.Round(commission, 2)
-	// }
+}
+
+func (o *Operation) SetSRCompensation() {
+
+	if o.Tariff_compensation == nil {
+		return
+	}
+
+	t := o.Tariff_compensation
+
+	amount := o.Balance_amount*t.Percent + t.Fix
+
+	if t.Min != 0 && amount < t.Min {
+		amount = t.Min
+	} else if t.Max != 0 && amount > t.Max {
+		amount = t.Max
+	}
+
+	o.SR_compensation = amount
+
+	// ерунда
+	if o.CompensationBC == 0 {
+		o.CompensationBC = o.SR_compensation - o.SR_balance_currency
+	}
+
 }
 
 func (o *Operation) SetCheckFee() {

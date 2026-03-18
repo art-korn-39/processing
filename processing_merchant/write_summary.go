@@ -126,19 +126,30 @@ func PSQL_Insert_SummaryMerchant(s []SummaryRowMerchant) {
 
 				tx, _ := storage.Postgres.Beginx()
 
-				for _, row := range v {
-					tx.Exec(stat_delete, row.Document_date, row.Merchant_id) //, row.Convertation)
-				}
+				//for _, row := range v {
+				// дата одна во всем батче, мерчант тоже
+				tx.Exec(stat_delete, v[0].Document_date, v[0].Merchant_id)
+				//}
 
-				_, err := storage.Postgres.NamedExec(stat_insert, v)
-				if err != nil {
-					once.Do(func() { logs.Add(logs.INFO, err) })
-					tx.Rollback()
-					return
-				} else if logs.Testing {
-					tx.Rollback()
-				} else {
-					tx.Commit()
+				for i := 0; i < len(v); i += batch_len {
+					end := i + batch_len
+					if end > len(v) {
+						end = len(v)
+					}
+
+					batch := v[i:end]
+					_, err := storage.Postgres.NamedExec(stat_insert, batch)
+
+					if err != nil {
+						once.Do(func() { logs.Add(logs.INFO, err) })
+						tx.Rollback()
+						return
+					} else if logs.Testing {
+						tx.Rollback()
+					} else {
+						tx.Commit()
+					}
+
 				}
 
 			}

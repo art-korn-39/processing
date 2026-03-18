@@ -167,7 +167,10 @@ func Stat_Select_tariffs_compensations() string {
 }
 
 func Stat_Select_provider_balances() string {
-	return `SELECT distinct
+	return `WITH t_providers (contractor_guid, is_tradex) AS (
+				SELECT DISTINCT contractor_guid, is_tradex FROM providers
+			)
+			SELECT
 				pb.guid,pb.provider_balance,pb.contractor,pb.provider_name,pb.provider_id,pb.balance_code,
 				pb.legal_entity,pb.merchant_account,pb.merchant_account_id,pb.date_start,pb.nickname,
 				pb.date_finish,pb.convertation,pb.convertation_id,pb.balance_currency,pb.type,
@@ -175,10 +178,9 @@ func Stat_Select_provider_balances() string {
 				subdivision_guid,
 				coalesce(p.is_tradex, false) as is_tradex
 			FROM provider_balances as pb
-			LEFT JOIN providers as p
+			LEFT JOIN t_providers as p
 			ON pb.contractor_guid = p.contractor_guid
 			WHERE pb.provider_id > 0 AND pb.merchant_account_id > 0`
-
 }
 
 func Stat_Select_crypto() string {

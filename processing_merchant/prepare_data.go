@@ -165,6 +165,9 @@ func FillRefFieldsInRegistry() {
 				// подбор тарифа реферала
 				op.Tariff_referal = tariff_compensation.FindTariffForOperation(op, true, true)
 
+				// подбор тарифа компенсации
+				op.Tariff_compensation = tariff_compensation.FindTariffForOperation(op, true, false)
+
 				// холд
 				op.Hold, _ = holds.FindHoldForOperation(op.Balance_currency, op.Transaction_completed_at)
 

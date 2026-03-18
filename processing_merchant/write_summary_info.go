@@ -71,7 +71,7 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		"SR Balance Currency", "ChecFee", "Кол-во операций", "СуммаХолдаМ",
 		"К возврату на баланс, оборот", "К возврату на баланс, комиссия", "Surcharge amount", "BOF fee_amount",
 		"issuer country", "referal_name", "SR_referal", "RR_amount", "RR_date_unhold", "UNA", "Дата снятия UNA",
-		"BR amount"}
+		"BR amount", "Компенсация SR"}
 
 	style := xlsx.NewStyle()
 	style.Fill.FgColor = "5B9BD5"
@@ -257,6 +257,8 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		}
 
 		util.AddCellWithFloat(row, v.BR_amount, 2)
+
+		util.AddCellWithFloat(row, v.SR_compensation, 4)
 	}
 
 }

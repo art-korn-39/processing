@@ -46,7 +46,7 @@ func Stat_Insert_detailed() string {
 		act_min, act_max, range_min, range_max, sr_referal, referal_name,
 		tariff_rate_percent, tariff_rate_fix, tariff_rate_min, 
 		tariff_rate_max, rr_amount, rr_date, is_test_id, is_test_type,
-		una_amount, una_date
+		una_amount, una_date, sr_compensation, transaction_id, provider_balance_guid
 	)
 	VALUES (
 		:document_id, :operation_id, :transaction_completed_at, :merchant_id,
@@ -64,7 +64,7 @@ func Stat_Insert_detailed() string {
 		:range_min, :range_max, :sr_referal, :referal_name, 
 		:tariff_rate_percent, :tariff_rate_fix, :tariff_rate_min, 
 		:tariff_rate_max, :rr_amount, :rr_date, :is_test_id, :is_test_type,
-		:una_amount, :una_date
+		:una_amount, :una_date, :sr_compensation, :transaction_id, :provider_balance_guid
 		)
 	ON CONFLICT ON CONSTRAINT pk_detailed_id DO UPDATE SET 
 		transaction_completed_at = EXCLUDED.transaction_completed_at,merchant_id = EXCLUDED.merchant_id,
@@ -96,7 +96,9 @@ func Stat_Insert_detailed() string {
 		tariff_rate_min = EXCLUDED.tariff_rate_min,tariff_rate_max = EXCLUDED.tariff_rate_max,
 		rr_amount = EXCLUDED.rr_amount,rr_date = EXCLUDED.rr_date,
 		is_test_id = EXCLUDED.is_test_id,is_test_type = EXCLUDED.is_test_type,
-		una_amount = EXCLUDED.una_amount,una_date = EXCLUDED.una_date
+		una_amount = EXCLUDED.una_amount,una_date = EXCLUDED.una_date,
+		sr_compensation = EXCLUDED.sr_compensation, transaction_id = EXCLUDED.transaction_id, 
+		provider_balance_guid = EXCLUDED.provider_balance_guid
 		`
 }
 
@@ -144,7 +146,8 @@ func Stat_Insert_detailed_provider() string {
 		balance_id = EXCLUDED.balance_id,rr_amount = EXCLUDED.rr_amount,rr_date = EXCLUDED.rr_date,
 		is_test_id = EXCLUDED.is_test_id,is_test_type = EXCLUDED.is_test_type,provider_1c = EXCLUDED.provider_1c,
 		is_perevodix = EXCLUDED.is_perevodix,br_compensation = EXCLUDED.br_compensation,
-		merchant_account_id = EXCLUDED.merchant_account_id,una_amount = EXCLUDED.una_amount,una_date = EXCLUDED.una_date		
+		merchant_account_id = EXCLUDED.merchant_account_id,una_amount = EXCLUDED.una_amount,
+		una_date = EXCLUDED.una_date
 	`
 }
 
@@ -485,7 +488,7 @@ func Stat_Insert_summary_merchant() string {
 		sr_channel_currency, sr_balance_currency, count_operations, rate, referal_guid,
 		payment_type_id, payment_method_id, rated_account, provider_1c, subdivision_1c, business_type, project_id,
 		rr_amount, rr_date, schema, convertation_id, provider_balance_guid, sr_referal, is_test_id,
-		una_amount, una_date
+		una_amount, una_date, sr_compensation
 	)
 	VALUES (
 		:document_id, :document_date, :operation_type, :operation_group, :merchant_id, :merchant_account_id, 
@@ -494,7 +497,7 @@ func Stat_Insert_summary_merchant() string {
 		:sr_channel_currency, :sr_balance_currency, :count_operations, :rate, :referal_guid,
 		:payment_type_id, :payment_method_id, :rated_account, :provider_1c, :subdivision_1c, :business_type, :project_id,
 		:rr_amount, :rr_date, :schema, :convertation_id, :provider_balance_guid, :sr_referal, :is_test_id,
-		:una_amount, :una_date
+		:una_amount, :una_date, :sr_compensation
 		)`
 }
 

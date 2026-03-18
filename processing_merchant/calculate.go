@@ -44,6 +44,7 @@ func CalculateCommission() {
 				operation.SetRR()
 				operation.SetUNA()
 				operation.SetSRReferal()
+				operation.SetSRCompensation()
 				operation.SetHoldAmount()
 
 				operation.SetCheckFee()

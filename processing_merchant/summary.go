@@ -45,6 +45,7 @@ type SummaryRowMerchant struct {
 	Balance_amount      float64 `db:"balance_amount"`
 	SR_balance_currency float64 `db:"sr_balance_currency"`
 	SR_referal          float64 `db:"sr_referal"`
+	SR_compensation     float64 `db:"sr_compensation"`
 
 	Rate           float64 `db:"rate"`
 	Rated_account  string  `db:"rated_account"`
@@ -72,6 +73,7 @@ func (row *SummaryRowMerchant) AddValues(o *Operation) {
 	row.SR_balance_currency = row.SR_balance_currency + o.SR_balance_currency
 	row.RR_amount = row.RR_amount + o.RR_amount
 	row.SR_referal = row.SR_referal + o.SR_referal
+	row.SR_compensation = row.SR_compensation + o.SR_compensation
 	row.UNA_amount = row.UNA_amount + o.UNA_amount
 
 }

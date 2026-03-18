@@ -6,9 +6,11 @@ import (
 )
 
 type Detailed_row struct {
-	Operation_id             int       `db:"operation_id"`
+	Operation_id   int `db:"operation_id"`
+	Transaction_id int `db:"transaction_id"`
+	Document_id    int `db:"document_id"`
+
 	Transaction_completed_at time.Time `db:"transaction_completed_at"`
-	Document_id              int       `db:"document_id"`
 
 	Merchant_id         int    `db:"merchant_id"`
 	Merchant_account_id int    `db:"merchant_account_id"`
@@ -52,6 +54,7 @@ type Detailed_row struct {
 	SR_channel_currency float64 `db:"sr_channel_currency"`
 	SR_balance_currency float64 `db:"sr_balance_currency"`
 	SR_referal          float64 `db:"sr_referal"`
+	SR_compensation     float64 `db:"sr_compensation"`
 
 	CheckFee                 float64 `db:"check_fee"`
 	Provider_registry_amount float64 `db:"provider_registry_amount"`
@@ -66,9 +69,10 @@ type Detailed_row struct {
 	Crypto_network string `db:"crypto_network"`
 	Convertation   string `db:"convertation"`
 
-	Provider1C    string `db:"provider_1c"`
-	Subdivision1C string `db:"subdivision_1c"`
-	RatedAccount  string `db:"rated_account"`
+	Provider1C            string `db:"provider_1c"`
+	Subdivision1C         string `db:"subdivision_1c"`
+	RatedAccount          string `db:"rated_account"`
+	Provider_balance_guid string `db:"provider_balance_guid"`
 
 	Tariff_condition_id int       `db:"tariff_id"`
 	Tariff_date_start   time.Time `db:"tariff_date_start"`
@@ -96,8 +100,9 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d = Detailed_row{}
 
 	d.Operation_id = o.Operation_id
-	d.Transaction_completed_at = o.Transaction_completed_at
+	d.Transaction_id = o.Transaction_id
 	d.Document_id = o.Document_id
+	d.Transaction_completed_at = o.Transaction_completed_at
 	d.Merchant_id = o.Merchant_id
 	d.Merchant_account_id = o.Merchant_account_id
 	d.Balance_id = o.Balance_id
@@ -115,14 +120,9 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.Operation_type = o.Operation_type
 	d.Payment_id = o.Payment_id
 	d.Provider_id = o.Provider_id
+	d.Tariff_condition_id = o.Tariff_condition_id
 
 	d.Region = o.Country.Region
-
-	if o.Country_code2 != "" {
-		d.Country = o.Country_code2
-	} else {
-		d.Country = o.Country.Code2
-	}
 
 	d.Provider_amount = o.Provider_amount
 	d.Provider_currency_str = o.Provider_currency.Name
@@ -137,6 +137,7 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.SR_balance_currency = o.SR_balance_currency
 	d.SR_channel_currency = o.SR_channel_currency
 	d.SR_referal = o.SR_referal
+	d.SR_compensation = o.SR_compensation
 	d.RR_amount = o.RR_amount
 	d.RR_date = o.RR_date
 
@@ -153,8 +154,18 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.IsTestId = o.IsTestId
 	d.IsTestType = o.IsTestType
 
+	if o.ProviderBalance != nil {
+		d.Provider_balance_guid = o.ProviderBalance.GUID
+	}
+
 	if o.CryptoOperation != nil {
 		d.Crypto_network = o.CryptoOperation.Network
+	}
+
+	if o.Country_code2 != "" {
+		d.Country = o.Country_code2
+	} else {
+		d.Country = o.Country.Code2
 	}
 
 	if o.Tariff != nil {
@@ -169,8 +180,6 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 		d.Range_min = t.RangeMIN
 		d.Range_max = t.RangeMAX
 	}
-
-	d.Tariff_condition_id = o.Tariff_condition_id
 
 	// if o.Tariff_dragonpay_mid != nil {
 	// 	d.Tariff_condition_id = o.Tariff_dragonpay_mid.Id

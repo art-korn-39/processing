@@ -52,8 +52,8 @@ func FindTariffForOperation(op Operation, processing_merchant, is_referal bool) 
 			continue
 		}
 
-		if t.Is_referal == is_referal &&
-			(!processing_merchant || t.Merchant_id == merchant_id) &&
+		if //t.Is_referal == is_referal &&
+		(!processing_merchant || t.Merchant_id == merchant_id) &&
 			t.DateStart.Before(operation_date) && // добавил 04.12.25
 			(t.DateFinish.After(operation_date) || t.DateFinish.IsZero()) &&
 			(provider_balance_guid == t.Provider_balance_guid || t.Provider_balance_guid == "") &&

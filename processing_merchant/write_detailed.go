@@ -95,18 +95,17 @@ func Write_CSV_Detailed() {
 func SetHeaders_detailed(writer *csv.Writer) {
 	headers := []string{
 		"merchant_id", "merchant_name",
-		"operation_id", "merchant_account_id", "payment_id",
+		"operation_id", "transaction_id", "merchant_account_id", "payment_id",
 		"payment_method", "operation_type", "merchant_account_name", "issuer_country",
-		"Поставщик", "transaction_completed_at",
-		"provider_name", "provider_amount", "provider_currency",
-		"real_amount / channel_amount", "real_currency / channel_currency",
-		"fee_amount", "fee_currency",
+		"Поставщик", "transaction_completed_at", "provider_name", "provider_amount", "provider_currency",
+		"real_amount / channel_amount", "real_currency / channel_currency", "fee_amount", "fee_currency",
 		"Сумма в валюте баланса", "Валюта баланса", "КурсПоРеестру", "Сумма Реестра Провайдера",
 		"SR Real Currency", "SR_balance_currency", "checkFee", "Проверка",
 		"Crypto_network", "balance_id", "tariff_condition_id", "contract_id",
 		"Старт Тарифа", "Конвертация", "Акт. тариф", "Акт. фикс", "Акт. Мин", "Акт. Макс", "Range min", "Range max",
 		"tariff_rate_percent", "tariff_rate_fix", "tariff_rate_min", "tariff_rate_max", "project id", "project name",
 		"referal_name", "SR_referal", "RR_amount", "RR_date_unhold", "UNA", "Дата снятия UNA", "BR amount",
+		"SR_compensation",
 	}
 	writer.Write(headers)
 }
@@ -117,6 +116,7 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		fmt.Sprint(d.Merchant_id),
 		d.Merchant_name,
 		fmt.Sprint(d.Operation_id),
+		fmt.Sprint(d.Transaction_id),
 		fmt.Sprint(d.Merchant_account_id),
 		d.Payment_id,
 		d.Payment_type,
@@ -173,6 +173,7 @@ func MakeDetailedRow(d Detailed_row) (row []string) {
 		strings.ReplaceAll(fmt.Sprintf("%.2f", d.UNA_amount), ".", ","),
 		d.UNA_date.Format(time.DateTime),
 		strings.ReplaceAll(fmt.Sprintf("%.4f", d.BR_amount), ".", ","),
+		strings.ReplaceAll(fmt.Sprintf("%.4f", d.SR_compensation), ".", ","),
 	}
 
 	return
@@ -188,7 +189,7 @@ func PSQL_Insert_Detailed() {
 
 	channel := make(chan []Detailed_row, 500)
 
-	const batch_len = 1000
+	const batch_len = 950
 
 	var wg sync.WaitGroup
 
