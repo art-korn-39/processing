@@ -111,21 +111,12 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 	sheet.SetColWidth(20, 21, 12) // PPрасхолд
 	sheet.SetColWidth(22, 36, 16)
 
-	//var cell *xlsx.Cell
-
 	for k, v := range M {
-
-		// if k.verification == VRF_CHECK_RATE {
-		// 	continue
-		// }
-
-		// if test_merchant_accounts.Skip(k.document_date, k.merchant_account_id, k.operation_type) {
-		// 	continue
-		// }
 
 		row := sheet.AddRow()
 
-		row.AddCell().SetString(k.tariff.Schema)
+		//row.AddCell().SetString(k.tariff.Schema)
+		row.AddCell().SetString(k.schema)
 		row.AddCell().SetString(k.balance_name_prov)     //k.tariff.Balance_name)   //0
 		row.AddCell().SetInt(k.balance_id)               //1
 		row.AddCell().SetDate(k.document_date)           //2
@@ -179,56 +170,8 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		util.AddCellWithFloat(row, v.balance_amount, k.balance_currency.GetAccuracy(3))
 		util.AddCellWithFloat(row, v.SR_balance_currency, k.balance_currency.GetAccuracy(2))
 
-		// cell = row.AddCell() //23 Компенсация BC
-		// cell.SetFloat(v.CompensationBC)
-		// cell.SetFormat("0.00")
-
-		// cell = row.AddCell() //24 Компенсация RC
-		// cell.SetFloat(v.CompensationRC)
-		// cell.SetFormat("0.00")
-
-		// cell = row.AddCell() //25
-		// cell.SetFloat(v.channel_amount)
-		// cell.SetFormat("0.00")
-
-		// cell = row.AddCell() //26
-		// cell.SetFloat(v.SR_channel_currency)
-		// cell.SetFormat("0.00")
-
-		// cell = row.AddCell() //27 Сумма в валюте баланса
-		// cell.SetFloat(v.balance_amount)
-		// cell.SetFormat("0.000")
-
-		// cell = row.AddCell() //28
-		// cell.SetFloat(v.SR_balance_currency)
-		// cell.SetFormat("0.00")
-
 		row.AddCell().SetFloat(v.checkFee)       //29
 		row.AddCell().SetInt(v.count_operations) //30
-
-		// cell = row.AddCell() //31
-		// cell.SetFloat(v.RR_amount)
-		// cell.SetFormat("0.00")
-
-		// cell = row.AddCell() //32 СуммаХолдаМ
-		// cell.SetFloat(v.hold_amount)
-		// cell.SetFormat("0.00")
-
-		// cell = row.AddCell() //33 возврат на баланс, оборот
-		// cell.SetFloat(v.BalanceRefund_turnover)
-		// cell.SetFormat("0.00")
-
-		// cell = row.AddCell() //34 возврат на баланс, комиссия
-		// cell.SetFloat(v.BalanceRefund_fee)
-		// cell.SetFormat("0.00")
-
-		// cell = row.AddCell() //35 surcharge
-		// cell.SetFloat(v.Surcharge_amount)
-		// cell.SetFormat("0.00")
-
-		// cell = row.AddCell() //36
-		// cell.SetFloat(v.fee_amount)
-		// cell.SetFormat("0.00")
 
 		util.AddCellWithFloat(row, v.hold_amount, 2)
 		util.AddCellWithFloat(row, v.BalanceRefund_turnover, 2)
@@ -313,21 +256,11 @@ func add_page_detailed_nu(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 	sheet.SetColWidth(18, 19, 12) // PPрасхолд
 	sheet.SetColWidth(20, 34, 16)
 
-	//var cell *xlsx.Cell
-
 	for k, v := range M {
-
-		// if k.verification == VRF_CHECK_RATE {
-		// 	continue
-		// }
 
 		if k.tariff.IsTest {
 			continue
 		}
-
-		// if test_merchant_accounts.Skip(k.document_date, k.merchant_account_id, k.operation_type) {
-		// 	continue
-		// }
 
 		row := sheet.AddRow()
 		row.AddCell().SetString(k.balance_name_prov) //k.tariff.Balance_name)   //0
@@ -376,30 +309,6 @@ func add_page_detailed_nu(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		row.AddCell().SetString(k.crypto_network)    //21 CryptoNetWork
 		row.AddCell().SetString(k.tariff.DK_formula) //22 ДК тариф формула
 
-		// cell = row.AddCell() //23 Компенсация BC
-		// cell.SetFloat(v.CompensationBC)
-		// cell.SetFormat("0.00")
-
-		// cell = row.AddCell() //24 Компенсация RC
-		// cell.SetFloat(v.CompensationRC)
-		// cell.SetFormat("0.00")
-
-		// cell = row.AddCell() //25
-		// cell.SetFloat(v.channel_amount)
-		// cell.SetFormat("0.00")
-
-		// cell = row.AddCell() //26
-		// cell.SetFloat(v.SR_channel_currency)
-		// cell.SetFormat("0.00")
-
-		// cell = row.AddCell() //27 Сумма в валюте баланса
-		// cell.SetFloat(v.balance_amount)
-		// cell.SetFormat("0.000")
-
-		// cell = row.AddCell() //28
-		// cell.SetFloat(v.SR_balance_currency)
-		// cell.SetFormat("0.00")
-
 		util.AddCellWithFloat(row, v.CompensationBC, 2)
 		util.AddCellWithFloat(row, v.CompensationRC, 2)
 		util.AddCellWithFloat(row, v.channel_amount, 2)
@@ -409,26 +318,6 @@ func add_page_detailed_nu(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 		row.AddCell().SetFloat(v.checkFee)       //29
 		row.AddCell().SetInt(v.count_operations) //30
-
-		// cell = row.AddCell() //31
-		// cell.SetFloat(v.RR_amount)
-		// cell.SetFormat("0.00")
-
-		// cell = row.AddCell() //32 СуммаХолдаМ
-		// cell.SetFloat(v.hold_amount)
-		// cell.SetFormat("0.00")
-
-		// cell = row.AddCell() //33 возврат на баланс, оборот
-		// cell.SetFloat(v.BalanceRefund_turnover)
-		// cell.SetFormat("0.00")
-
-		// cell = row.AddCell() //34 возврат на баланс, комиссия
-		// cell.SetFloat(v.BalanceRefund_fee)
-		// cell.SetFormat("0.00")
-
-		// cell = row.AddCell() //35 surcharge
-		// cell.SetFloat(v.Surcharge_amount)
-		// cell.SetFormat("0.00")
 
 		util.AddCellWithFloat(row, v.RR_amount, 2)
 		util.AddCellWithFloat(row, v.hold_amount, 2)
@@ -493,21 +382,12 @@ func add_page_detailed_project(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFile
 	sheet.SetColWidth(20, 21, 12) // PPрасхолд
 	sheet.SetColWidth(22, 36, 16)
 
-	//var cell *xlsx.Cell
-
 	for k, v := range M {
-
-		// if k.verification == VRF_CHECK_RATE {
-		// 	continue
-		// }
-
-		// if test_merchant_accounts.Skip(k.document_date, k.merchant_account_id, k.operation_type) {
-		// 	continue
-		// }
 
 		row := sheet.AddRow()
 
-		row.AddCell().SetString(k.tariff.Schema)
+		//row.AddCell().SetString(k.tariff.Schema)
+		row.AddCell().SetString(k.schema)
 		row.AddCell().SetString(k.balance_name_prov)     //k.tariff.Balance_name)   //0
 		row.AddCell().SetInt(k.balance_id)               //1
 		row.AddCell().SetDate(k.document_date)           //2
@@ -518,8 +398,6 @@ func add_page_detailed_project(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFile
 		row.AddCell().SetString(k.project_name)          //7
 		row.AddCell().SetInt(k.project_id)               //7
 		row.AddCell().SetString(k.merchant_account_name) //8
-		//row.AddCell().SetString(k.tariff.Subdivision1C)  //9
-		//row.AddCell().SetString(k.tariff.RatedAccount)   //10
 		row.AddCell().SetString(k.provider1c)            //11
 		row.AddCell().SetString(k.channel_currency.Name) //12
 		row.AddCell().SetString(k.balance_currency.Name) //13 Валюта баланса
@@ -757,7 +635,10 @@ func add_page_1_makeTariff(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) 
 			continue
 		}
 
-		if k.verification == VRF_NO_TARIFF || k.verification == VRF_CHECK_TARIFF || k.verification == VRF_TARIFF_CURRENCY {
+		if k.verification == VRF_NO_TARIFF ||
+			k.verification == VRF_CHECK_TARIFF ||
+			k.verification == VRF_VALID_REG_FEE ||
+			k.verification == VRF_TARIFF_CURRENCY {
 
 			t1 := k.tariff.Percent + k.tariff.Fix + k.tariff.Min + k.tariff.Max
 			t2 := k.tariff_bof.Percent + k.tariff_bof.Fix + k.tariff_bof.Min + k.tariff_bof.Max

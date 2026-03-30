@@ -14,7 +14,7 @@ type Operation struct {
 	Rrn                     string    `json:"rrn" db:"rrn"`
 	Receipt_date            time.Time `json:"receiptdate" db:"receipt_date"`
 	Provider_payment_id_str string    `json:"providerpaymentid"`
-	Provider_payment_id     int       `db:"provider_payment_id"`
+	Provider_payment_id     string    `db:"provider_payment_id"`
 	Account_number          string    `json:"accountnumber" db:"account_number"`
 
 	Project_id   int    `db:"project_id"`
@@ -67,7 +67,7 @@ type Operation struct {
 
 func (op *Operation) fill() {
 	op.ID, _ = strconv.Atoi(op.ID_str)
-	op.Provider_payment_id, _ = strconv.Atoi(op.Provider_payment_id_str)
+	op.Provider_payment_id = op.Provider_payment_id_str
 	op.Merchant_id = getID(op.Merchant["PspMechantProcessingId"])
 	op.Merchant_name = op.Merchant["Name"]
 	op.Provider_id = getID(op.Provider["PspProviderId"])

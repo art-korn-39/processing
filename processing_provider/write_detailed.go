@@ -8,6 +8,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -210,6 +211,10 @@ func PSQL_Insert_Detailed() {
 			continue
 		}
 
+		if skipOperation(v) {
+			continue
+		}
+
 		d := NewDetailedRow(v)
 		batch = append(batch, d)
 		if len(batch) >= batch_len {
@@ -228,4 +233,21 @@ func PSQL_Insert_Detailed() {
 
 	logs.Add(logs.INFO, fmt.Sprintf("Загрузка детализированных данных в Postgres: %v", util.FormatDuration(time.Since(start_time))))
 
+}
+
+func skipOperation(op *Operation) bool {
+
+	if op.IsTestId == IST_LIVE {
+
+		if op.Balance_id == 0 {
+			return true
+		}
+
+		if !slices.Contains([]string{VRF_OK, VRF_NO_TARIFF}, op.Verification) {
+			return true
+		}
+
+	}
+
+	return false
 }

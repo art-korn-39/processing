@@ -175,7 +175,7 @@ func Stat_Select_provider_balances() string {
 				pb.legal_entity,pb.merchant_account,pb.merchant_account_id,pb.date_start,pb.nickname,
 				pb.date_finish,pb.convertation,pb.convertation_id,pb.balance_currency,pb.type,
 				pb.extra_balance_guid,pb.contractor_guid,pb.balance_name_fin,pb.subdivision_name,
-				subdivision_guid,
+				subdivision_guid,code_1c,
 				coalesce(p.is_tradex, false) as is_tradex
 			FROM provider_balances as pb
 			LEFT JOIN t_providers as p

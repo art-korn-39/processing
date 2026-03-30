@@ -297,7 +297,8 @@ func Stat_Insert_chargeback_operations() string {
 		chargeback_id = EXCLUDED.chargeback_id, state = EXCLUDED.state, state_change_date = EXCLUDED.state_change_date,
 		chargeback_case_id = EXCLUDED.chargeback_case_id, chargeback_status = EXCLUDED.chargeback_status,
 		chargeback_deadline = EXCLUDED.chargeback_deadline, chargeback_code_reason = EXCLUDED.chargeback_code_reason,
-		merchant_id = EXCLUDED.merchant_id, provider_id = EXCLUDED.provider_id`
+		merchant_id = EXCLUDED.merchant_id, provider_id = EXCLUDED.provider_id, 
+		provider_payment_id = EXCLUDED.provider_payment_id`
 }
 
 func Stat_Insert_crm_payment_method() string {

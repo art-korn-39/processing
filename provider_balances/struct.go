@@ -11,6 +11,7 @@ type data map[int]*LinkedBalance
 type Balance struct {
 	Name                string    `db:"provider_balance"`
 	Nickname            string    `db:"nickname"`
+	Code_1c             int       `db:"code_1c"`
 	GUID                string    `db:"guid"`
 	Extra_balance_guid  string    `db:"extra_balance_guid"`
 	Type                string    `db:"type"` //IN, OUT, IN-OUT

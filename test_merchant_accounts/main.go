@@ -69,7 +69,7 @@ func Skip(date time.Time, ma_id, merchant_id int, operation_type string) bool {
 	if ok {
 		for _, v := range *s {
 
-			if v.Date_start.Before(date) && v.Date_finish.After(date) &&
+			if util.DateBeforeEq(v.Date_start, date) && util.DateAfterEq(v.Date_finish, date) &&
 				merchant_id == v.Merchant_id &&
 				(v.Operation_type == "" || v.Operation_type == operation_type) {
 

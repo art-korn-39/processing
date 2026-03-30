@@ -35,8 +35,9 @@ func CalculateCommission() {
 
 				operation.mu.Lock()
 
+				operation.SetBalanceAmount()
+
 				if operation.Tariff != nil {
-					operation.SetBalanceAmount()
 					operation.SetSRAmount()
 					operation.SetDK()
 				}

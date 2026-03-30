@@ -11,27 +11,30 @@ import (
 //key = ДатаДокумента + Мерчант + ТипКонвертации
 
 type SummaryRowMerchant struct {
-	Document_id         int       `db:"document_id"`
-	Document_date       time.Time `db:"document_date"`
-	Convertation_id     int       `db:"convertation_id"`
-	Convertation        string    `db:"convertation"`
-	Schema              string    `db:"schema"`
-	Operation_type      string    `db:"operation_type"`
-	Operation_group     string    `db:"operation_group"`
-	Merchant_id         int       `db:"merchant_id"`
-	Merchant_account_id int       `db:"merchant_account_id"`
-	Balance_id          int       `db:"balance_id"`
-	Provider_id         int       `db:"provider_id"`
-	Referal_guid        string    `db:"referal_guid"`
-	Country             string    `db:"country"`
-	Region              string    `db:"region"`
-	Project_id          int       `db:"project_id"`
-	Tariff_date_start   time.Time `db:"tariff_date_start"`
-	Tariff_id           int       `db:"tariff_id"`
-	Formula             string    `db:"formula"`
-	Payment_type_id     int       `db:"payment_type_id"`
-	Payment_type        string    `db:"payment_type"`
-	Payment_method_id   int       `db:"payment_method_id"`
+	Document_id     int       `db:"document_id"`
+	Document_date   time.Time `db:"document_date"`
+	Convertation_id int       `db:"convertation_id"`
+	Convertation    string    `db:"convertation"`
+
+	Balance_code_1c     int    //`db:"balance_code_1c"`
+	Schema              string `db:"schema"`
+	Operation_type      string `db:"operation_type"`
+	Operation_group     string `db:"operation_group"`
+	Merchant_id         int    `db:"merchant_id"`
+	Merchant_account_id int    `db:"merchant_account_id"`
+	Balance_id          int    `db:"balance_id"`
+	Provider_id         int    `db:"provider_id"`
+	Referal_guid        string `db:"referal_guid"`
+
+	Country           string    `db:"country"`
+	Region            string    `db:"region"`
+	Project_id        int       `db:"project_id"`
+	Tariff_date_start time.Time `db:"tariff_date_start"`
+	Tariff_id         int       `db:"tariff_id"`
+	Formula           string    `db:"formula"`
+	Payment_type_id   int       `db:"payment_type_id"`
+	Payment_type      string    `db:"payment_type"`
+	Payment_method_id int       `db:"payment_method_id"`
 
 	Business_type     string `db:"business_type"`
 	Account_bank_name string `db:"account_bank_name"`
@@ -108,21 +111,47 @@ func (row *SummaryRowMerchant) SetConvertationID() {
 
 func (row *SummaryRowMerchant) SetID() {
 
-	//id merch len = 5
-	//days len = 5
-	//conv len = 1
+	_1_march_2026 := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
 
-	date_01_01_2024 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	if row.Document_date.Before(_1_march_2026) {
+		//"10" len = 2
+		//id merch len = 5
+		//days len = 5
+		//conv len = 1
 
-	duration := row.Document_date.Sub(date_01_01_2024)
+		date_01_01_2024 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	days := int(duration.Hours() / 24)
-	days_str := fmt.Sprintf("%05d", days)
+		duration := row.Document_date.Sub(date_01_01_2024)
 
-	merch_str := fmt.Sprintf("%05d", row.Merchant_id)
+		days := int(duration.Hours() / 24)
+		days_str := fmt.Sprintf("%05d", days)
 
-	id_str := fmt.Sprint(10, days_str, merch_str, row.Convertation_id)
-	row.Document_id, _ = strconv.Atoi(id_str)
+		merch_str := fmt.Sprintf("%05d", row.Merchant_id)
+
+		id_str := fmt.Sprint(10, days_str, merch_str, row.Convertation_id)
+		row.Document_id, _ = strconv.Atoi(id_str)
+
+	} else {
+		//"1" len = 1
+		//days len = 5
+		//id merch len = 6
+		//balance code = 6
+		//conv len = 1
+
+		date_01_01_2024 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+
+		duration := row.Document_date.Sub(date_01_01_2024)
+
+		days := int(duration.Hours() / 24)
+		days_str := fmt.Sprintf("%05d", days)
+
+		merchant_str := fmt.Sprintf("%06d", row.Merchant_id)
+
+		balance_code_1c_str := fmt.Sprintf("%06d", row.Balance_code_1c)
+
+		id_str := fmt.Sprint(1, days_str, merchant_str, balance_code_1c_str, row.Convertation_id)
+		row.Document_id, _ = strconv.Atoi(id_str)
+	}
 
 }
 
@@ -175,6 +204,7 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 
 		if o.ProviderBalance != nil {
 			k.Provider_balance_GUID = o.ProviderBalance.GUID
+			k.Balance_code_1c = o.ProviderBalance.Code_1c
 		}
 
 		k.SetConvertationID()
@@ -186,12 +216,12 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 
 	group_data := map[SummaryRowMerchant]SummaryRowMerchant{}
 	for _, operation := range storage.Registry {
-		// if operation.IsTestId > 0 {
-		// 	continue
-		// }
-		// if operation.Tariff != nil && operation.Tariff.IsTest {
-		// 	continue
-		// }
+		if operation.IsTestId == IST_LIVE && operation.Balance_id == 0 {
+			continue
+		}
+		if operation.ProviderBalance == nil {
+			continue
+		}
 		key := NewKey(operation) // получили структуру с полями группировки
 		row := group_data[key]   // получили текущие агрегатные данные по ним
 		row.AddValues(operation) // увеличили агрегатные данные на значения тек. операции

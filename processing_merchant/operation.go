@@ -110,6 +110,7 @@ type Operation struct {
 	IsMonetix                bool
 	IsQafpay                 bool
 	IsSirp                   bool
+	IsHope                   bool
 	IsCrypto                 bool
 	TakeProvider1cFromTariff bool
 
@@ -170,6 +171,7 @@ func (o *Operation) StartingFill() {
 	o.IsMonetix = o.Merchant_id == 648
 	o.IsQafpay = o.Merchant_id == 74032
 	o.IsSirp = slices.Contains([]int{33042, 32142}, o.Provider_id)
+	o.IsHope = slices.Contains([]int{34942, 30136, 30156, 30126, 30166, 30146}, o.Provider_id)
 	o.TakeProvider1cFromTariff = slices.Contains([]int{30126, 30136, 34942}, o.Provider_id)
 	o.IsCrypto = o.Provider_id == 8342
 
@@ -274,7 +276,7 @@ func (o *Operation) SetBalanceCurrency() {
 	//
 	//
 	// могут быть колбэки, поэтому проверка валюты провайдера
-	if !o.IsPerevodix && o.ProviderOperation != nil && o.ProviderOperation.Provider_currency.Name != "" {
+	if !o.IsPerevodix && !o.IsHope && o.ProviderOperation != nil && o.ProviderOperation.Provider_currency.Name != "" {
 
 		o.Balance_currency = o.ProviderOperation.Provider_currency
 
@@ -307,7 +309,12 @@ func (o *Operation) SetBalanceCurrency() {
 func (o *Operation) SetBalanceAmount() {
 
 	t := o.Tariff
-	//o.Balance_currency = t.Balance_currency
+
+	if t == nil {
+		o.Rate = 1
+		o.Balance_amount = o.Channel_amount
+		return
+	}
 
 	rate := float64(1)
 	balance_amount := float64(0)
@@ -325,9 +332,6 @@ func (o *Operation) SetBalanceAmount() {
 	} else if t.Convertation == "Реестр" || t.Convertation == "KGX" {
 
 		// Поиск в мапе операций провайдера по ID
-		//ProviderOperation, ok := provider_registry.GetOperation(o.Operation_id, o.Document_date, o.Channel_amount)
-		//o.ProviderOperation = ProviderOperation
-
 		if o.ProviderOperation != nil {
 			balance_amount = o.ProviderOperation.Amount
 			rate = o.ProviderOperation.Rate
@@ -340,8 +344,6 @@ func (o *Operation) SetBalanceAmount() {
 			// Поиск в детализированных провайдера для тарифов не реестр/KGX
 		} else if !(t.Convertation == "Реестр" || t.Convertation == "KGX") &&
 			(o.IsPerevodix || o.IsMonetix || o.IsQafpay) {
-
-			//o.Detailed_provider, ok = data_detailed_provider[o.Operation_id]
 
 			if o.Detailed_provider != nil {
 				balance_amount = o.Detailed_provider.Balance_amount

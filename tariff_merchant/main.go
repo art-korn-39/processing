@@ -197,6 +197,7 @@ func FindTariffForOperation(op Operation) *Tariff {
 	// второй раз по общей схеме, как и остальные тарифы [ClassicTariffDragonPay = true]
 	isDragonPay := op.GetBool("IsDragonPay") && !op.GetBool("ClassicTariffDragonPay")
 	merchant_account_id := op.GetInt("Merchant_account_id")
+	merchant_id := op.GetInt("Merchant_id")
 	provider1c := op.GetString("Provider1c")
 	balance_id := op.GetInt("Balance_id")
 	operation_type := op.GetString("Operation_type")
@@ -219,7 +220,11 @@ func FindTariffForOperation(op Operation) *Tariff {
 				continue
 			}
 
-			if t.Balance_id != 0 && balance_id != t.Balance_id {
+			// if t.Balance_id != 0 && balance_id != t.Balance_id {
+			// 	continue
+			// }
+
+			if merchant_id == 74682 && t.Balance_id != 0 && balance_id != t.Balance_id {
 				continue
 			}
 

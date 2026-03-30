@@ -107,6 +107,8 @@ type KeyFields_SummaryInfo struct {
 	merchant_account_id int
 	tariff_condition_id int
 
+	schema string
+
 	channel_currency currency.Currency
 	balance_currency currency.Currency
 	tariff_currency  currency.Currency
@@ -165,6 +167,11 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 	if o.Tariff != nil {
 		KF.tariff = *o.Tariff
 		KF.balance_id_str = fmt.Sprint(o.Balance_id, "_", o.Tariff.Balance_type)
+
+		KF.schema = o.Tariff.Schema
+		if o.IsTestId == IST_LIVE_TEST {
+			KF.schema = "Тест"
+		}
 
 		if o.Tariff.Convertation == "KGX" {
 			if o.ProviderOperation != nil {

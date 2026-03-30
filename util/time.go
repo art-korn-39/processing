@@ -59,3 +59,13 @@ func LastDayOfMonth(t time.Time) time.Time {
 func EndOfDay(t time.Time) time.Time {
 	return t.Truncate(24 * time.Hour).Add(24*time.Hour - time.Second)
 }
+
+// d1 <= d2
+func DateBeforeEq(d1, d2 time.Time) bool {
+	return d1.Before(d2) || d1.Equal(d2)
+}
+
+// d1 >= d2
+func DateAfterEq(d1, d2 time.Time) bool {
+	return d1.After(d2) || d1.Equal(d2)
+}

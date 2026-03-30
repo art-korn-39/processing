@@ -16,6 +16,7 @@ type SummaryRowProvider struct {
 	Convertation_id int       `db:"convertation_id"`
 	Convertation    string    `db:"convertation"`
 
+	Balance_code_1c     int //`db:"balance_code_1c"`
 	Merchant_id         int `db:"merchant_id"`
 	Merchant_account_id int `db:"merchant_account_id"`
 	Balance_id          int `db:"balance_id"`
@@ -88,21 +89,47 @@ func (row *SummaryRowProvider) SetRate() {
 
 func (row *SummaryRowProvider) SetID() {
 
-	//id merch len = 5
-	//days len = 5
-	//conv len = 1
+	_1_march_2026 := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
 
-	date_01_01_2024 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	if row.Document_date.Before(_1_march_2026) {
+		//"10" len = 2
+		//id prov len = 5
+		//days len = 5
+		//conv len = 1
 
-	duration := row.Document_date.Sub(date_01_01_2024)
+		date_01_01_2024 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	days := int(duration.Hours() / 24)
-	days_str := fmt.Sprintf("%05d", days)
+		duration := row.Document_date.Sub(date_01_01_2024)
 
-	merch_str := fmt.Sprintf("%05d", row.Provider_id)
+		days := int(duration.Hours() / 24)
+		days_str := fmt.Sprintf("%05d", days)
 
-	id_str := fmt.Sprint(10, days_str, merch_str, row.Convertation_id)
-	row.Document_id, _ = strconv.Atoi(id_str)
+		provider_str := fmt.Sprintf("%05d", row.Provider_id)
+
+		id_str := fmt.Sprint(10, days_str, provider_str, row.Convertation_id)
+		row.Document_id, _ = strconv.Atoi(id_str)
+
+	} else {
+		//"1" len = 1
+		//days len = 5
+		//id prov len = 6
+		//balance code = 6
+		//conv len = 1
+
+		date_01_01_2024 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+
+		duration := row.Document_date.Sub(date_01_01_2024)
+
+		days := int(duration.Hours() / 24)
+		days_str := fmt.Sprintf("%05d", days)
+
+		provider_str := fmt.Sprintf("%06d", row.Provider_id)
+
+		balance_code_1c_str := fmt.Sprintf("%06d", row.Balance_code_1c)
+
+		id_str := fmt.Sprint(1, days_str, provider_str, balance_code_1c_str, row.Convertation_id)
+		row.Document_id, _ = strconv.Atoi(id_str)
+	}
 
 }
 
@@ -141,6 +168,7 @@ func GroupRegistryToSummaryProvider() (data []SummaryRowProvider) {
 			k.Convertation = o.ProviderBalance.Convertation
 			k.Convertation_id = o.ProviderBalance.Convertation_id
 			k.Provider_balance_GUID = o.ProviderBalance.GUID
+			k.Balance_code_1c = o.ProviderBalance.Code_1c
 		}
 
 		k.SetID()
@@ -151,9 +179,12 @@ func GroupRegistryToSummaryProvider() (data []SummaryRowProvider) {
 
 	group_data := map[SummaryRowProvider]SummaryRowProvider{}
 	for _, operation := range storage.Registry {
-		// if operation.IsTestId > 0 {
-		// 	continue
-		// }
+		if operation.IsTestId == IST_LIVE && operation.Balance_id == 0 {
+			continue
+		}
+		if operation.ProviderBalance == nil {
+			continue
+		}
 		key := NewKey(operation) // получили структуру с полями группировки
 		row := group_data[key]   // получили текущие агрегатные данные по ним
 		row.AddValues(operation) // увеличили агрегатные данные на значения тек. операции
