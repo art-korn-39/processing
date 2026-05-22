@@ -11,7 +11,7 @@ var crypto = []string{"BTC", "ETH", "XRP", "LTC", "XMR", "ADA", "DOT", "BNB", "B
 // 32 bytes
 type Currency struct {
 	Name     string
-	Exponent bool // без деления на 100
+	Exponent bool // без деления на 100 при чтении
 	Crypto   bool
 }
 

@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/lib/pq"
 	"golang.org/x/text/encoding/charmap"
 )
 
@@ -109,7 +110,7 @@ func PSQL_Insert_SummaryProvider(s []SummaryRowProvider) {
 
 	stat_delete :=
 		`DELETE FROM summary_provider 
-		WHERE document_date = $1 AND provider_id = $2` // AND convertation = $3
+		WHERE document_date = $1 AND provider_id = ANY($2)` // AND convertation = $3
 
 	stat_insert := querrys.Stat_Insert_summary_provider()
 	_, err := storage.Postgres.PrepareNamed(stat_insert)
@@ -117,6 +118,12 @@ func PSQL_Insert_SummaryProvider(s []SummaryRowProvider) {
 		logs.Add(logs.INFO, err)
 		return
 	}
+
+	s_provider_id := make([]int, 0, 30)
+	for _, v := range s {
+		s_provider_id = append(s_provider_id, v.Provider_id)
+	}
+	s_provider_id = util.Compact(s_provider_id)
 
 	wg.Add(config.NumCPU)
 	for i := 1; i <= config.NumCPU; i++ {
@@ -128,9 +135,10 @@ func PSQL_Insert_SummaryProvider(s []SummaryRowProvider) {
 
 				//for _, row := range v {
 				// дата одна во всем батче, провайдер тоже
-				tx.Exec(stat_delete, v[0].Document_date, v[0].Provider_id)
+				tx.Exec(stat_delete, v[0].Document_date, pq.Array(s_provider_id))
 				//}
 
+				// нарезаем батч, если в рамках дня больше 400 строк для вставки/обновления
 				for i := 0; i < len(v); i += batch_len {
 					end := i + batch_len
 					if end > len(v) {

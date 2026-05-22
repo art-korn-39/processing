@@ -130,7 +130,7 @@ func Stat_Select_provider_registry_period_only() string {
 		WHERE transaction_completed_at BETWEEN $1 AND $2`
 }
 
-func Stat_Select_tariffs_merchant() string {
+func Stat_Select_tariffs_merchant_0() string {
 	return `SELECT 
 				id,balance_id,balance_name,balance_code,merchant_account_id,
 				merchant_account_name,provider_name,schema,convertation,merchant_id, 
@@ -140,6 +140,25 @@ func Stat_Select_tariffs_merchant() string {
 				dk_fix,dk_min,dk_max,currency_commission,network_type, 
 				payment_type,company,date_start_ma,date_finish_ma
 			FROM tariffs_merchant
+			WHERE merchant_id = ANY($1)`
+}
+
+func Stat_Select_tariffs_merchant() string {
+	return `SELECT 
+				id,balance_id,balance_name,balance_code,merchant_account_id,
+				merchant_account_name,provider_name,schema,convertation,merchant_id, 
+				operation_type,rr_days,rr_percent,subdivision1c,provider1c, 
+				ratedaccount,balance_type,date_start_ps,balance_currency,
+				date_start,currency_commission,network_type,payment_type,
+				company,date_start_ma,date_finish_ma,tms.range_min,tms.range_max,
+				tms.dk_percent,tms.dk_fix,tms.dk_min,tms.dk_max,tm.turnover_type,
+				CASE WHEN tm.additional_tariff THEN tm.percent ELSE tms.percent END AS percent, 
+				CASE WHEN tm.additional_tariff THEN tm.fix ELSE tms.fix END AS fix, 
+				CASE WHEN tm.additional_tariff THEN tm.min ELSE tms.min END AS min, 
+				CASE WHEN tm.additional_tariff THEN tm.max ELSE tms.max END AS max 
+			FROM tariffs_merchant tm
+				INNER JOIN public.tariffs_merchant_settings tms
+				ON tm.guid = tms.tariff_guid 
 			WHERE merchant_id = ANY($1)`
 }
 
@@ -286,6 +305,17 @@ func Stat_Select_chargebacks() string {
 				id,name,case_id,created_on,total_amount,account_number,deadline,receipt_date,
 				status,brand,code_reason,merchant_id,merchant_name,provider_id,provider_name
 			FROM chargebacks`
+}
+
+func Stat_Select_chargeback_operations() string {
+	return `SELECT 
+				guid, id, created_on, modified_on, rrn, receipt_date, provider_payment_id, account_number,
+				project_id, project_name, merchant_id, merchant_name, provider_id, provider_name, 
+				merchant_account_id, merchant_account_name, payment_type_id, payment_type_name, amount,
+				channel_amount, amount_usd, channel_amount_usd, amount_rub, channel_amount_rub,
+				type, channel_currency, transaction_status, state, state_change_date,
+				chargeback_id, chargeback_case_id, chargeback_status, chargeback_deadline, chargeback_code_reason
+			FROM chargeback_operations`
 }
 
 func Stat_Select_dragonpay_operation() string {

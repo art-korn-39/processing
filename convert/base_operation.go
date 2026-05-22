@@ -132,6 +132,11 @@ func (base_op *Base_operation) createProviderOperation() (op *pg.Operation, err 
 		return nil, err
 	}
 
+	op.BR_fix, err = util.ParseFloat(base_op.getValue("br_fix"))
+	if err != nil {
+		return nil, err
+	}
+
 	op.Provider_name = base_op.getValue("provider_name")
 	op.Merchant_name = base_op.getValue("merchant_name")
 	op.Merchant_account_name = base_op.getValue("merchant_account_name")
@@ -181,7 +186,7 @@ func (base_op *Base_operation) getValue(reg_name string) (result string) {
 		return
 	}
 
-	float_names := []string{"amount", "channel_amount", "br_amount", "rate", "comission_tradex"}
+	float_names := []string{"amount", "channel_amount", "br_amount", "rate", "comission_tradex", "br_fix"}
 
 	bof_op := Bof_operation{Operation_id: "0"}
 	if base_op.Bof_operation != nil {

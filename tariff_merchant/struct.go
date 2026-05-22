@@ -31,6 +31,7 @@ type Tariff struct {
 	Provider_name         string `db:"provider_name"`
 	Company               string `db:"company"`
 
+	Turnover_type  string `db:"turnover_type"`
 	Schema         string `db:"schema"`
 	IsCrypto       bool
 	Convertation   string `db:"convertation"`

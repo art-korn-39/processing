@@ -171,11 +171,13 @@ func GroupRegistryToSummaryInfo() (group_data map[KeyFields_SummaryInfo]SumFiled
 
 	group_data = map[KeyFields_SummaryInfo]SumFileds{}
 	for _, operation := range storage.Registry {
+		if operation.SkipDecline() {
+			continue
+		}
 		kf := NewKeyFields_SummaryInfo(operation) // получили структуру с полями группировки
 		sf := group_data[kf]                      // получили текущие агрегатные данные по ним
 		sf.AddValues(operation)                   // увеличили агрегатные данные на значения тек. операции
-		//sf.RoundValues(operation.Balance_currency) // снова избавляемся от погрешностей
-		group_data[kf] = sf // положили обратно в мапу
+		group_data[kf] = sf                       // положили обратно в мапу
 	}
 
 	for k, v := range group_data {

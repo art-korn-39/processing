@@ -61,6 +61,9 @@ func Write_CSV_Detailed() {
 			defer wg.Done()
 			for i := range channel_indexes {
 				o := storage.Registry[i]
+				if o.SkipDecline() {
+					continue
+				}
 				detailed_row := NewDetailedRow(o)
 				row := MakeDetailedRow(detailed_row)
 				channel_rows <- row
@@ -178,9 +181,10 @@ func PSQL_Insert_Detailed() {
 
 	channel := make(chan []Detailed_row, 500)
 
-	const batch_len = 1200
+	const batch_len = 1100
 
 	var wg sync.WaitGroup
+	var once sync.Once
 
 	stat := querrys.Stat_Insert_detailed_provider()
 	_, err := storage.Postgres.PrepareNamed(stat)
@@ -195,9 +199,17 @@ func PSQL_Insert_Detailed() {
 			defer wg.Done()
 			for v := range channel {
 
-				_, err := storage.Postgres.NamedExec(stat, v)
+				tx, _ := storage.Postgres.Beginx()
+
+				_, err := tx.NamedExec(stat, v)
 				if err != nil {
-					logs.Add(logs.ERROR, fmt.Sprint("не удалось записать в БД (detailed_provider): ", err))
+					once.Do(func() { logs.Add(logs.INFO, err) })
+					tx.Rollback()
+					return
+				} else if logs.Testing {
+					tx.Rollback()
+				} else {
+					tx.Commit()
 				}
 
 			}
@@ -207,11 +219,7 @@ func PSQL_Insert_Detailed() {
 	batch := make([]Detailed_row, 0, batch_len)
 	for _, v := range storage.Registry {
 
-		if config.SkipDate(v.Document_date) {
-			continue
-		}
-
-		if skipOperation(v) {
+		if config.SkipDate(v.Document_date) || skipOperation(v) || v.SkipDecline() {
 			continue
 		}
 
@@ -239,7 +247,7 @@ func skipOperation(op *Operation) bool {
 
 	if op.IsTestId == IST_LIVE {
 
-		if op.Balance_id == 0 {
+		if op.Balance_amount == 0 {
 			return true
 		}
 

@@ -32,8 +32,6 @@ func PSQL_read_detailed_provider(db *sqlx.DB, registry_done chan querrys.Args) {
 		return
 	}
 
-	// переписать на merchant_id, когда будет будет заполнено поле
-
 	Args := <-registry_done
 
 	start_time := time.Now()

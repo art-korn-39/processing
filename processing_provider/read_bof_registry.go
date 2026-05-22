@@ -234,6 +234,11 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		op.Real_provider = record[idx-1]
 	}
 
+	idx = map_fileds["operation_status"]
+	if idx > 0 {
+		op.Operation_status = record[idx-1]
+	}
+
 	return
 
 }

@@ -111,6 +111,9 @@ func FillRefFieldsInRegistry() {
 					op.SetIsTestID(op.Detailed_merchant.IsTestId)
 				}
 
+				// связанная операция из таблицы detailed_provider
+				op.Detailed_provider = data_detailed_provider[op.Operation_id]
+
 				// мерчант
 				op.Merchant, _ = merchants.GetByProjectID(op.Project_id)
 

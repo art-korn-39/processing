@@ -214,7 +214,7 @@ func GroupRegistryToSummaryInfo() (group_data map[KeyFields_SummaryInfo]SumFiled
 
 	group_data = map[KeyFields_SummaryInfo]SumFileds{}
 	for _, operation := range storage.Registry {
-		if operation.IsTestId > IST_LIVE_TEST {
+		if operation.IsTestId > IST_LIVE_TEST || operation.SkipDecline() {
 			continue
 		}
 		kf := NewKeyFields_SummaryInfo(operation) // получили структуру с полями группировки

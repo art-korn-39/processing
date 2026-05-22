@@ -49,7 +49,13 @@ func Start() {
 		logs.Add(logs.FATAL, err)
 	}
 
-	// заполнение case_id из чарджей
+	// сохранили загруженные операции
+	operationsInsertIntoDB(storage.Postgres)
+
+	// получили все операции из БД
+	readChargebacOperations(storage.Postgres)
+
+	// заполнение данными из чарджей и dispute
 	setChargebackInfoIntoOperations()
 
 	operationsInsertIntoDB(storage.Postgres)
@@ -81,7 +87,7 @@ func setChargebackInfoIntoOperations() {
 			countNoneInDisput++
 		}
 	}
-	logs.Add(logs.MAIN, fmt.Sprintf("Стыковка chargebacks и операций: %v [%s нет в т.Dispute, %s пустой ID]",
+	logs.Add(logs.MAIN, fmt.Sprintf("Стыковка chargebacks, dispute и операций: %v [%s нет в т.Dispute, %s пустой ID]",
 		time.Since(start_time),
 		util.FormatInt(countNoneInDisput),
 		util.FormatInt(countBadId)))

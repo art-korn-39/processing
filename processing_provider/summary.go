@@ -57,6 +57,9 @@ type SummaryRowProvider struct {
 	UNA_amount float64   `db:"una_amount"`
 	UNA_date   time.Time `db:"una_date"`
 
+	IsCorrection     bool `db:"is_correction"`
+	CorrectionTypeId int  `db:"correction_type_id"`
+
 	Is_test_id int `db:"is_test_id"`
 }
 
@@ -90,6 +93,7 @@ func (row *SummaryRowProvider) SetRate() {
 func (row *SummaryRowProvider) SetID() {
 
 	_1_march_2026 := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
+	_1_may_2026 := time.Date(2026, 5, 1, 0, 0, 0, 0, time.UTC)
 
 	if row.Document_date.Before(_1_march_2026) {
 		//"10" len = 2
@@ -109,7 +113,7 @@ func (row *SummaryRowProvider) SetID() {
 		id_str := fmt.Sprint(10, days_str, provider_str, row.Convertation_id)
 		row.Document_id, _ = strconv.Atoi(id_str)
 
-	} else {
+	} else if row.Document_date.Before(_1_may_2026) {
 		//"1" len = 1
 		//days len = 5
 		//id prov len = 6
@@ -128,6 +132,36 @@ func (row *SummaryRowProvider) SetID() {
 		balance_code_1c_str := fmt.Sprintf("%06d", row.Balance_code_1c)
 
 		id_str := fmt.Sprint(1, days_str, provider_str, balance_code_1c_str, row.Convertation_id)
+		row.Document_id, _ = strconv.Atoi(id_str)
+	} else {
+		//"1 or 2" len = 1
+		//days len = 4
+		//id merch len = 6
+		//balance code = 6
+		//conv len = 1
+		//corr type len = 1
+
+		correction_str := "1"
+		if row.IsCorrection {
+			correction_str = "2"
+		}
+
+		date_01_01_2024 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+
+		duration := row.Document_date.Sub(date_01_01_2024)
+
+		days := int(duration.Hours() / 24)
+		days_str := fmt.Sprintf("%04d", days)
+
+		provider_str := fmt.Sprintf("%06d", row.Provider_id)
+
+		balance_code_1c_str := fmt.Sprintf("%06d", row.Balance_code_1c)
+
+		convertation_id_str := strconv.Itoa(row.Convertation_id)
+
+		correction_type_id_str := strconv.Itoa(row.CorrectionTypeId)
+
+		id_str := fmt.Sprint(correction_str, days_str, provider_str, balance_code_1c_str, convertation_id_str, correction_type_id_str)
 		row.Document_id, _ = strconv.Atoi(id_str)
 	}
 
@@ -157,6 +191,8 @@ func GroupRegistryToSummaryProvider() (data []SummaryRowProvider) {
 		k.RR_date = o.RR_date
 		k.UNA_date = o.UNA_date
 		k.Is_test_id = o.IsTestId
+		k.IsCorrection = o.IsCorrection
+		k.CorrectionTypeId = o.CorrectionTypeId
 
 		if o.Tariff != nil {
 			k.Tariff_date_start = o.Tariff.DateStart
@@ -179,7 +215,7 @@ func GroupRegistryToSummaryProvider() (data []SummaryRowProvider) {
 
 	group_data := map[SummaryRowProvider]SummaryRowProvider{}
 	for _, operation := range storage.Registry {
-		if operation.IsTestId == IST_LIVE && operation.Balance_id == 0 {
+		if operation.IsTestId == IST_LIVE && operation.Balance_amount == 0 {
 			continue
 		}
 		if operation.ProviderBalance == nil {
@@ -204,6 +240,7 @@ func GroupRegistryToSummaryProvider() (data []SummaryRowProvider) {
 		k.RR_amount = v.RR_amount
 		k.UNA_amount = v.UNA_amount
 		k.Extra_BR_balance_currency = v.Extra_BR_balance_currency
+		k.BR_compensation = v.BR_compensation
 
 		k.SetRate()
 

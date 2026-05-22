@@ -76,7 +76,7 @@ func NewQuerryArgs(from_cfg bool) (args querrys.Args) {
 			args.Merchant_id = append(args.Merchant_id, row.Merchant_id)
 			args.Provider_id = append(args.Provider_id, row.Provider_id)
 
-			if row.Balance_id == 0 {
+			if row.Balance_id == 0 && row.Operation_status != "decline" {
 				args.ID = append(args.ID, row.Operation_id)
 			}
 		}
@@ -185,6 +185,7 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 		Merchant_name:         record[map_fileds["merchant_name"]-1],
 		Merchant_account_name: record[map_fileds["merchant_account_name"]-1],
 		Payment_id:            record[map_fileds["external_id / payment_id"]-1],
+		Operation_status:      record[map_fileds["operation_status"]-1],
 
 		Count_operations:      1,
 		Channel_currency_str:  record[map_fileds["real_currency / channel_currency"]-1],
@@ -203,7 +204,7 @@ func ConvertRecordToOperation(record []string, map_fileds map[string]int) (op *O
 
 	num, _ := strconv.Atoi(record[map_fileds["is_test"]-1])
 	if num == 1 && (op.Balance_id == 0 || strings.Contains(op.Provider_name, "[MOCK]")) {
-		op.IsTestId = IST_TECH_TEST
+		op.SetIsTestID(IST_TECH_TEST)
 	}
 
 	idx := map_fileds["created_at / operation_created_at"]

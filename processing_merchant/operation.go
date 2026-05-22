@@ -22,7 +22,7 @@ import (
 )
 
 type Operation struct {
-	mu sync.Mutex
+	mu *sync.Mutex
 
 	Operation_id   int `db:"operation_id"`
 	Transaction_id int `db:"transaction_id"`
@@ -94,6 +94,11 @@ type Operation struct {
 
 	Actual_amount float64 `db:"actual_amount"`
 
+	Operation_status string //`db:"surcharge_currency"`
+
+	CorrectionType   string
+	CorrectionTypeId int
+
 	Rate                 float64
 	SR_channel_currency  float64
 	SR_balance_currency  float64
@@ -137,6 +142,7 @@ type Operation struct {
 	DragonpayOperation   *dragonpay.Operation
 	Country              countries.Country
 	Detailed_provider    *detailed_provider
+	Detailed_merchant    *detailed_merchant
 	ProviderBalance      *provider_balances.Balance
 	Tariff_referal       *tariff_compensation.Tariff
 	Tariff_compensation  *tariff_compensation.Tariff
@@ -150,15 +156,23 @@ type Operation struct {
 	Tariff_rate_max               float64 `db:"billing__tariff_rate_max"`
 	Tariff_currency_rate          float64
 	Tariff_currency_rate_exponent float64
+	Tariff_currency               currency.Currency
 
-	Tariff_currency currency.Currency
+	NotInBilling bool // нет в кликхаусе
 
 	Skip       bool
+	Dupclicate bool
+
 	IsTestId   int
 	IsTestType string
+
+	IsFinal      bool
+	IsCorrection bool
 }
 
 func (o *Operation) StartingFill() {
+
+	o.mu = &sync.Mutex{}
 
 	if o.Transaction_completed_at.IsZero() {
 		o.Transaction_completed_at = o.Operation_created_at
@@ -227,10 +241,6 @@ func (o *Operation) StartingFill() {
 
 	o.Skip = o.Provider_name == "Capitaller transfers"
 
-	// if o.IsTestId == 0 {
-	// 	o.IsTestType = "live"
-	// }
-
 }
 
 func (o *Operation) SetBalanceID() {
@@ -242,7 +252,21 @@ func (o *Operation) SetBalanceID() {
 	ch_operation, ok := bof_clickhouse_data[o.Operation_id]
 	if ok {
 		o.Balance_id = ch_operation.Balance_id
+		o.Tariff_condition_id = ch_operation.Tariff_condition_id
+
+		if o.Tariff_bof != nil {
+			o.Tariff_bof.Percent = ch_operation.Tariff_rate_percent
+			o.Tariff_bof.Fix = ch_operation.Tariff_rate_fix
+			o.Tariff_bof.Min = ch_operation.Tariff_rate_min
+			o.Tariff_bof.Max = ch_operation.Tariff_rate_max
+		}
+
+		o.Fee_currency = ch_operation.Fee_currency
+		o.Fee_amount = ch_operation.Fee_amount
 	} else {
+
+		o.NotInBilling = true
+
 		for _, v := range storage.Registry {
 			if v.Merchant_account_id == o.Merchant_account_id &&
 				v.Operation_type == o.Operation_type &&
@@ -253,6 +277,17 @@ func (o *Operation) SetBalanceID() {
 				v != o && v.Balance_id > 0 {
 
 				o.Balance_id = v.Balance_id
+				o.Tariff_condition_id = v.Tariff_condition_id
+
+				// if o.Tariff_bof != nil && v.Tariff_bof != nil {
+				// 	o.Tariff_bof.Percent = v.Tariff_bof.Percent
+				// 	o.Tariff_bof.Fix = v.Tariff_bof.Fix
+				// 	o.Tariff_bof.Min = v.Tariff_bof.Min
+				// 	o.Tariff_bof.Max = v.Tariff_bof.Max
+				// }
+
+				// o.Fee_currency = v.Fee_currency
+				// o.Fee_amount = v.Fee_amount
 				return
 			}
 		}
@@ -262,19 +297,6 @@ func (o *Operation) SetBalanceID() {
 
 func (o *Operation) SetBalanceCurrency() {
 
-	// if o.Tariff == nil {
-	// 	return
-	// }
-
-	// t := o.Tariff
-
-	// o.Balance_currency = t.Balance_currency
-
-	// if t.Convertation == "KGX" && o.ProviderOperation != nil {
-	// 	o.Balance_currency = o.ProviderOperation.Provider_currency
-	// }
-	//
-	//
 	// могут быть колбэки, поэтому проверка валюты провайдера
 	if !o.IsPerevodix && !o.IsHope && o.ProviderOperation != nil && o.ProviderOperation.Provider_currency.Name != "" {
 
@@ -374,6 +396,10 @@ func (o *Operation) SetSRAmount() {
 		return
 	}
 
+	if t.Schema == "Лесенка от оборота" {
+		t = o.Tariff_bof
+	}
+
 	br_fix := 0.00
 	if o.ProviderOperation != nil {
 		br_fix = o.ProviderOperation.BR_fix
@@ -448,7 +474,10 @@ func (o *Operation) SetSRAmount() {
 	}
 
 	// # 1204
-	if o.Balance_currency.Exponent {
+	if o.Balance_currency.Crypto {
+		o.Balance_amount = util.Round(o.Balance_amount, 8)
+		o.SR_balance_currency = util.Round(SR_balance_currency, 8)
+	} else if o.Balance_currency.Exponent {
 		o.Balance_amount = util.Round(o.Balance_amount, 0)
 		o.SR_balance_currency = util.Round(SR_balance_currency, 0)
 	} else if o.Fee_currency == o.Balance_currency ||
@@ -604,7 +633,8 @@ func (o *Operation) SetVerification() {
 		}
 	} else if o.IsSirp && o.ProviderOperation == nil {
 		o.Verification = VRF_NO_IN_REG
-
+	} else if o.NotInBilling {
+		o.Verification = VRF_NOT_IN_BILLING
 	} else if o.CheckFee == 0 {
 		o.Verification = VRF_OK
 	} else if o.CheckRates != 0 {
@@ -656,6 +686,7 @@ const (
 	VRF_EMPTY_TARIFF_ID       = "Заполни tariff_condition_id"
 	VRF_CHECK_TARIFF_ID       = "Проверь tariff_condition_id"
 	VRF_CHECK_DATE_START      = "Проверь дату старта тарифа"
+	VRF_NOT_IN_BILLING        = "Нет в биллинге"
 )
 
 // 0 = live | 1 = live test (из МА/мерчанта/тарифа) | 2 = tech test (из БОФ)
@@ -670,6 +701,52 @@ const (
 	CNV_REESTR     int = 2
 	CNV_CALLBACK   int = 3
 )
+
+func (o *Operation) SetCorrection() {
+
+	if o.Detailed_merchant != nil {
+		if o.Detailed_merchant.Operation_status != o.Operation_status {
+			o.IsCorrection = true
+			o.CorrectionType = "status_changed"
+			o.CorrectionTypeId = 1
+		} else if !util.Equals(o.Detailed_merchant.Channel_amount, o.Channel_amount) {
+			o.IsCorrection = true
+			o.CorrectionType = "amount_changed"
+			o.CorrectionTypeId = 2
+		} else if !util.Equals(o.Detailed_merchant.SR_balance_currency, o.SR_balance_currency) {
+			o.IsCorrection = true
+			o.CorrectionType = "commission_changed"
+			o.CorrectionTypeId = 3
+		}
+	}
+
+}
+
+func (o *Operation) SetDeclineAmount() {
+
+	if o.Operation_status == "decline" {
+
+		if o.Detailed_merchant != nil {
+			o.Balance_amount = -o.Detailed_merchant.Balance_amount
+			o.Channel_amount = -o.Detailed_merchant.Channel_amount
+			o.Fee_amount = -o.Detailed_merchant.Fee_amount
+			o.SR_balance_currency = -o.Detailed_merchant.SR_balance_currency
+			o.SR_channel_currency = -o.Detailed_merchant.SR_channel_currency
+		}
+
+	}
+
+}
+
+func (o *Operation) SkipDecline() bool {
+
+	if o.Operation_status == "decline" && o.Detailed_merchant == nil {
+		return true
+	}
+
+	return false
+
+}
 
 func (o *Operation) SetRR() {
 

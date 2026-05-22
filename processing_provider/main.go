@@ -80,9 +80,9 @@ func ReadSources() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(17)
+	wg.Add(18)
 
-	channel_readers := 5
+	channel_readers := 6
 	registry_done := make(chan querrys.Args, channel_readers)
 
 	go func() {
@@ -138,6 +138,11 @@ func ReadSources() {
 	go func() {
 		defer wg.Done()
 		PSQL_read_detailed_merchant(storage.Postgres, registry_done)
+	}()
+
+	go func() {
+		defer wg.Done()
+		PSQL_read_detailed_provider(storage.Postgres, registry_done)
 	}()
 
 	go func() {

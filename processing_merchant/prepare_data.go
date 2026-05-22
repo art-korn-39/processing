@@ -142,6 +142,9 @@ func FillRefFieldsInRegistry() {
 				// связанная операция из таблицы detailed_provider
 				op.Detailed_provider = data_detailed_provider[op.Operation_id]
 
+				// связанная операция из таблицы detailed_merchant
+				op.Detailed_merchant = data_detailed_merchant[op.Operation_id]
+
 				// подбор тарифов
 				op.Tariff = tariff_merchant.FindTariffForOperation(op)
 				if op.Tariff == nil {

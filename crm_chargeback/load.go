@@ -127,7 +127,7 @@ func loadOperations(cfg config.Config, token string) error {
 		// slice_periods = append(slice_periods, util.GetSliceOfDuration(_1feb25, _1mar25, time.Hour*24)...)
 		//slice_periods = append(slice_periods, util.GetSliceOfDuration(_30dec23, time.Now(), time.Hour*24*3)...)
 
-		slice_periods = append(slice_periods, util.GetSliceOfDuration(_1mar25, time.Now(), time.Hour*24*30)...)
+		slice_periods = append(slice_periods, util.GetSliceOfDuration(_1feb26, time.Now(), time.Hour*24*30)...)
 	}
 
 	operations = map[string]*Operation{}
@@ -234,7 +234,8 @@ func getDisputeForPeriod(cfg config.Config, token string, date_start, date_end t
 	}
 
 	s0 = append(s0, "$expand=state($select=Name)")
-	s0 = append(s0, "$filter=CreatedOn+ge+@date1+and+CreatedOn+le+@date2")
+	//s0 = append(s0, "$filter=CreatedOn+ge+@date1+and+CreatedOn+le+@date2")
+	s0 = append(s0, "$filter=modifiedon+ge+@date1+and+modifiedon+le+@date2")
 	s0 = append(s0, "@date1="+date_start.Format(time_layout))
 	s0 = append(s0, "@date2="+date_end.Format(time_layout))
 

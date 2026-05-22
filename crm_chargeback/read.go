@@ -37,3 +37,33 @@ func readChargebacks(db *sqlx.DB) {
 	logs.Add(logs.MAIN, fmt.Sprintf("Чтение chargebacks из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(chargebacks))))
 
 }
+
+func readChargebacOperations(db *sqlx.DB) {
+
+	if db == nil {
+		return
+	}
+
+	start_time := time.Now()
+
+	stat := querrys.Stat_Select_chargeback_operations()
+
+	slice_operations := []Operation{}
+
+	err := db.Select(&slice_operations, stat)
+	if err != nil {
+		logs.Add(logs.INFO, err)
+		return
+	}
+
+	//chargebacks = map[string]*Chargeback{}
+
+	operations = map[string]*Operation{}
+
+	for _, op := range slice_operations {
+		operations[op.GUID] = &op
+	}
+
+	logs.Add(logs.MAIN, fmt.Sprintf("Чтение chargebacks operations из Postgres: %v [%s строк]", time.Since(start_time), util.FormatInt(len(operations))))
+
+}

@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/lib/pq"
 	"golang.org/x/text/encoding/charmap"
 )
 
@@ -109,7 +110,7 @@ func PSQL_Insert_SummaryMerchant(s []SummaryRowMerchant) {
 
 	stat_delete :=
 		`DELETE FROM summary_merchant 
-		WHERE document_date = $1 AND merchant_id = $2` // AND convertation = $3
+		WHERE document_date = $1 AND merchant_id = ANY($2)` // AND convertation = $3
 
 	stat_insert := querrys.Stat_Insert_summary_merchant()
 	_, err := storage.Postgres.PrepareNamed(stat_insert)
@@ -117,6 +118,12 @@ func PSQL_Insert_SummaryMerchant(s []SummaryRowMerchant) {
 		logs.Add(logs.INFO, err)
 		return
 	}
+
+	s_merchant_id := make([]int, 0, 30)
+	for _, v := range s {
+		s_merchant_id = append(s_merchant_id, v.Merchant_id)
+	}
+	s_merchant_id = util.Compact(s_merchant_id)
 
 	wg.Add(config.NumCPU)
 	for i := 1; i <= config.NumCPU; i++ {
@@ -128,9 +135,10 @@ func PSQL_Insert_SummaryMerchant(s []SummaryRowMerchant) {
 
 				//for _, row := range v {
 				// дата одна во всем батче, мерчант тоже
-				tx.Exec(stat_delete, v[0].Document_date, v[0].Merchant_id)
+				tx.Exec(stat_delete, v[0].Document_date, pq.Array(s_merchant_id))
 				//}
 
+				// нарезаем батч, если в рамках дня больше 400 строк для вставки/обновления
 				for i := 0; i < len(v); i += batch_len {
 					end := i + batch_len
 					if end > len(v) {

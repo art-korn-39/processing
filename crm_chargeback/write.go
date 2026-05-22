@@ -79,7 +79,7 @@ func operationsInsertIntoDB(db *sqlx.DB) {
 
 	channel := make(chan []Operation, 1000)
 
-	const batch_len = 100
+	const batch_len = 500
 
 	var wg sync.WaitGroup
 

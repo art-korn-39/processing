@@ -14,6 +14,7 @@ import (
 	"app/tariff_provider"
 	"app/una_provider"
 	"app/util"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -21,7 +22,7 @@ import (
 )
 
 type Operation struct {
-	mu sync.Mutex
+	mu *sync.Mutex
 
 	Operation_id   int `db:"operation_id"`
 	Transaction_id int `db:"transaction_id"`
@@ -55,6 +56,10 @@ type Operation struct {
 	Payment_id            string
 	Balance_type          string
 	Real_provider         string
+	Operation_status      string
+
+	CorrectionType   string
+	CorrectionTypeId int
 
 	Project_name      string `db:"project_name"`
 	Project_id        int    `db:"project_id"`
@@ -99,6 +104,7 @@ type Operation struct {
 	IsKessPay          bool
 	IsPerevodix        bool
 	IsTradex           bool
+	IsSirp             bool
 
 	RR_amount float64
 	RR_date   time.Time
@@ -119,14 +125,22 @@ type Operation struct {
 	RR_provider         *rr_provider.Tariff
 	UNA_provider        *una_provider.Tariff
 	Detailed_merchant   *detailed_merchant
+	Detailed_provider   *detailed_provider
 
 	Legal_entity_id int `db:"legal_entity_id"`
 
 	IsTestId   int
 	IsTestType string
+
+	IsCorrection bool
+	IsFinal      bool
+
+	Dupclicate bool
 }
 
 func (o *Operation) StartingFill() {
+
+	o.mu = &sync.Mutex{}
 
 	if o.Transaction_completed_at.IsZero() {
 		o.Transaction_completed_at = o.Operation_created_at
@@ -137,21 +151,17 @@ func (o *Operation) StartingFill() {
 	o.IsDragonPay = strings.Contains(strings.ToLower(o.Provider_name), "dragonpay")
 	o.IsKessPay = strings.Contains(strings.ToLower(o.Provider_name), "kesspay")
 	o.IsPerevodix = strings.Contains(strings.ToLower(o.Provider_name), "perevodix")
+	o.IsSirp = slices.Contains([]int{33042, 32142}, o.Provider_id)
 
 	o.Provider_currency = currency.New(o.Provider_currency_str)
 	o.Channel_currency = currency.New(o.Channel_currency_str)
 	o.Surcharge_currency = currency.New(o.Surcharge_currency_str)
 	o.Currency = currency.New(o.Currency_str)
-	//o.Msc_currency = currency.New(o.Msc_currency_str)
-	//o.Fee_currency = currency.New(o.Fee_currency_str)
 
 	o.Provider_amount = util.TR(o.Provider_currency.Exponent, o.Provider_amount, o.Provider_amount/100).(float64)
 	o.Channel_amount = util.TR(o.Channel_currency.Exponent, o.Channel_amount, o.Channel_amount/100).(float64)
 	o.Surcharge_amount = util.TR(o.Surcharge_currency.Exponent, o.Surcharge_amount, o.Surcharge_amount/100).(float64)
 	o.Operation_actual_amount = util.TR(o.Channel_currency.Exponent, o.Operation_actual_amount, o.Operation_actual_amount/100).(float64)
-	//o.Msc_amount = util.TR(o.Msc_currency.Exponent, o.Msc_amount, o.Msc_amount/100).(float64)
-	//o.Actual_amount = util.TR(o.Channel_currency.Exponent, o.Actual_amount, o.Actual_amount/100).(float64)
-	//o.Fee_amount = util.TR(o.Fee_currency.Exponent, o.Fee_amount, o.Fee_amount/100).(float64)
 
 	if o.Operation_type == "" {
 		if o.Operation_type_id == 3 {
@@ -182,11 +192,6 @@ func (o *Operation) StartingFill() {
 	} else {
 		o.Balance_type = "IN"
 	}
-
-	// if o.IsTestId == 0 {
-	// 	o.IsTestType = "live"
-	// }
-
 }
 
 func (o *Operation) SetBalanceID() {
@@ -222,60 +227,6 @@ func (o *Operation) SetCountry() {
 
 func (o *Operation) SetPaymentType() {
 	//o.Payment_type = dragonpay.GetProvider1C()
-}
-
-// func (o *Operation) SetBalanceCurrency() {
-
-// 	if o.ProviderOperation != nil {
-// 		o.Balance_currency = o.ProviderOperation.Provider_currency
-// 	} else if o.ProviderBalance != nil && o.ProviderBalance.Convertation == "Курс наш (в колбэках)" {
-// 		o.Balance_currency = o.ProviderBalance.Balance_currency
-// 	} else {
-// 		o.Balance_currency = o.Channel_currency
-// 	}
-
-// }
-
-// unused
-func (o *Operation) SetBalance() {
-
-	// для операции с конвертом = "реестр" должна быть операция в "Provider_registry"
-	currency := o.Channel_currency.Name
-	if o.ProviderOperation != nil {
-		currency = o.ProviderOperation.Provider_currency.Name
-	} else if o.Provider_amount > 0 {
-		currency = ""
-	}
-
-	var balance *provider_balances.Balance
-	var ok bool
-	if o.IsTradex && o.ProviderOperation != nil {
-		balance, ok = provider_balances.GetBalanceByNickname(o.ProviderOperation.Balance)
-	} else {
-		balance, ok = provider_balances.GetBalance(o, currency)
-	}
-
-	if ok {
-		o.ProviderBalance = balance
-	} else {
-
-		// это для "без конвертации" и валюты канала = USD
-		if o.Channel_currency.Name == "USD" {
-			balance, ok = provider_balances.GetBalance(o, "USDT")
-			if ok && balance.Convertation_id == CNV_NO_CONVERT {
-				o.ProviderBalance = balance
-			}
-		}
-
-		// для колбэка условие, если баланс так и не нашли
-		if o.ProviderBalance == nil && o.Provider_amount == 0 {
-			balance, ok = provider_balances.GetBalance(o, "")
-			if ok && balance.Convertation_id == CNV_CALLBACK {
-				o.ProviderBalance = balance
-			}
-		}
-	}
-
 }
 
 func (o *Operation) SetBalanceCurrency() {
@@ -384,6 +335,11 @@ func (o *Operation) SetBRAmount() {
 		return
 	}
 
+	br_fix := 0.00
+	if o.ProviderOperation != nil {
+		br_fix = o.ProviderOperation.BR_fix
+	}
+
 	// BR
 	useRate := o.Balance_currency != t.TariffCurrency && t.TariffCurrency != currency.Currency{}
 
@@ -394,7 +350,7 @@ func (o *Operation) SetBRAmount() {
 		amount = o.Balance_amount
 	}
 
-	commission := amount*t.Percent + t.Fix
+	commission := amount*t.Percent + util.TR(o.IsSirp, br_fix, t.Fix).(float64)
 
 	if t.Min != 0 && commission < t.Min {
 		commission = t.Min
@@ -407,7 +363,9 @@ func (o *Operation) SetBRAmount() {
 	}
 
 	// ОКРУГЛЕНИЕ
-	if o.Balance_currency.Exponent {
+	if o.Balance_currency.Crypto {
+		o.BR_balance_currency = util.Round(commission, 8)
+	} else if o.Balance_currency.Exponent {
 		o.BR_balance_currency = util.Round(commission, 0)
 	} else if o.IsTradex {
 		o.BR_balance_currency = util.Round(commission, 2)
@@ -446,7 +404,9 @@ func (o *Operation) SetExtraBRAmount() {
 		commission = commission / o.Rate
 	}
 
-	if o.Balance_currency.Exponent {
+	if o.Balance_currency.Crypto {
+		o.Extra_BR_balance_currency = util.Round(commission, 8)
+	} else if o.Balance_currency.Exponent {
 		o.Extra_BR_balance_currency = util.Round(commission, 0)
 	} else if o.IsTradex {
 		o.Extra_BR_balance_currency = util.Round(commission, 2)
@@ -522,6 +482,52 @@ func (o *Operation) SetBRCompensation() {
 
 }
 
+func (o *Operation) SetCorrection() {
+
+	if o.Detailed_provider != nil {
+		if o.Detailed_provider.Operation_status != o.Operation_status {
+			o.IsCorrection = true
+			o.CorrectionType = "status_changed"
+			o.CorrectionTypeId = 1
+		} else if !util.Equals(o.Detailed_provider.Channel_amount, o.Channel_amount) {
+			o.IsCorrection = true
+			o.CorrectionType = "amount_changed"
+			o.CorrectionTypeId = 2
+		} else if !util.Equals(o.Detailed_provider.BR_balance_currency, o.BR_balance_currency) {
+			o.IsCorrection = true
+			o.CorrectionType = "commission_changed"
+			o.CorrectionTypeId = 3
+		}
+	}
+
+}
+
+func (o *Operation) SetDeclineAmount() {
+
+	if o.Operation_status == "decline" {
+
+		if o.Detailed_provider != nil {
+			o.Balance_amount = -o.Detailed_provider.Balance_amount
+			o.Channel_amount = -o.Detailed_provider.Channel_amount
+			//o.Fee_amount = -o.Detailed_provider.Fee_amount
+			o.BR_balance_currency = -o.Detailed_provider.BR_balance_currency
+			//o.BR_channel_currency = -o.Detailed_provider.BR_channel_currency
+		}
+
+	}
+
+}
+
+func (o *Operation) SkipDecline() bool {
+
+	if o.Operation_status == "decline" && o.Detailed_provider == nil {
+		return true
+	}
+
+	return false
+
+}
+
 func (o *Operation) SetVerification() {
 
 	if o.IsTradex && o.ProviderOperation == nil {
@@ -562,6 +568,8 @@ func (o *Operation) SetVerificationTradex() {
 		o.ProviderOperation.Provider_amount_tradex != 0 {
 
 		o.VerificationTradex = VRF_TRADEX_CHECK_AMOUNT
+	} else if o.IsSirp && o.ProviderOperation == nil {
+		o.Verification = VRF_NO_IN_REG
 	} else {
 		o.VerificationTradex = VRF_OK
 	}

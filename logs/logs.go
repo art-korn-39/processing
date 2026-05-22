@@ -37,12 +37,16 @@ func Add(t LogType, v ...any) {
 		return
 	}
 
+	cfg := config.Get()
+
+	is_import := cfg.Application == "processing_merchant" || cfg.Application == "processing_provider"
+
 	switch t {
 
 	// для пользователя интерактивно
 	case INFO:
-		if !config.Get().Routine_task {
-			file, _ := os.OpenFile(config.Get().File_logs, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+		if !cfg.Routine_task || is_import {
+			file, _ := os.OpenFile(cfg.File_logs, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 			defer file.Close()
 
 			file.WriteString(fmt.Sprintf("%s\n", value))
@@ -51,10 +55,10 @@ func Add(t LogType, v ...any) {
 
 	// всегда (консоль + файл)
 	case MAIN:
-		file, _ := os.OpenFile(config.Get().File_logs, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+		file, _ := os.OpenFile(cfg.File_logs, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 		defer file.Close()
 
-		if config.Get().Routine_task {
+		if cfg.Routine_task {
 			file.WriteString(fmt.Sprintf("[%s] %s\n", time.Now().Format(time.DateTime), value))
 		} else {
 			file.WriteString(fmt.Sprintf("%s\n", value))
@@ -64,7 +68,7 @@ func Add(t LogType, v ...any) {
 
 	// в файл, консоль при отладке
 	case ERROR:
-		file, _ := os.OpenFile(config.Get().File_errors, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+		file, _ := os.OpenFile(cfg.File_errors, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 		defer file.Close()
 
 		file.WriteString(fmt.Sprintf("[%s] %s\n", time.Now().Format(time.DateTime), value))
@@ -75,7 +79,7 @@ func Add(t LogType, v ...any) {
 
 	// консоль и файл
 	case FATAL:
-		file, _ := os.OpenFile(config.Get().File_logs, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+		file, _ := os.OpenFile(cfg.File_logs, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 		defer file.Close()
 
 		file.WriteString(fmt.Sprintf("%s\n", value))
@@ -83,8 +87,8 @@ func Add(t LogType, v ...any) {
 
 	// в консоль для всех и в файл только для регламентных
 	case REGL:
-		if config.Get().Routine_task {
-			file, _ := os.OpenFile(config.Get().File_logs, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+		if cfg.Routine_task {
+			file, _ := os.OpenFile(cfg.File_logs, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 			defer file.Close()
 
 			file.WriteString(fmt.Sprintf("[%s] %s\n", time.Now().Format(time.DateTime), value))

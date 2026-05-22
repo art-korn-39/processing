@@ -63,6 +63,8 @@ type SummaryRowMerchant struct {
 
 	Provider_balance_GUID string `db:"provider_balance_guid"`
 	Is_test_id            int    `db:"is_test_id"`
+	IsCorrection          bool   `db:"is_correction"`
+	CorrectionTypeId      int    `db:"correction_type_id"`
 
 	HasProviderOperation bool
 }
@@ -112,6 +114,7 @@ func (row *SummaryRowMerchant) SetConvertationID() {
 func (row *SummaryRowMerchant) SetID() {
 
 	_1_march_2026 := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
+	_1_may_2026 := time.Date(2026, 5, 1, 0, 0, 0, 0, time.UTC)
 
 	if row.Document_date.Before(_1_march_2026) {
 		//"10" len = 2
@@ -131,12 +134,17 @@ func (row *SummaryRowMerchant) SetID() {
 		id_str := fmt.Sprint(10, days_str, merch_str, row.Convertation_id)
 		row.Document_id, _ = strconv.Atoi(id_str)
 
-	} else {
-		//"1" len = 1
+	} else if row.Document_date.Before(_1_may_2026) {
+		//"1 or 2" len = 1
 		//days len = 5
 		//id merch len = 6
 		//balance code = 6
 		//conv len = 1
+
+		correction_str := 1
+		if row.IsCorrection {
+			correction_str = 2
+		}
 
 		date_01_01_2024 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 
@@ -149,7 +157,37 @@ func (row *SummaryRowMerchant) SetID() {
 
 		balance_code_1c_str := fmt.Sprintf("%06d", row.Balance_code_1c)
 
-		id_str := fmt.Sprint(1, days_str, merchant_str, balance_code_1c_str, row.Convertation_id)
+		id_str := fmt.Sprint(correction_str, days_str, merchant_str, balance_code_1c_str, row.Convertation_id)
+		row.Document_id, _ = strconv.Atoi(id_str)
+	} else {
+		//"1 or 2" len = 1
+		//days len = 4
+		//id merch len = 6
+		//balance code = 6
+		//conv len = 1
+		//corr type len = 1
+
+		correction_str := "1"
+		if row.IsCorrection {
+			correction_str = "2"
+		}
+
+		date_01_01_2024 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+
+		duration := row.Document_date.Sub(date_01_01_2024)
+
+		days := int(duration.Hours() / 24)
+		days_str := fmt.Sprintf("%04d", days)
+
+		merchant_str := fmt.Sprintf("%06d", row.Merchant_id)
+
+		balance_code_1c_str := fmt.Sprintf("%06d", row.Balance_code_1c)
+
+		convertation_id_str := strconv.Itoa(row.Convertation_id)
+
+		correction_type_id_str := strconv.Itoa(row.CorrectionTypeId)
+
+		id_str := fmt.Sprint(correction_str, days_str, merchant_str, balance_code_1c_str, convertation_id_str, correction_type_id_str)
 		row.Document_id, _ = strconv.Atoi(id_str)
 	}
 
@@ -180,6 +218,8 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 		k.Provider_1c = o.Provider1c
 		k.Country = o.Country.Code2
 		k.Is_test_id = o.IsTestId
+		k.IsCorrection = o.IsCorrection
+		k.CorrectionTypeId = o.CorrectionTypeId
 
 		if o.Tariff != nil {
 			k.Convertation = o.Tariff.Convertation
@@ -216,10 +256,10 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 
 	group_data := map[SummaryRowMerchant]SummaryRowMerchant{}
 	for _, operation := range storage.Registry {
-		if operation.IsTestId == IST_LIVE && operation.Balance_id == 0 {
+		if operation.IsTestId == IST_LIVE && operation.Balance_amount == 0 {
 			continue
 		}
-		if operation.ProviderBalance == nil {
+		if operation.ProviderBalance == nil || operation.SkipDecline() {
 			continue
 		}
 		key := NewKey(operation) // получили структуру с полями группировки
@@ -241,6 +281,7 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 		k.RR_amount = v.RR_amount
 		k.UNA_amount = v.UNA_amount
 		k.SR_referal = v.SR_referal
+		k.SR_compensation = v.SR_compensation
 
 		k.SetRate()
 

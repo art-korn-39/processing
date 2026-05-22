@@ -32,6 +32,7 @@ type Detailed_row struct {
 	Payment_method        string `db:"payment_method"`
 	Country               string `db:"country"`
 	Region                string `db:"region"`
+	Operation_status      string `db:"operation_status"`
 
 	Operation_type string `db:"operation_type"`
 
@@ -91,6 +92,12 @@ type Detailed_row struct {
 	IsTestId   int    `db:"is_test_id"`
 	IsTestType string `db:"is_test_type"`
 
+	IsFinal bool `db:"is_final"`
+
+	IsCorrection     bool   `db:"is_correction"`
+	CorrectionType   string `db:"correction_type"`
+	CorrectionTypeId int    `db:"correction_type_id"`
+
 	BR_amount        float64
 	Balance_currency currency.Currency
 }
@@ -148,11 +155,18 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.Verification = o.Verification
 	d.Rate = o.Rate
 	d.Provider1C = o.Provider1c
+	d.Operation_status = o.Operation_status
 
 	d.Balance_currency = o.Balance_currency
 
 	d.IsTestId = o.IsTestId
 	d.IsTestType = o.IsTestType
+
+	d.IsFinal = o.IsFinal
+
+	d.IsCorrection = o.IsCorrection
+	d.CorrectionType = o.CorrectionType
+	d.CorrectionTypeId = o.CorrectionTypeId
 
 	if o.ProviderBalance != nil {
 		d.Provider_balance_guid = o.ProviderBalance.GUID

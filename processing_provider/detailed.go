@@ -47,6 +47,7 @@ type Detailed_row struct {
 	Rate                      float64   `db:"rate"`
 	CompensationBR            float64   `db:"compensation_br"` // УДАЛИТЬ!
 	Verification              string    `db:"verification"`
+	Operation_status          string    `db:"operation_status"`
 	Tariff_date_start         time.Time `db:"tariff_date_start"`
 	Act_percent               float64   `db:"act_percent"`
 	Act_fix                   float64   `db:"act_fix"`
@@ -71,6 +72,12 @@ type Detailed_row struct {
 
 	IsTestId   int    `db:"is_test_id"`
 	IsTestType string `db:"is_test_type"`
+
+	IsCorrection     bool   `db:"is_correction"`
+	CorrectionType   string `db:"correction_type"`
+	CorrectionTypeId int    `db:"correction_type_id"`
+
+	IsFinal bool `db:"is_final"`
 }
 
 func NewDetailedRow(o *Operation) (d Detailed_row) {
@@ -98,6 +105,7 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	} else {
 		d.Country = o.Country.Code2
 	}
+	d.Operation_status = o.Operation_status
 	d.Transaction_created_at = o.Transaction_created_at
 	d.Transaction_completed_at = o.Transaction_completed_at
 	d.Channel_amount = o.Channel_amount
@@ -138,6 +146,12 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.IsTestId = o.IsTestId
 	d.IsTestType = o.IsTestType
 
+	d.IsFinal = o.IsFinal
+
+	d.IsCorrection = o.IsCorrection
+	d.CorrectionType = o.CorrectionType
+	d.CorrectionTypeId = o.CorrectionTypeId
+
 	if o.DragonpayOperation != nil {
 		d.Provider_dragonpay = o.DragonpayOperation.Provider1c
 	}
@@ -155,6 +169,10 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 
 	if o.ProviderOperation != nil {
 		d.Provider_BR = o.ProviderOperation.BR_amount
+
+		if o.IsSirp {
+			d.Act_fix = o.ProviderOperation.BR_fix
+		}
 	}
 
 	if o.Detailed_merchant != nil {

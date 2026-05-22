@@ -26,6 +26,10 @@ func CalculateCommission() {
 
 				operation := storage.Registry[index]
 
+				if operation.SkipDecline() || operation.Dupclicate {
+					continue
+				}
+
 				operation.mu.Lock()
 
 				operation.SetBalanceAmount()
@@ -39,7 +43,12 @@ func CalculateCommission() {
 				operation.SetVerification()
 				operation.SetVerificationTradex()
 
+				operation.SetCorrection()
+				operation.SetDeclineAmount()
+
 				operation.mu.Unlock()
+
+				addDuplicate(operation)
 
 			}
 		}()
@@ -53,5 +62,29 @@ func CalculateCommission() {
 	wg.Wait()
 
 	logs.Add(logs.INFO, fmt.Sprintf("Расчёт комиссии: %v", util.FormatDuration(time.Since(start_time))))
+
+}
+
+func addDuplicate(o *Operation) {
+
+	if o.CorrectionTypeId != 2 {
+		return
+	}
+
+	if o.Detailed_provider == nil {
+		return
+	}
+
+	copy := *o
+	copy.mu = &sync.Mutex{}
+
+	copy.Balance_amount = -o.Detailed_provider.Balance_amount
+	copy.Channel_amount = -o.Detailed_provider.Channel_amount
+	copy.BR_balance_currency = -o.Detailed_provider.BR_balance_currency
+
+	copy.CorrectionType = "reversal"
+	copy.CorrectionTypeId = 4
+
+	storage.Registry = append(storage.Registry, &copy)
 
 }

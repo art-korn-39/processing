@@ -57,7 +57,7 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 	sheet, _ := f.AddSheet("Обороты")
 
-	headers := []string{"Баланс провайдера", "Ключ", "Наименование баланса ПС", "ЮЛ", "Дата учета",
+	headers := []string{"Проверка", "Баланс провайдера", "Ключ", "Наименование баланса ПС", "ЮЛ", "Дата учета",
 		"provider_name", "merchant_account", "operation_type", "region", "payment_type", "merchant_name",
 		"Валюта баланса", "Кол-во транз", "Сумма в валюте баланса", "BR в валюте баланса",
 		"Surcharge amount", "Доп. BR в валюте баланса", "Сумма в валюте канала", "Валюта канала",
@@ -98,6 +98,7 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 	for k, v := range M {
 
 		row := sheet.AddRow()
+		row.AddCell().SetString(k.verification)
 		row.AddCell().SetString(k.balance)
 		row.AddCell().SetString(k.id_revise)
 		row.AddCell().SetString(k.contractor_provider)
