@@ -7,10 +7,5 @@ type Provider struct {
 	Provider_name   string `db:"provider_name"`
 	Provider_id     int    `db:"provider_id"`
 	Is_tradex       bool   `db:"is_tradex"`
-}
-
-func Is_tradex(provider_id int) bool {
-
-	return data_tradex[provider_id]
-
+	Fin             string `db:"fin"`
 }

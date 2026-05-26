@@ -55,9 +55,14 @@ func FillRefFieldsInRegistry() {
 				// страна
 				op.SetCountry()
 
-				// это tradex
-				op.IsTradex = providers.Is_tradex(op.Provider_id)
+				// провайдер
+				var ok bool
+				op.Provider, ok = providers.GetByID(op.Provider_id)
+				if ok {
+					op.IsTradex = op.Provider.Is_tradex
+				}
 
+				// это tradex доп.
 				if op.Provider_id == 35802 && op.Real_provider != "ps-tradex" {
 					op.IsTradex = false
 				}

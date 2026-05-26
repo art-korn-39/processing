@@ -9,4 +9,5 @@ type Merchant struct {
 	Project_name    string `db:"project_name"`
 	Project_id      int    `db:"project_id"`
 	Project_url     string `db:"project_url"`
+	Fin             string `db:"fin"`
 }

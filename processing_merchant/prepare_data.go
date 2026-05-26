@@ -7,6 +7,7 @@ import (
 	"app/dragonpay"
 	"app/holds"
 	"app/logs"
+	"app/merchants"
 	"app/provider_balances"
 	"app/provider_registry"
 	"app/providers"
@@ -92,6 +93,9 @@ func FillRefFieldsInRegistry() {
 				if op.IsTestId == IST_LIVE {
 					op.SetBalanceID()
 				}
+
+				// мерчант
+				op.Merchant, _ = merchants.GetByID(op.Merchant_id)
 
 				// dragonpay: payment_type, provider1c
 				if op.IsDragonPay {

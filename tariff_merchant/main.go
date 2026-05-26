@@ -214,7 +214,9 @@ func FindTariffForOperation(op Operation) *Tariff {
 			continue
 		}
 
-		if t.Merchant_account_id == merchant_account_id {
+		// добавлена стыковка по merchant_id тк один МА может быть у разных мерчантов
+		// *в файлах нет merchant_id
+		if t.Merchant_account_id == merchant_account_id && (t.Merchant_id == merchant_id || t.IsFile) {
 
 			if isDragonPay && provider1c != t.Provider1C {
 				continue

@@ -7,8 +7,10 @@ import (
 	"app/dragonpay"
 	"app/holds"
 	"app/logs"
+	"app/merchants"
 	"app/provider_balances"
 	"app/provider_registry"
+	"app/providers"
 	"app/providers_1c"
 	"app/rr_provider"
 	"app/tariff_compensation"
@@ -146,9 +148,10 @@ type Operation struct {
 	ProviderBalance      *provider_balances.Balance
 	Tariff_referal       *tariff_compensation.Tariff
 	Tariff_compensation  *tariff_compensation.Tariff
-	//RR_merchant          *rr_merchant.Tariff //не используем
-	RR_provider  *rr_provider.Tariff
-	UNA_provider *una_provider.Tariff
+	RR_provider          *rr_provider.Tariff
+	UNA_provider         *una_provider.Tariff
+	Merchant             *merchants.Merchant
+	Provider             *providers.Provider
 
 	Tariff_rate_fix               float64 `db:"billing__tariff_rate_fix"`
 	Tariff_rate_percent           float64 `db:"billing__tariff_rate_percent"`
@@ -397,7 +400,15 @@ func (o *Operation) SetSRAmount() {
 	}
 
 	if t.Schema == "Лесенка от оборота" {
+		//!!! лютый колхоз и говнокод
 		t = o.Tariff_bof
+		if o.Channel_currency == o.Balance_currency {
+			t.Convertation = "Без конверта"
+		} else {
+			t.Convertation = "Реестр"
+		}
+		t.Schema = o.Tariff.Schema
+		o.Tariff = t
 	}
 
 	br_fix := 0.00
@@ -706,17 +717,31 @@ func (o *Operation) SetCorrection() {
 
 	if o.Detailed_merchant != nil {
 		if o.Detailed_merchant.Operation_status != o.Operation_status {
-			o.IsCorrection = true
 			o.CorrectionType = "status_changed"
 			o.CorrectionTypeId = 1
 		} else if !util.Equals(o.Detailed_merchant.Channel_amount, o.Channel_amount) {
-			o.IsCorrection = true
 			o.CorrectionType = "amount_changed"
 			o.CorrectionTypeId = 2
 		} else if !util.Equals(o.Detailed_merchant.SR_balance_currency, o.SR_balance_currency) {
-			o.IsCorrection = true
 			o.CorrectionType = "commission_changed"
 			o.CorrectionTypeId = 3
+			// +++
+			// сторнирование
+			// o.CorrectionTypeId = 4
+			// ===
+		} else if o.IsTestId != o.Detailed_merchant.Is_test_id {
+			o.CorrectionType = "is_test_changed"
+			o.CorrectionTypeId = 5
+		} else if !util.Equals(o.Rate, o.Detailed_merchant.Rate) {
+			o.CorrectionType = "rate_changed"
+			o.CorrectionTypeId = 6
+		} else if o.ProviderBalance != nil && o.ProviderBalance.GUID != o.Detailed_merchant.Provider_balance_guid {
+			o.CorrectionType = "balance_changed"
+			o.CorrectionTypeId = 7
+		}
+
+		if o.CorrectionTypeId > 0 {
+			o.IsCorrection = true
 		}
 	}
 

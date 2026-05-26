@@ -11,10 +11,12 @@ import (
 )
 
 var (
-	data map[int]*Merchant
+	data_project_id map[int]*Merchant
+	data            map[int]*Merchant
 )
 
 func init() {
+	data_project_id = map[int]*Merchant{}
 	data = map[int]*Merchant{}
 }
 
@@ -38,7 +40,8 @@ func Read(db *sqlx.DB) {
 
 	for _, merchant := range slice_merchants {
 
-		data[merchant.Project_id] = merchant
+		data_project_id[merchant.Project_id] = merchant
+		data[merchant.Merchant_id] = merchant
 	}
 
 	logs.Add(logs.INFO, fmt.Sprintf("Чтение мерчантов: %v [%s строк]", util.FormatDuration(time.Since(start_time)), util.FormatInt(len(data))))
@@ -46,6 +49,11 @@ func Read(db *sqlx.DB) {
 }
 
 func GetByProjectID(project_id int) (*Merchant, bool) {
-	m, ok := data[project_id]
+	m, ok := data_project_id[project_id]
+	return m, ok
+}
+
+func GetByID(merchant_id int) (*Merchant, bool) {
+	m, ok := data[merchant_id]
 	return m, ok
 }

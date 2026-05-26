@@ -84,6 +84,7 @@ type KeyFields_SummaryInfo struct {
 	isTestId              int
 	team_tradex           string
 	una_date              time.Time
+	fin                   string
 }
 
 func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
@@ -155,6 +156,10 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		}
 	} else {
 		KF.provider1c = o.Provider1c
+	}
+
+	if o.Provider != nil {
+		KF.fin = o.Provider.Fin
 	}
 
 	return

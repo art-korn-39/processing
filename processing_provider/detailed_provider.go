@@ -17,9 +17,10 @@ type detailed_provider struct {
 	Operation_status         string    `db:"operation_status"`
 	Channel_amount           float64   `db:"channel_amount"`
 	Balance_amount           float64   `db:"balance_amount"`
-	//Fee_amount               float64   `db:"fee_amount"`
-	BR_balance_currency float64 `db:"br_balance_currency"`
-	//BR_channel_currency      float64   `db:"br_channel_currency"`
+	BR_balance_currency      float64   `db:"br_balance_currency"`
+	Provider_balance_guid    string    `db:"provider_balance_guid"`
+	Rate                     float64   `db:"rate"`
+	Is_test_id               int       `db:"is_test_id"`
 }
 
 var (
@@ -41,7 +42,7 @@ func PSQL_read_detailed_provider(db *sqlx.DB, registry_done chan querrys.Args) {
 	start_time := time.Now()
 
 	stat := `SELECT operation_id,operation_status,channel_amount,br_balance_currency,
-			balance_amount,transaction_completed_at
+			balance_amount,transaction_completed_at,is_test_id,rate,provider_balance_guid
 			FROM detailed_provider
 			WHERE (provider_id = ANY($1) OR provider_id = 0) 
 			AND transaction_completed_at BETWEEN $2 AND $3

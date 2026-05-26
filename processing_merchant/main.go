@@ -5,6 +5,7 @@ import (
 	"app/crypto"
 	"app/dragonpay"
 	"app/logs"
+	"app/merchants"
 	"app/provider_balances"
 	"app/provider_registry"
 	"app/providers"
@@ -83,7 +84,7 @@ func ReadSources() {
 
 	var wg sync.WaitGroup
 
-	wg.Add(17)
+	wg.Add(18)
 
 	channel_readers := 7
 	registry_done := make(chan querrys.Args, channel_readers)
@@ -156,6 +157,11 @@ func ReadSources() {
 	go func() {
 		defer wg.Done()
 		providers.Read(storage.Postgres)
+	}()
+
+	go func() {
+		defer wg.Done()
+		merchants.Read(storage.Postgres)
 	}()
 
 	go func() {

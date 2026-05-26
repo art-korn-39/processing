@@ -229,7 +229,7 @@ func Stat_Select_countries() string {
 func Stat_Select_merchants() string {
 	return `SELECT 
 				contractor_name,contractor_guid,merchant_name,
-				merchant_id,project_name,project_id,project_url
+				merchant_id,project_name,project_id,project_url,fin
 			FROM merchants`
 }
 
@@ -410,7 +410,8 @@ func Stat_Select_providers() string {
 				p.contractor_name,
 				p.provider_name,
 				p.provider_id,
-				p.is_tradex
+				p.is_tradex,
+				p.fin
 			FROM providers p
 			`
 }

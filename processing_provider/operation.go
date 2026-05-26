@@ -8,6 +8,7 @@ import (
 	"app/merchants"
 	"app/provider_balances"
 	"app/provider_registry"
+	"app/providers"
 	"app/providers_1c"
 	"app/rr_provider"
 	"app/tariff_compensation"
@@ -122,6 +123,7 @@ type Operation struct {
 	Country             countries.Country
 	ProviderBalance     *provider_balances.Balance
 	Merchant            *merchants.Merchant
+	Provider            *providers.Provider
 	RR_provider         *rr_provider.Tariff
 	UNA_provider        *una_provider.Tariff
 	Detailed_merchant   *detailed_merchant
@@ -497,6 +499,19 @@ func (o *Operation) SetCorrection() {
 			o.IsCorrection = true
 			o.CorrectionType = "commission_changed"
 			o.CorrectionTypeId = 3
+			// +++
+			// сторнирование
+			// o.CorrectionTypeId = 4
+			// ===
+		} else if o.IsTestId != o.Detailed_provider.Is_test_id {
+			o.CorrectionType = "is_test_changed"
+			o.CorrectionTypeId = 5
+		} else if !util.Equals(o.Rate, o.Detailed_provider.Rate) {
+			o.CorrectionType = "rate_changed"
+			o.CorrectionTypeId = 6
+		} else if o.ProviderBalance != nil && o.ProviderBalance.GUID != o.Detailed_provider.Provider_balance_guid {
+			o.CorrectionType = "balance_changed"
+			o.CorrectionTypeId = 7
 		}
 	}
 

@@ -34,6 +34,7 @@ type SummaryRowProvider struct {
 	Payment_type      string    `db:"payment_type"`
 	Business_type     string    `db:"business_type"`
 	Provider_1c       string    `db:"provider_1c"`
+	Operation_status  string    `db:"operation_status"`
 
 	Channel_currency_str string `db:"channel_currency"`
 	Balance_currency_str string `db:"balance_currency"`
@@ -193,6 +194,7 @@ func GroupRegistryToSummaryProvider() (data []SummaryRowProvider) {
 		k.Is_test_id = o.IsTestId
 		k.IsCorrection = o.IsCorrection
 		k.CorrectionTypeId = o.CorrectionTypeId
+		k.Operation_status = o.Operation_status
 
 		if o.Tariff != nil {
 			k.Tariff_date_start = o.Tariff.DateStart

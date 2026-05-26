@@ -108,6 +108,7 @@ type KeyFields_SummaryInfo struct {
 	tariff_condition_id int
 
 	schema string
+	fin    string
 
 	channel_currency currency.Currency
 	balance_currency currency.Currency
@@ -198,6 +199,10 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 
 	if o.CryptoOperation != nil {
 		KF.crypto_network = o.CryptoOperation.Network
+	}
+
+	if o.Merchant != nil {
+		KF.fin = o.Merchant.Fin
 	}
 
 	return

@@ -496,7 +496,7 @@ func Stat_Insert_summary_merchant() string {
 		sr_channel_currency, sr_balance_currency, count_operations, rate, referal_guid,
 		payment_type_id, payment_method_id, rated_account, provider_1c, subdivision_1c, business_type, project_id,
 		rr_amount, rr_date, schema, convertation_id, provider_balance_guid, sr_referal, is_test_id,
-		una_amount, una_date, sr_compensation, is_correction, correction_type_id
+		una_amount, una_date, sr_compensation, is_correction, correction_type_id, operation_status
 	)
 	VALUES (
 		:document_id, :document_date, :operation_type, :operation_group, :merchant_id, :merchant_account_id, 
@@ -505,7 +505,7 @@ func Stat_Insert_summary_merchant() string {
 		:sr_channel_currency, :sr_balance_currency, :count_operations, :rate, :referal_guid,
 		:payment_type_id, :payment_method_id, :rated_account, :provider_1c, :subdivision_1c, :business_type, :project_id,
 		:rr_amount, :rr_date, :schema, :convertation_id, :provider_balance_guid, :sr_referal, :is_test_id,
-		:una_amount, :una_date, :sr_compensation, :is_correction, :correction_type_id
+		:una_amount, :una_date, :sr_compensation, :is_correction, :correction_type_id, :operation_status
 		)`
 }
 
@@ -518,7 +518,7 @@ func Stat_Insert_summary_provider() string {
 		br_channel_currency, br_balance_currency, count_operations, rate, provider_1c,
 		payment_type_id,  project_id, rr_amount, rr_date, convertation_id, extra_br_balance_currency,
 		br_compensation, balance_id, provider_balance_guid, is_test_id, una_amount, una_date,
-		is_correction, correction_type_id
+		is_correction, correction_type_id, operation_status
 	)
 	VALUES (
 		:document_id, :document_date, :operation_type, :operation_group, :merchant_id, :merchant_account_id, 
@@ -527,7 +527,7 @@ func Stat_Insert_summary_provider() string {
 		:br_channel_currency, :br_balance_currency, :count_operations, :rate, :provider_1c,
 		:payment_type_id,  :project_id, :rr_amount, :rr_date, :convertation_id, :extra_br_balance_currency,
 		:br_compensation, :balance_id, :provider_balance_guid, :is_test_id, :una_amount, :una_date,
-		:is_correction, :correction_type_id
+		:is_correction, :correction_type_id, :operation_status
 		)`
 }
 

@@ -62,7 +62,7 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 	sheet, _ := f.AddSheet("Детализация")
 
-	headers := []string{"Схема", "Баланс", "balance_id", "Дата", "Проверка", "operation_type",
+	headers := []string{"Ответственный финансист", "Схема", "Баланс", "balance_id", "Дата", "Проверка", "operation_type",
 		"payment_method_type", "merchant_name", "project_name", "merchant_account_name", //"Подразделение", "Рассчетный счет",
 		"Поставщик 1С", "real_currency / channel_currency", "Валюта баланса", "Акт. тариф формула", "Range",
 		"Старт тарифа", "tariff_condition_id", "contract_id", "PPрасхолд", "ДатаРасхолдМ", "CryptoNetWork",
@@ -116,6 +116,7 @@ func add_page_detailed(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		row := sheet.AddRow()
 
 		//row.AddCell().SetString(k.tariff.Schema)
+		row.AddCell().SetString(k.fin)
 		row.AddCell().SetString(k.schema)
 		row.AddCell().SetString(k.balance_name_prov)     //k.tariff.Balance_name)   //0
 		row.AddCell().SetInt(k.balance_id)               //1

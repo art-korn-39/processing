@@ -15,11 +15,14 @@ type detailed_merchant struct {
 	Operation_id             int       `db:"operation_id"`
 	Transaction_completed_at time.Time `db:"transaction_completed_at"`
 	Operation_status         string    `db:"operation_status"`
+	Provider_balance_guid    string    `db:"provider_balance_guid"`
 	Channel_amount           float64   `db:"channel_amount"`
 	Balance_amount           float64   `db:"balance_amount"`
 	Fee_amount               float64   `db:"fee_amount"`
 	SR_balance_currency      float64   `db:"sr_balance_currency"`
 	SR_channel_currency      float64   `db:"sr_channel_currency"`
+	Rate                     float64   `db:"rate"`
+	Is_test_id               int       `db:"is_test_id"`
 }
 
 var (
@@ -41,7 +44,8 @@ func PSQL_read_detailed_merchant(db *sqlx.DB, registry_done chan querrys.Args) {
 	start_time := time.Now()
 
 	stat := `SELECT operation_id,operation_status,channel_amount,sr_balance_currency,
-			sr_channel_currency,balance_amount,fee_amount,transaction_completed_at
+			sr_channel_currency,balance_amount,fee_amount,transaction_completed_at,
+			is_test_id,rate,provider_balance_guid
 			FROM detailed
 			WHERE (merchant_id = ANY($1) OR merchant_id = 0) 
 			AND transaction_completed_at BETWEEN $2 AND $3
