@@ -144,7 +144,7 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 	d.SR_balance_currency = o.SR_balance_currency
 	d.SR_channel_currency = o.SR_channel_currency
 	d.SR_referal = o.SR_referal
-	d.SR_compensation = o.SR_compensation
+	d.SR_compensation = o.CompensationBC
 	d.RR_amount = o.RR_amount
 	d.RR_date = o.RR_date
 

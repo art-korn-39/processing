@@ -85,6 +85,8 @@ type KeyFields_SummaryInfo struct {
 	team_tradex           string
 	una_date              time.Time
 	fin                   string
+	IsCorrection          bool
+	CorrectionType        string
 }
 
 func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
@@ -106,6 +108,8 @@ func NewKeyFields_SummaryInfo(o *Operation) (KF KeyFields_SummaryInfo) {
 		isTradex:              o.IsTradex,
 		project_id_tradex:     o.Project_id,
 		una_date:              o.UNA_date,
+		IsCorrection:          o.IsCorrection,
+		CorrectionType:        o.CorrectionType,
 	}
 
 	if o.Tariff != nil {

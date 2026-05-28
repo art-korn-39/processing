@@ -65,6 +65,7 @@ type Detailed_row struct {
 	BR_Compensation           float64   `db:"br_compensation"`
 	UNA_amount                float64   `db:"una_amount"`
 	UNA_date                  time.Time `db:"una_date"`
+	Provider_balance_guid     string    `db:"provider_balance_guid"`
 
 	Balance_currency    currency.Currency
 	Provider_BR         float64
@@ -154,6 +155,10 @@ func NewDetailedRow(o *Operation) (d Detailed_row) {
 
 	if o.DragonpayOperation != nil {
 		d.Provider_dragonpay = o.DragonpayOperation.Provider1c
+	}
+
+	if o.ProviderBalance != nil {
+		d.Provider_balance_guid = o.ProviderBalance.GUID
 	}
 
 	if o.Tariff != nil {

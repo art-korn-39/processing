@@ -480,7 +480,7 @@ func (o *Operation) SetBRCompensation() {
 		amount = t.Max
 	}
 
-	o.BR_Compensation = amount
+	o.BR_Compensation = o.BR_balance_currency - amount
 
 }
 

@@ -39,6 +39,7 @@ type SummaryRowMerchant struct {
 	Business_type     string `db:"business_type"`
 	Account_bank_name string `db:"account_bank_name"`
 	Operation_status  string `db:"operation_status"`
+	Verification      string `db:"verification"`
 
 	Channel_currency_str string `db:"channel_currency"`
 	Balance_currency_str string `db:"balance_currency"`
@@ -222,6 +223,7 @@ func GroupRegistryToSummaryMerchant() (data []SummaryRowMerchant) {
 		k.IsCorrection = o.IsCorrection
 		k.CorrectionTypeId = o.CorrectionTypeId
 		k.Operation_status = o.Operation_status
+		k.Verification = o.Verification
 
 		if o.Tariff != nil {
 			k.Convertation = o.Tariff.Convertation

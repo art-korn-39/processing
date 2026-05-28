@@ -38,6 +38,7 @@ func Write_XLSX_SummaryInfo(M map[KeyFields_SummaryInfo]SumFileds) {
 	f := xlsx.NewFile()
 
 	add_page_turnover(f, M)
+	add_page_corrections(f, M)
 	add_page_turnover_tradex(f, M)
 	add_page_detail(f, M)
 	add_page_turnover_dragonpay(f, M)
@@ -57,7 +58,8 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 
 	sheet, _ := f.AddSheet("Обороты")
 
-	headers := []string{"Ответственный финансист", "Проверка", "Баланс провайдера", "Ключ", "Наименование баланса ПС", "ЮЛ", "Дата учета",
+	headers := []string{"Ответственный финансист", "Проверка", "Баланс провайдера", "Ключ",
+		"Наименование баланса ПС", "ЮЛ", "Дата учета",
 		"provider_name", "merchant_account", "operation_type", "region", "payment_type", "merchant_name",
 		"Валюта баланса", "Кол-во транз", "Сумма в валюте баланса", "BR в валюте баланса",
 		"Surcharge amount", "Доп. BR в валюте баланса", "Сумма в валюте канала", "Валюта канала",
@@ -150,7 +152,7 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		row.AddCell().SetString("")
 
 		util.AddCellWithFloat(row, v.BR_compensation, 2)
-		util.AddCellWithFloat(row, v.BR_balance_currency-v.BR_compensation, 2)
+		util.AddCellWithFloat(row, v.BR_balance_currency+v.BR_compensation, 2)
 
 		util.AddCellWithFloat(row, v.RR_amount, 2)
 
@@ -169,6 +171,143 @@ func add_page_turnover(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
 		}
 
 		util.AddCellWithFloat(row, v.SR_balance_currency, k.balance_currency.GetAccuracy(4))
+
+	}
+}
+
+func add_page_corrections(f *xlsx.File, M map[KeyFields_SummaryInfo]SumFileds) {
+
+	sheet, _ := f.AddSheet("Корректировки")
+
+	headers := []string{
+		"Ответственный финансист", "Дата корректировки", "Наименование баланса ПС", "ЮЛ",
+		"operation_type", "merchant_name", "Валюта баланса", "Кол-во транз", "Сумма в валюте баланса",
+		"BR в валюте баланса", "Причина", "Корректировка за дату (как у ПС)", "Комментарий", "Мерч 1С",
+		"Подразделение", "Поставщик", "Вид дохода", "Дата 1С", "Комментарий 1С",
+	}
+
+	style := xlsx.NewStyle()
+	style.Fill.FgColor = "5B9BD5"
+	style.Fill.PatternType = "solid"
+	style.ApplyFill = true
+	style.Alignment.WrapText = true
+	style.Alignment.Horizontal = "center"
+	style.Alignment.Vertical = "center"
+	style.ApplyAlignment = true
+	style.Font.Bold = true
+	style.Font.Color = "FFFFFF"
+
+	row := sheet.AddRow()
+
+	for _, v := range headers {
+		cell := row.AddCell()
+		cell.SetString(v)
+		cell.SetStyle(style)
+	}
+
+	sheet.SetColWidth(0, 0, 20)   // Ответственный финансист
+	sheet.SetColWidth(1, 1, 18)   // Дата корректировки
+	sheet.SetColWidth(2, 2, 30)   // Наименование баланса ПС
+	sheet.SetColWidth(3, 3, 20)   // ЮЛ
+	sheet.SetColWidth(4, 4, 15)   // operation_type
+	sheet.SetColWidth(5, 5, 30)   // merchant_name
+	sheet.SetColWidth(6, 6, 15)   // Валюта баланса
+	sheet.SetColWidth(7, 7, 12)   // Кол-во транз
+	sheet.SetColWidth(8, 8, 18)   // Сумма в валюте баланса
+	sheet.SetColWidth(9, 9, 18)   // BR в валюте баланса
+	sheet.SetColWidth(10, 10, 20) // Причина (новая)
+	sheet.SetColWidth(11, 11, 22) // Корректировка за дату (новая)
+	sheet.SetColWidth(12, 12, 30) // Комментарий
+	sheet.SetColWidth(13, 13, 20) // Мерч 1С
+	sheet.SetColWidth(14, 14, 20) // Подразделение
+	sheet.SetColWidth(15, 15, 20) // Поставщик
+	sheet.SetColWidth(16, 16, 20) // Вид дохода
+	sheet.SetColWidth(17, 17, 15) // Дата 1С
+	sheet.SetColWidth(18, 18, 30) // Комментарий 1С (новая)
+
+	for k, v := range M {
+
+		if !k.IsCorrection {
+			continue
+		}
+
+		row := sheet.AddRow()
+		// Ответственный финансист
+		row.AddCell().SetString(k.fin)
+
+		// Дата корректировки (берём из k.document_date)
+		if k.document_date.IsZero() {
+			row.AddCell().SetString("")
+		} else {
+			row.AddCell().SetDate(k.document_date)
+		}
+
+		// Наименование баланса ПС
+		row.AddCell().SetString(k.contractor_provider)
+
+		// ЮЛ
+		row.AddCell().SetString(k.organization)
+
+		// operation_type
+		row.AddCell().SetString(k.operation_type)
+
+		// merchant_name
+		row.AddCell().SetString(k.merchant_name)
+
+		// Валюта баланса
+		row.AddCell().SetString(k.balance_currency.Name)
+
+		// Кол-во транз
+		row.AddCell().SetInt(v.count_operations)
+
+		// Сумма в валюте баланса
+		util.AddCellWithFloat(row, v.balance_amount, k.balance_currency.GetAccuracy(3))
+
+		// BR в валюте баланса
+		util.AddCellWithFloat(row, v.BR_balance_currency, k.balance_currency.GetAccuracy(4))
+
+		// Причина (новая колонка - пустая)
+		row.AddCell().SetString(k.CorrectionType)
+
+		// Корректировка за дату (новая колонка - пустая)
+		row.AddCell().SetString("")
+
+		// Комментарий (бывший Комментарий, оставляем пустым как в оригинале)
+		row.AddCell().SetString("")
+
+		// Мерч 1С
+		if k.isTestId >= IST_LIVE_TEST {
+			row.AddCell().SetString("Тест")
+		} else {
+			row.AddCell().SetString(k.contractor_merchant)
+		}
+
+		// Подразделение
+		row.AddCell().SetString(k.subdivision_name)
+
+		// Поставщик
+		row.AddCell().SetString(k.provider1c)
+
+		// Вид дохода
+		if k.operation_group == "IN" {
+			row.AddCell().SetString("Корректировка БР (прием)")
+		} else if k.operation_type == "payout" {
+			row.AddCell().SetString("Корректировка БР (выплата)")
+		} else if k.operation_type == "refund" {
+			row.AddCell().SetString("Комиссия рефанд")
+		} else {
+			row.AddCell().SetString("")
+		}
+
+		// Дата 1С
+		if k.document_date.IsZero() {
+			row.AddCell().SetString("")
+		} else {
+			row.AddCell().SetDate(util.LastDayOfMonth(k.document_date))
+		}
+
+		// Комментарий 1С (новая колонка - пустая)
+		row.AddCell().SetString("")
 
 	}
 }

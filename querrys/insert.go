@@ -116,8 +116,8 @@ func Stat_Insert_detailed_provider() string {
 		balance_currency, rate, compensation_br, verification,tariff_date_start, act_percent, 
 		act_fix, act_min, act_max, range_min, range_max, region, provider_dragonpay, balance_id,
 		rr_amount, rr_date, is_test_id, is_test_type, provider_1c, is_perevodix, br_compensation,
-		merchant_account_id, una_amount, una_date, is_final, operation_status, is_correction, correction_type,
-		correction_type_id
+		merchant_account_id, una_amount, una_date, is_final, operation_status, is_correction, 
+		correction_type, correction_type_id, provider_balance_guid
 	)
 	VALUES (
 		:document_id, :operation_id,  :provider_payment_id, :transaction_id, :rrn, :payment_id, :provider_id,
@@ -128,8 +128,8 @@ func Stat_Insert_detailed_provider() string {
 		:balance_currency, :rate, :compensation_br, :verification, :tariff_date_start, :act_percent, 
 		:act_fix, :act_min, :act_max, :range_min, :range_max, :region, :provider_dragonpay, :balance_id,
 		:rr_amount, :rr_date, :is_test_id, :is_test_type, :provider_1c, :is_perevodix, :br_compensation,
-		:merchant_account_id, :una_amount, :una_date, :is_final, :operation_status, :is_correction, :correction_type,
-		:correction_type_id
+		:merchant_account_id, :una_amount, :una_date, :is_final, :operation_status, :is_correction, 
+		:correction_type, :correction_type_id, :provider_balance_guid
 		)
 	ON CONFLICT ON CONSTRAINT pk_detailed_provider_id DO UPDATE SET
 		provider_payment_id = EXCLUDED.provider_payment_id,
@@ -153,7 +153,8 @@ func Stat_Insert_detailed_provider() string {
 		is_test_id = EXCLUDED.is_test_id,is_test_type = EXCLUDED.is_test_type,provider_1c = EXCLUDED.provider_1c,
 		is_perevodix = EXCLUDED.is_perevodix,br_compensation = EXCLUDED.br_compensation,
 		merchant_account_id = EXCLUDED.merchant_account_id,una_amount = EXCLUDED.una_amount,
-		una_date = EXCLUDED.una_date, is_final = EXCLUDED.is_final, operation_status = EXCLUDED.operation_status
+		una_date = EXCLUDED.una_date, is_final = EXCLUDED.is_final, operation_status = EXCLUDED.operation_status,
+		provider_balance_guid = EXCLUDED.provider_balance_guid
 	WHERE detailed_provider.is_final = FALSE
 	`
 }
@@ -496,7 +497,8 @@ func Stat_Insert_summary_merchant() string {
 		sr_channel_currency, sr_balance_currency, count_operations, rate, referal_guid,
 		payment_type_id, payment_method_id, rated_account, provider_1c, subdivision_1c, business_type, project_id,
 		rr_amount, rr_date, schema, convertation_id, provider_balance_guid, sr_referal, is_test_id,
-		una_amount, una_date, sr_compensation, is_correction, correction_type_id, operation_status
+		una_amount, una_date, sr_compensation, is_correction, correction_type_id, operation_status,
+		verification
 	)
 	VALUES (
 		:document_id, :document_date, :operation_type, :operation_group, :merchant_id, :merchant_account_id, 
@@ -505,7 +507,8 @@ func Stat_Insert_summary_merchant() string {
 		:sr_channel_currency, :sr_balance_currency, :count_operations, :rate, :referal_guid,
 		:payment_type_id, :payment_method_id, :rated_account, :provider_1c, :subdivision_1c, :business_type, :project_id,
 		:rr_amount, :rr_date, :schema, :convertation_id, :provider_balance_guid, :sr_referal, :is_test_id,
-		:una_amount, :una_date, :sr_compensation, :is_correction, :correction_type_id, :operation_status
+		:una_amount, :una_date, :sr_compensation, :is_correction, :correction_type_id, :operation_status,
+		:verification
 		)`
 }
 
@@ -518,7 +521,7 @@ func Stat_Insert_summary_provider() string {
 		br_channel_currency, br_balance_currency, count_operations, rate, provider_1c,
 		payment_type_id,  project_id, rr_amount, rr_date, convertation_id, extra_br_balance_currency,
 		br_compensation, balance_id, provider_balance_guid, is_test_id, una_amount, una_date,
-		is_correction, correction_type_id, operation_status
+		is_correction, correction_type_id, operation_status, verification
 	)
 	VALUES (
 		:document_id, :document_date, :operation_type, :operation_group, :merchant_id, :merchant_account_id, 
@@ -527,7 +530,7 @@ func Stat_Insert_summary_provider() string {
 		:br_channel_currency, :br_balance_currency, :count_operations, :rate, :provider_1c,
 		:payment_type_id,  :project_id, :rr_amount, :rr_date, :convertation_id, :extra_br_balance_currency,
 		:br_compensation, :balance_id, :provider_balance_guid, :is_test_id, :una_amount, :una_date,
-		:is_correction, :correction_type_id, :operation_status
+		:is_correction, :correction_type_id, :operation_status, :verification
 		)`
 }
 
